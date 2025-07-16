@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL + "/api/productos"; // si usás Vite
+const API_URL = import.meta.env.VITE_API_URL + "/api/productos";
 
 
 export const obtenerProductos = async () => {
