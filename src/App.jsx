@@ -11,6 +11,7 @@ import CookDashboard from "./pages/CookDashboard";
 import Navbar from "./components/common/Navbar";
 
 export default function App() {
+   console.log("API:", import.meta.env.VITE_API_URL); // 👈 Acá
   return (
     <Router>
       <Navbar />
