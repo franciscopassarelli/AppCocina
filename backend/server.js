@@ -6,9 +6,15 @@ require("dotenv").config();
 const app = express();
 
 // 🔁 Middleware ANTES de las rutas
+const allowedOrigins = [
+  "http://localhost:5173", // frontend local
+  "https://app-cocina.vercel.app", // frontend en producción
+];
+
 app.use(cors({
-  origin: "https://app-cocina.vercel.app"
+  origin: allowedOrigins
 }));
+
 app.use(express.json());
 
 // ✅ Conexión a MongoDB

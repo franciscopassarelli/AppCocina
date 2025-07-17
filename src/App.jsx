@@ -12,6 +12,9 @@ import Navbar from "./components/common/Navbar";
 
 export default function App() {
    console.log("API:", import.meta.env.VITE_API_URL); // 👈 Acá
+   console.log("URL productos:", import.meta.env.VITE_API_PRODUCTOS_URL);
+console.log("URL historial:", import.meta.env.VITE_API_HISTORIAL_URL);
+
   return (
     <Router>
       <Navbar />

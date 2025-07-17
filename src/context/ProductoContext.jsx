@@ -75,9 +75,11 @@ export function ProductoProvider({ children }) {
       setProductos((prev) =>
         prev.map((p) => (p._id === id ? res.data : p))
       );
-    } catch (err) {
-      console.error("Error al actualizar stock:", err);
-    }
+   } catch (err) {
+  console.error("❌ Error al actualizar stock:", err.message);
+  console.error(err.response?.data || err);
+}
+
   };
 
   // Eliminar producto
