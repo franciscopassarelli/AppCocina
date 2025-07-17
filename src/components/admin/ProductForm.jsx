@@ -14,6 +14,8 @@ export default function ProductForm() {
   const [unidad, setUnidad] = useState("kg");
   const [pesoPromedio, setPesoPromedio] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
+  const [departamento, setDepartamento] = useState("Carnes");
+
 
   useEffect(() => {
     if (productoEditando) {
@@ -21,6 +23,7 @@ export default function ProductForm() {
       setStock(productoEditando.stock.toString());
       setUnidad(productoEditando.unidad);
       setPesoPromedio(productoEditando.pesoPromedio.toString());
+      setDepartamento(productoEditando.departamento || "Carnes");
     }
   }, [productoEditando]);
 
@@ -42,6 +45,7 @@ export default function ProductForm() {
       stock: parseFloat(stock),
       unidad,
       pesoPromedio: parseFloat(pesoPromedio),
+      departamento,
     };
 
     try {
@@ -109,6 +113,24 @@ export default function ProductForm() {
             </select>
           </div>
 
+          <div className="col-md-2">
+  <select
+    className="form-select"
+    value={departamento}
+    onChange={(e) => setDepartamento(e.target.value)}
+  >
+    <option value="Carnes">Carnes</option>
+    <option value="Verduras">Verduras</option>
+    <option value="Congelados">Congelados</option>
+    <option value="Aderezos">Aderezos</option>
+    <option value="Lácteos">Lácteos</option>
+    <option value="Panadería">Panadería</option>
+    <option value="Aceites">Aceites</option>
+    <option value="Insumos">Insumos</option>
+  </select>
+</div>
+
+
           <div className="col-md-3">
             <input
               type="number"
@@ -147,7 +169,7 @@ export default function ProductForm() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <div>
-                <strong>{prod.nombre}</strong> — {prod.stock} {prod.unidad} —{" "}
+                <strong>{prod.nombre}</strong> — {prod.departamento} — {prod.stock} {prod.unidad} —{" "}
                 {prod.pesoPromedio} {prod.unidad === "l" ? "ml" : "g"}
               </div>
               <div className="d-flex gap-2">

@@ -5,6 +5,7 @@ const productoSchema = new mongoose.Schema({
   stock: { type: Number, required: true },
   unidad: { type: String, enum: ["kg", "l", "unidad"], required: true },
   pesoPromedio: { type: Number, required: true }, // gramos por unidad
+   departamento: { type: String, required: true },
 });
 
 module.exports = mongoose.model("Producto", productoSchema);

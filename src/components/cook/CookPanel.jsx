@@ -11,19 +11,17 @@ export default function CookPanel() {
     agregarRegistroHistorial,
   } = useProductos();
 
-
-  
-
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
-  const productoSeleccionado = productos.find(
-    (p) => p._id === productoIdSeleccionado
-  );
-
   const [usoDelDia, setUsoDelDia] = useState("");
   const [unidades, setUnidades] = useState("");
   const [alerta, setAlerta] = useState(null);
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [departamentoActivo, setDepartamentoActivo] = useState(null);
+
+  const productoSeleccionado = productos.find(
+    (p) => p._id === productoIdSeleccionado
+  );
 
   const mostrarMensajeAlerta = (mensaje) => {
     setAlerta(mensaje);
@@ -31,81 +29,73 @@ export default function CookPanel() {
     setTimeout(() => setMostrarAlerta(false), 2700);
     setTimeout(() => setAlerta(null), 3200);
   };
-const API_URL = import.meta.env.VITE_API_URL;
 
-const handleRegistrar = async () => {
-  const uso = parseFloat(usoDelDia);
-  const cantUnidades = parseInt(unidades);
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  if (!uso || !cantUnidades || !productoSeleccionado) return;
+  const handleRegistrar = async () => {
+    const uso = parseFloat(usoDelDia);
+    const cantUnidades = parseInt(unidades);
+    if (!uso || !cantUnidades || !productoSeleccionado) return;
 
-  const pesoPromedio = productoSeleccionado.pesoPromedio;
-  const cantidadUtil = (cantUnidades * pesoPromedio) / 1000; // gramos a kg
-  const desperdicio = Math.max(0, uso - cantidadUtil);
-  const nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
+    const pesoPromedio = productoSeleccionado.pesoPromedio;
+    const cantidadUtil = (cantUnidades * pesoPromedio) / 1000;
+    const desperdicio = Math.max(0, uso - cantidadUtil);
+    const nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
 
-  const nuevoRegistro = {
-    producto: productoSeleccionado.nombre,
-    fecha: new Date(),
-    uso: parseFloat(uso.toFixed(2)),
-    unidades: cantUnidades,
-    desperdicio: parseFloat(desperdicio.toFixed(3)), // Cambiar de 2 a 3 decimales
-  };
+    const nuevoRegistro = {
+      producto: productoSeleccionado.nombre,
+      fecha: new Date(),
+      uso: parseFloat(uso.toFixed(2)),
+      unidades: cantUnidades,
+      desperdicio: parseFloat(desperdicio.toFixed(3)),
+    };
 
-  try {
-    setCargando(true);
+    try {
+      setCargando(true);
 
-    // 🟢 Actualizar stock en el backend
-    const res = await fetch(
-      `${API_URL}/productos/${productoSeleccionado._id}`,
-      {
+      await fetch(`${API_URL}/productos/${productoSeleccionado._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stock: nuevoStock }),
-      }
-    );
+      });
 
-    if (!res.ok) throw new Error("Error al actualizar stock");
+      await fetch(`${API_URL}/historial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevoRegistro),
+      });
 
-    // 🟢 Registrar historial en el backend
-    await fetch(`${API_URL}/historial`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuevoRegistro),
-    });
+      await actualizarStock(productoSeleccionado._id, nuevoStock);
+      agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
 
-    // ✅ ACTUALIZAR estado global
-    await actualizarStock(productoSeleccionado._id, nuevoStock);
-    agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
+      setUsoDelDia("");
+      setUnidades("");
+      setProductoIdSeleccionado(null);
 
-    // 🧹 Resetear formulario y cerrar modal
-    setUsoDelDia("");
-    setUnidades("");
-    setProductoIdSeleccionado(null);
-
-    // ✅ Mostrar alerta final
-    mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
-  } catch (err) {
-    console.error("❌ Error:", err.message);
-    mostrarMensajeAlerta("Hubo un error al registrar el uso");
-  } finally {
-    setCargando(false);
-  }
-};
-
+      mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
+    } catch (err) {
+      console.error("❌ Error:", err.message);
+      mostrarMensajeAlerta("Hubo un error al registrar el uso");
+    } finally {
+      setCargando(false);
+    }
+  };
 
   const unidad = productoSeleccionado?.unidad;
   const esLiquido = unidad === "l";
+  const cantidadUtil = productoSeleccionado && unidades
+    ? (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
+    : 0;
+  const desperdicio = usoDelDia && cantidadUtil
+    ? (parseFloat(usoDelDia) - cantidadUtil).toFixed(3)
+    : 0;
 
-  const cantidadUtil =
-    productoSeleccionado && unidades
-      ? (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
-      : 0;
-
-  const desperdicio =
-    usoDelDia && cantidadUtil
-      ? (parseFloat(usoDelDia) - cantidadUtil).toFixed(3) // Cambiar de 2 a 3 decimales
-      : 0;
+  const productosPorDepartamento = productos.reduce((acc, prod) => {
+    const depto = prod.departamento || "Otros";
+    if (!acc[depto]) acc[depto] = [];
+    acc[depto].push(prod);
+    return acc;
+  }, {});
 
   return (
     <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
@@ -142,31 +132,65 @@ const handleRegistrar = async () => {
       )}
 
       {!productoSeleccionado && (
-        <div className="d-flex flex-wrap gap-3 justify-content-center">
-          {productos.map((prod) => (
-            <motion.button
-              key={prod._id}
-              className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
+        <div>
+          {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
+            <motion.div
+              key={depto}
+              className="text-white my-3 py-2 px-3 rounded border mx-auto"
               style={{
-                backgroundColor: "#222",
-                color: "white",
-                border: "1px solid white",
-                borderRadius: "10px",
-                minWidth: "200px",
-                minHeight: "140px",
+                cursor: "pointer",
+                backgroundColor: "#111",
+                borderColor: "#444",
+                width: "95%",
+                maxWidth: "900px",
               }}
-              onClick={() => setProductoIdSeleccionado(prod._id)}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              onClick={() =>
+                setDepartamentoActivo(depto === departamentoActivo ? null : depto)
+              }
+              whileHover={{ scale: 1.015 }}
             >
-              <strong style={{ fontSize: "1.2rem" }}>{prod.nombre}</strong>
-              <div className="small mt-2 text-secondary">
-                Stock: {prod.stock.toFixed(2)} {prod.unidad}
-              </div>
-            </motion.button>
+              <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
+                {depto}
+              </h5>
+
+              <AnimatePresence>
+                {departamentoActivo === depto && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
+                  >
+                    {productosDepto.map((prod) => (
+                      <motion.button
+                        key={prod._id}
+                        className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
+                        style={{
+                          backgroundColor: "#222",
+                          color: "white",
+                          border: "1px solid white",
+                          borderRadius: "10px",
+                          minWidth: "170px",
+                          minHeight: "120px",
+                        }}
+                        onClick={() => setProductoIdSeleccionado(prod._id)}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <strong style={{ fontSize: "1.1rem" }}>{prod.nombre}</strong>
+                        <div className="small mt-2 text-secondary">
+                          Stock: {prod.stock.toFixed(2)} {prod.unidad}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
         </div>
       )}
