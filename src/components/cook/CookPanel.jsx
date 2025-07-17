@@ -11,6 +11,9 @@ export default function CookPanel() {
     agregarRegistroHistorial,
   } = useProductos();
 
+
+  
+
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const productoSeleccionado = productos.find(
     (p) => p._id === productoIdSeleccionado
@@ -28,66 +31,68 @@ export default function CookPanel() {
     setTimeout(() => setMostrarAlerta(false), 2700);
     setTimeout(() => setAlerta(null), 3200);
   };
+const API_URL = import.meta.env.VITE_API_URL;
 
-  const handleRegistrar = async () => {
-    const uso = parseFloat(usoDelDia);
-    const cantUnidades = parseInt(unidades);
+const handleRegistrar = async () => {
+  const uso = parseFloat(usoDelDia);
+  const cantUnidades = parseInt(unidades);
 
-    if (!uso || !cantUnidades || !productoSeleccionado) return;
+  if (!uso || !cantUnidades || !productoSeleccionado) return;
 
-    const pesoPromedio = productoSeleccionado.pesoPromedio;
-    const cantidadUtil = (cantUnidades * pesoPromedio) / 1000; // gramos a kg
-    const desperdicio = Math.max(0, uso - cantidadUtil);
-    const nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
+  const pesoPromedio = productoSeleccionado.pesoPromedio;
+  const cantidadUtil = (cantUnidades * pesoPromedio) / 1000; // gramos a kg
+  const desperdicio = Math.max(0, uso - cantidadUtil);
+  const nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
 
-    const nuevoRegistro = {
-      producto: productoSeleccionado.nombre,
-      fecha: new Date(),
-      uso: parseFloat(uso.toFixed(2)),
-      unidades: cantUnidades,
-      desperdicio: parseFloat(desperdicio.toFixed(3)), // Cambiar de 2 a 3 decimales
-    };
-
-    try {
-      setCargando(true);
-
-      // 🟢 Actualizar stock en el backend
-      const res = await fetch(
-        `http://localhost:5000/api/productos/${productoSeleccionado._id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stock: nuevoStock }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Error al actualizar stock");
-
-      // 🟢 Registrar historial en el backend
-      await fetch("http://localhost:5000/api/historial", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevoRegistro),
-      });
-
-      // ✅ ACTUALIZAR estado global
-      await actualizarStock(productoSeleccionado._id, nuevoStock);
-      agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
-
-      // 🧹 Resetear formulario y cerrar modal
-      setUsoDelDia("");
-      setUnidades("");
-      setProductoIdSeleccionado(null);
-
-      // ✅ Mostrar alerta final
-      mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
-    } catch (err) {
-      console.error("❌ Error:", err.message);
-      mostrarMensajeAlerta("Hubo un error al registrar el uso");
-    } finally {
-      setCargando(false);
-    }
+  const nuevoRegistro = {
+    producto: productoSeleccionado.nombre,
+    fecha: new Date(),
+    uso: parseFloat(uso.toFixed(2)),
+    unidades: cantUnidades,
+    desperdicio: parseFloat(desperdicio.toFixed(3)), // Cambiar de 2 a 3 decimales
   };
+
+  try {
+    setCargando(true);
+
+    // 🟢 Actualizar stock en el backend
+    const res = await fetch(
+      `${API_URL}/productos/${productoSeleccionado._id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: nuevoStock }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Error al actualizar stock");
+
+    // 🟢 Registrar historial en el backend
+    await fetch(`${API_URL}/historial`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nuevoRegistro),
+    });
+
+    // ✅ ACTUALIZAR estado global
+    await actualizarStock(productoSeleccionado._id, nuevoStock);
+    agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
+
+    // 🧹 Resetear formulario y cerrar modal
+    setUsoDelDia("");
+    setUnidades("");
+    setProductoIdSeleccionado(null);
+
+    // ✅ Mostrar alerta final
+    mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
+  } catch (err) {
+    console.error("❌ Error:", err.message);
+    mostrarMensajeAlerta("Hubo un error al registrar el uso");
+  } finally {
+    setCargando(false);
+  }
+};
+
 
   const unidad = productoSeleccionado?.unidad;
   const esLiquido = unidad === "l";
