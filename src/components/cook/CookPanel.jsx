@@ -23,6 +23,8 @@ export default function CookPanel() {
     (p) => p._id === productoIdSeleccionado
   );
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const mostrarMensajeAlerta = (mensaje) => {
     setAlerta(mensaje);
     setMostrarAlerta(true);
@@ -30,22 +32,35 @@ export default function CookPanel() {
     setTimeout(() => setAlerta(null), 3200);
   };
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const unidad = productoSeleccionado?.unidad;
+  const esLiquido = unidad === "l";
+  const esInsumoUnidad = unidad === "unidad";
 
   const handleRegistrar = async () => {
     const uso = parseFloat(usoDelDia);
     const cantUnidades = parseInt(unidades);
-    if (!uso || !cantUnidades || !productoSeleccionado) return;
 
-    const pesoPromedio = productoSeleccionado.pesoPromedio;
-    const cantidadUtil = (cantUnidades * pesoPromedio) / 1000;
-    const desperdicio = Math.max(0, uso - cantidadUtil);
-    const nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
+    if (!productoSeleccionado) return;
+    if (esInsumoUnidad && !cantUnidades) return;
+    if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
+
+    let nuevoStock = productoSeleccionado.stock;
+    let desperdicio = 0;
+    let cantidadUtil = 0;
+
+    if (esInsumoUnidad) {
+      nuevoStock = Math.max(productoSeleccionado.stock - cantUnidades, 0);
+      cantidadUtil = cantUnidades;
+    } else {
+      cantidadUtil = (cantUnidades * productoSeleccionado.pesoPromedio) / 1000;
+      desperdicio = Math.max(0, uso - cantidadUtil);
+      nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
+    }
 
     const nuevoRegistro = {
       producto: productoSeleccionado.nombre,
       fecha: new Date(),
-      uso: parseFloat(uso.toFixed(2)),
+      uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
       unidades: cantUnidades,
       desperdicio: parseFloat(desperdicio.toFixed(3)),
     };
@@ -81,14 +96,16 @@ export default function CookPanel() {
     }
   };
 
-  const unidad = productoSeleccionado?.unidad;
-  const esLiquido = unidad === "l";
   const cantidadUtil = productoSeleccionado && unidades
-    ? (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
+    ? esInsumoUnidad
+      ? parseInt(unidades)
+      : (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
     : 0;
-  const desperdicio = usoDelDia && cantidadUtil
-    ? (parseFloat(usoDelDia) - cantidadUtil).toFixed(3)
-    : 0;
+
+  const desperdicio =
+    !esInsumoUnidad && usoDelDia && cantidadUtil
+      ? (parseFloat(usoDelDia) - cantidadUtil).toFixed(3)
+      : 0;
 
   const productosPorDepartamento = productos.reduce((acc, prod) => {
     const depto = prod.departamento || "Otros";
@@ -224,22 +241,24 @@ export default function CookPanel() {
                 </p>
 
                 <div className="row g-3 mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label">
-                      Uso del día ({esLiquido ? "litros" : "kg"}):
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control form-control-lg"
-                      value={usoDelDia}
-                      onChange={(e) => setUsoDelDia(e.target.value)}
-                      placeholder="Ej: 10"
-                      step="0.1"
-                      min="0"
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label">Unidades producidas:</label>
+                  {!esInsumoUnidad && (
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        Uso del día ({esLiquido ? "litros" : "kg"}):
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control form-control-lg"
+                        value={usoDelDia}
+                        onChange={(e) => setUsoDelDia(e.target.value)}
+                        placeholder="Ej: 10"
+                        step="0.1"
+                        min="0"
+                      />
+                    </div>
+                  )}
+                  <div className={esInsumoUnidad ? "col-md-12" : "col-md-6"}>
+                    <label className="form-label">Unidades {esInsumoUnidad ? "a descontar" : "producidas"}:</label>
                     <input
                       type="number"
                       className="form-control form-control-lg"
@@ -251,24 +270,20 @@ export default function CookPanel() {
                   </div>
                 </div>
 
-                <div className="text-start mb-3">
-                  <p>
-                    <strong>{esLiquido ? "Volumen" : "Peso"} útil:</strong>{" "}
-                    {cantidadUtil.toFixed(3)} {esLiquido ? "litros" : "kg"}
-                  </p>
-                  <p>
-                    <strong>Desperdicio:</strong> {desperdicio} {esLiquido ? "litros" : "kg"}
-                  </p>
-                  <p>
-                    <strong>
-                      {esLiquido
-                        ? "Volumen promedio por unidad"
-                        : "Peso promedio por unidad"}:
-                    </strong>{" "}
-                    {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)}{" "}
-                    {esLiquido ? "litros" : "kg"}
-                  </p>
-                </div>
+                {!esInsumoUnidad && (
+                  <div className="text-start mb-3">
+                    <p>
+                      <strong>Cantidad útil:</strong> {cantidadUtil.toFixed(3)} {unidad}
+                    </p>
+                    <p>
+                      <strong>Desperdicio:</strong> {desperdicio} {unidad}
+                    </p>
+                    <p>
+                      <strong>Promedio por unidad:</strong>{" "}
+                      {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
+                    </p>
+                  </div>
+                )}
 
                 <button
                   className="btn btn-success btn-lg w-100"
@@ -281,9 +296,10 @@ export default function CookPanel() {
                       Registrando...
                     </div>
                   ) : (
-                    "Registrar uso"
+                    esInsumoUnidad ? "Descontar unidades" : "Registrar uso"
                   )}
                 </button>
+
                 <button
                   className="btn btn-secondary btn-lg w-100 mt-3"
                   onClick={() => setProductoIdSeleccionado(null)}

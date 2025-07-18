@@ -8,7 +8,6 @@ import { FaBoxes } from "react-icons/fa";
 export default function AdminDashboard() {
   return (
     <div className="container mt-4">
-
       <h2
   className="text-white mb-4 d-flex align-items-center gap-3"
   style={{
