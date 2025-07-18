@@ -27,8 +27,7 @@ mongoose.connect(uri)
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
 // 🟢 Middleware para manejar rutas de productos y historial
-const historial = require("./models/Historial");
-const Producto = require("./models/Producto");
+
 
 
 

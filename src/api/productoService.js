@@ -8,10 +8,14 @@ export const obtenerProductos = async () => {
   return res.data;
 };
 
+const API_PRODUCTOS_URL = import.meta.env.VITE_API_PRODUCTOS_URL;
+
 export const agregarProducto = async (producto) => {
-  const res = await axios.post(API_URL, producto);
+  const res = await axios.post(API_PRODUCTOS_URL, producto);
   return res.data;
 };
+
+
 
 export const actualizarStock = async (id, nuevoStock) => {
   const res = await axios.put(`${API_URL}/${id}`, { stock: nuevoStock });
