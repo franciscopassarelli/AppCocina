@@ -33,6 +33,8 @@ router.put("/:id", async (req, res) => {
         stock: req.body.stock,
         unidad: req.body.unidad,
         pesoPromedio: req.body.pesoPromedio,
+        departamento: req.body.departamento,      // ✅ agregar esto
+        stockCritico: req.body.stockCritico,      // ✅ y esto
       },
       { new: true }
     );
@@ -41,6 +43,7 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 // 🔴 Eliminar un producto por ID
 router.delete("/:id", async (req, res) => {
