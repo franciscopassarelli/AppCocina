@@ -28,14 +28,7 @@ router.put("/:id", async (req, res) => {
   try {
     const actualizado = await Producto.findByIdAndUpdate(
       req.params.id,
-      {
-        nombre: req.body.nombre,
-        stock: req.body.stock,
-        unidad: req.body.unidad,
-        pesoPromedio: req.body.pesoPromedio,
-        departamento: req.body.departamento,      // ✅ agregar esto
-        stockCritico: req.body.stockCritico,      // ✅ y esto
-      },
+      { $set: req.body },  // <--- actualización parcial segura
       { new: true }
     );
     res.json(actualizado);
@@ -43,6 +36,7 @@ router.put("/:id", async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 
 
 // 🔴 Eliminar un producto por ID

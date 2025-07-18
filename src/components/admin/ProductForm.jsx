@@ -15,7 +15,7 @@ export default function ProductForm() {
   const [pesoPromedio, setPesoPromedio] = useState("");
   const [stockCritico, setStockCritico] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
-  const [departamento, setDepartamento] = useState("Carnes");
+  const [departamento, setDepartamento] = useState("Insumos");
 
   useEffect(() => {
     if (productoEditando) {

@@ -31,6 +31,8 @@ const historialRoutes = require("./routes/historial");
 
 
 
+
+
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);
 
