@@ -16,6 +16,7 @@ export default function ProductForm() {
   const [stockCritico, setStockCritico] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
   const [departamento, setDepartamento] = useState("Insumos");
+  const [fechaVencimiento, setFechaVencimiento] = useState("");
 
   useEffect(() => {
     if (productoEditando) {
@@ -25,6 +26,7 @@ export default function ProductForm() {
       setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
       setDepartamento(productoEditando.departamento || "Carnes");
       setStockCritico(productoEditando.stockCritico?.toString() || "");
+      setFechaVencimiento(productoEditando.fechaVencimiento?.split("T")[0] || "");
     }
   }, [productoEditando]);
 
@@ -35,12 +37,14 @@ export default function ProductForm() {
     setPesoPromedio("");
     setStockCritico("");
     setProductoEditando(null);
+    setDepartamento("Insumos");
+    setFechaVencimiento("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nombre || !stock || !unidad || !stockCritico) return;
+    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento) return;
     if (unidad !== "unidad" && !pesoPromedio) return;
 
     const productoData = {
@@ -50,6 +54,7 @@ export default function ProductForm() {
       pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
       departamento,
       stockCritico: parseFloat(stockCritico),
+      fechaVencimiento: new Date(fechaVencimiento),
     };
 
     try {
@@ -80,7 +85,7 @@ export default function ProductForm() {
     <>
       <form onSubmit={handleSubmit} className="mb-4">
         <h4>{productoEditando ? "Editar producto" : "Nuevo producto"}</h4>
-        <div className="row g-2 align-items-end">
+        <div className="row g-2">
           <div className="col-md-3">
             <input
               type="text"
@@ -144,7 +149,18 @@ export default function ProductForm() {
               <option value="Panadería">Panadería</option>
               <option value="Aceites">Aceites</option>
               <option value="Insumos">Insumos</option>
+              <option value="Otros">Otros</option>
             </select>
+          </div>
+
+          <div className="col-md-2">
+            <input
+              type="date"
+              className="form-control"
+              value={fechaVencimiento}
+              onChange={(e) => setFechaVencimiento(e.target.value)}
+              required
+            />
           </div>
 
           {unidad !== "unidad" && (
@@ -191,19 +207,25 @@ export default function ProductForm() {
               key={prod._id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>
-                <strong>{prod.nombre}</strong> — {prod.departamento} —{" "}
-                {prod.stock} {prod.unidad}
-                {prod.unidad !== "unidad" &&
-                  ` — ${prod.pesoPromedio} ${
-                    prod.unidad === "l" ? "ml" : "g"
-                  }`}
-                {prod.stockCritico !== undefined && (
-                  <small className="text-muted ms-2">
-                    (Crítico: {prod.stockCritico})
-                  </small>
-                )}
-              </div>
+             <div>
+  <strong>{prod.nombre}</strong> — {prod.departamento} —{" "}
+  {prod.stock} {prod.unidad}
+  {prod.unidad !== "unidad" &&
+    ` — ${prod.pesoPromedio} ${prod.unidad === "l" ? "ml" : "g"}`}
+  {prod.stockCritico !== undefined && (
+    <small className="text-muted ms-2">
+      (Crítico: {prod.stockCritico})
+    </small>
+  )}
+  <div className="text-muted small">
+    Vence: {new Date(prod.fechaVencimiento).toLocaleDateString("es-AR")}
+  </div>
+  <div className="text-muted small">
+    Creado: {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} — 
+    Actualizado: {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
+  </div>
+</div>
+
               <div className="d-flex gap-2">
                 <button
                   className="btn btn-sm btn-outline-primary"

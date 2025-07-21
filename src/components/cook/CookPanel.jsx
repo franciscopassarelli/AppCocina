@@ -282,6 +282,9 @@ export default function CookPanel() {
                       <strong>Promedio por unidad:</strong>{" "}
                       {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
                     </p>
+                    <p>
+                      <strong>Vencimiento:</strong>{" "}
+                      {new Date(productoSeleccionado.fechaVencimiento).toLocaleDateString("es-AR")}</p>
                   </div>
                 )}
 

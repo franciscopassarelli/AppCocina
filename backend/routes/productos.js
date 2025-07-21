@@ -23,12 +23,12 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 🟡 Actualizar un producto por ID
+// 🟡 Actualizar un producto por ID (usa findOneAndUpdate para activar el middleware)
 router.put("/:id", async (req, res) => {
   try {
-    const actualizado = await Producto.findByIdAndUpdate(
-      req.params.id,
-      { $set: req.body },  // <--- actualización parcial segura
+    const actualizado = await Producto.findOneAndUpdate(
+      { _id: req.params.id },
+      { $set: req.body },
       { new: true }
     );
     res.json(actualizado);

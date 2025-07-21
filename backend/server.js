@@ -23,17 +23,18 @@ mongoose.connect(uri)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
+
+  // 👉 Ruta de test para verificar funcionamiento
+app.get("/api", (req, res) => {
+  res.send("✅ API funcionando correctamente");
+});
+
+
 // 🛣️ Rutas
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
 // 🟢 Middleware para manejar rutas de productos y historial
 
-const historial = require("./models/Historial");
-const producto = require("./models/Producto");
-
-
-app.use("/models/historial", historial);
-app.use("/models/producto", producto);
 
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);
