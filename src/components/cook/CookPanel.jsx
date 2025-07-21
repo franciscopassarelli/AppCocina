@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
@@ -18,6 +18,8 @@ export default function CookPanel() {
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [departamentoActivo, setDepartamentoActivo] = useState(null);
+  const [fechaVencimientoElaborado, setFechaVencimientoElaborado] = useState("");
+
 
   const productoSeleccionado = productos.find(
     (p) => p._id === productoIdSeleccionado
@@ -36,11 +38,20 @@ export default function CookPanel() {
   const esLiquido = unidad === "l";
   const esInsumoUnidad = unidad === "unidad";
 
+
+
+ 
+
+
   const handleRegistrar = async () => {
     const uso = parseFloat(usoDelDia);
     const cantUnidades = parseInt(unidades);
-
+    
     if (!productoSeleccionado) return;
+     if (!fechaVencimientoElaborado) {
+    mostrarMensajeAlerta("Por favor seleccioná una fecha de vencimiento");
+    return;
+  }
     if (esInsumoUnidad && !cantUnidades) return;
     if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
 
@@ -63,7 +74,11 @@ export default function CookPanel() {
       uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
       unidades: cantUnidades,
       desperdicio: parseFloat(desperdicio.toFixed(3)),
+      fechaVencimiento: fechaVencimientoElaborado ? new Date(fechaVencimientoElaborado) : null,
     };
+
+ 
+
 
     try {
       setCargando(true);
@@ -236,7 +251,7 @@ export default function CookPanel() {
               <div className="modal-content bg-dark text-white p-4 border border-light">
                 <h4 className="mb-3">{productoSeleccionado.nombre}</h4>
                 <p className="fs-5">
-                  <strong>Stock actual:</strong>{" "}
+                  <strong>Stock actual:s</strong>{" "}
                   {productoSeleccionado.stock.toFixed(2)} {productoSeleccionado.unidad}
                 </p>
 
@@ -288,6 +303,18 @@ export default function CookPanel() {
                   </div>
                 )}
 
+                <div className="mb-3">
+  <label className="form-label">Fecha de vencimiento del producto elaborado:</label>
+  <input
+    type="date"
+    className="form-control form-control-lg"
+    value={fechaVencimientoElaborado}
+    onChange={(e) => setFechaVencimientoElaborado(e.target.value)}
+    required
+  />
+</div>
+
+
                 <button
                   className="btn btn-success btn-lg w-100"
                   onClick={handleRegistrar}
@@ -310,6 +337,8 @@ export default function CookPanel() {
                 >
                   Cerrar
                 </button>
+
+                
               </div>
             </motion.div>
           </motion.div>

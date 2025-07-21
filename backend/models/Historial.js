@@ -6,6 +6,7 @@ const historialSchema = new mongoose.Schema({
   uso: { type: Number, required: true }, // cantidad utilizada
   unidades: { type: Number, required: true },
   desperdicio: { type: Number, required: true },
+  fechaVencimiento: { type: Date }, // fecha de vencimiento del producto
 });
 
 module.exports = mongoose.model("Historial", historialSchema);

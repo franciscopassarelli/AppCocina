@@ -109,6 +109,15 @@ export default function Navbar() {
               Cocina
             </Link>
           </li>
+          <li className="nav-item">
+           <Link
+             className={`nav-link ${pathname === "/proveedor" ? "active" : ""}`}
+             to="/proveedor"
+          >
+    Proveedores
+  </Link>
+</li>
+
         </ul>
       </div>
     </nav>
