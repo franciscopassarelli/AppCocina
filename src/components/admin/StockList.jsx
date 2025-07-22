@@ -168,41 +168,38 @@ export default function StockList() {
                     exit={{ x: direccion > 0 ? -300 : 300, opacity: 0 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <table className="table table-bordered table-striped align-middle text-center">
-                      <thead className="table-dark">
-                        <tr>
-                          <th>Producto</th>
-                          <th>Fecha y hora</th>
-                          <th>Uso</th>
-                          <th>Unidades</th>
-                          <th>Desperdicio</th>
-                          <th>Vencimiento</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {registrosActuales.map((registro) => {
-                          const unidad = obtenerUnidad(registro.producto);
-                          return (
-                            <tr key={registro.id}>
-                              <td>{registro.producto}</td>
-                              <td>{formatearFechaHora(registro.fecha)}</td>
-                              <td>
-                                {registro.uso} {unidad}
-                              </td>
-                              <td>{registro.unidades}</td>
-                              <td>
-                                {registro.desperdicio} {unidad}
-                              </td>
-                              <td>
-                                {registro.fechaVencimiento
-                                  ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
-                                  : "—"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    <table className="table table-sm table-bordered table-striped align-middle text-center">
+  <thead className="table-dark small">
+    <tr>
+      <th>Producto</th>
+      <th>Fecha y hora producción</th>
+      <th>Uso</th>
+      <th>Unidades</th>
+      <th>Desperdicio</th>
+      <th>Vencimiento elaboración</th>
+    </tr>
+  </thead>
+  <tbody className="small">
+    {registrosActuales.map((registro) => {
+      const unidad = obtenerUnidad(registro.producto);
+      return (
+        <tr key={registro.id}>
+          <td>{registro.producto}</td>
+          <td>{formatearFechaHora(registro.fecha)}</td>
+          <td>{registro.uso} {unidad}</td>
+          <td>{registro.unidades}</td>
+          <td>{registro.desperdicio} {unidad}</td>
+          <td>
+            {registro.fechaVencimiento
+              ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
+              : "—"}
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
                   </motion.div>
                 </AnimatePresence>
               </div>

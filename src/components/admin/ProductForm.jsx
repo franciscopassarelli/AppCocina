@@ -15,7 +15,7 @@ export default function ProductForm() {
   const [pesoPromedio, setPesoPromedio] = useState("");
   const [stockCritico, setStockCritico] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
-  const [departamento, setDepartamento] = useState("Insumos");
+  const [departamento, setDepartamento] = useState("Otros");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
 
   useEffect(() => {
@@ -83,119 +83,133 @@ export default function ProductForm() {
 
   return (
     <>
+
+    <div className="card card-body mb-4 shadow-sm">
       <form onSubmit={handleSubmit} className="mb-4">
-        <h4>{productoEditando ? "Editar producto" : "Nuevo producto"}</h4>
-        <div className="row g-2">
-          <div className="col-md-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
-          </div>
+  <h5 className="mb-3 fw-bold text-success">{productoEditando ? "Editar producto" : "Nuevo producto"}</h5>
+  <div className="row g-2 align-items-end">
 
-          <div className="col-md-2">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Stock"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              min="0"
-              step="any"
-              required
-            />
-          </div>
+    <div className="col-md-2">
+      <label htmlFor="nombre" className="form-label fw-semibold small text-dark mb-1">Nombre</label>
+      <input
+        id="nombre"
+        type="text"
+        className="form-control form-control-sm"
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+        required
+      />
+    </div>
 
-          <div className="col-md-2">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Stock crítico"
-              value={stockCritico}
-              onChange={(e) => setStockCritico(e.target.value)}
-              min="0"
-              step="any"
-              required
-            />
-          </div>
+    <div className="col-md-1">
+      <label htmlFor="stock" className="form-label fw-semibold small text-dark mb-1">Stock</label>
+      <input
+        id="stock"
+        type="number"
+        className="form-control form-control-sm"
+        value={stock}
+        onChange={(e) => setStock(e.target.value)}
+        min="0"
+        step="any"
+        required
+      />
+    </div>
 
-          <div className="col-md-2">
-            <select
-              className="form-select"
-              value={unidad}
-              onChange={(e) => setUnidad(e.target.value)}
-            >
-              <option value="kg">kg</option>
-              <option value="l">litros</option>
-              <option value="unidad">unidad</option>
-            </select>
-          </div>
+    <div className="col-md-1">
+      <label htmlFor="stockCritico" className="form-label fw-semibold small text-dark mb-1">Crítico</label>
+      <input
+        id="stockCritico"
+        type="number"
+        className="form-control form-control-sm"
+        value={stockCritico}
+        onChange={(e) => setStockCritico(e.target.value)}
+        min="0"
+        step="any"
+        required
+      />
+    </div>
 
-          <div className="col-md-2">
-            <select
-              className="form-select"
-              value={departamento}
-              onChange={(e) => setDepartamento(e.target.value)}
-            >
-              <option value="Carnes">Carnes</option>
-              <option value="Verduras">Verduras</option>
-              <option value="Congelados">Congelados</option>
-              <option value="Aderezos">Aderezos</option>
-              <option value="Lácteos">Lácteos</option>
-              <option value="Panadería">Panadería</option>
-              <option value="Aceites">Aceites</option>
-              <option value="Insumos">Insumos</option>
-              <option value="Otros">Otros</option>
-            </select>
-          </div>
+    <div className="col-md-1">
+      <label htmlFor="unidad" className="form-label fw-semibold small text-dark mb-1">Unidad</label>
+      <select
+        id="unidad"
+        className="form-select form-select-sm"
+        value={unidad}
+        onChange={(e) => setUnidad(e.target.value)}
+      >
+        <option value="kg">kg</option>
+        <option value="l">litros</option>
+        <option value="unidad">unidad</option>
+      </select>
+    </div>
 
-          <div className="col-md-2">
-            <input
-              type="date"
-              className="form-control"
-              value={fechaVencimiento}
-              onChange={(e) => setFechaVencimiento(e.target.value)}
-              required
-            />
-          </div>
+    <div className="col-md-2">
+      <label htmlFor="departamento" className="form-label fw-semibold small text-dark mb-1">Departamento</label>
+      <select
+        id="departamento"
+        className="form-select form-select-sm"
+        value={departamento}
+        onChange={(e) => setDepartamento(e.target.value)}
+      >
+        <option value="Carnes">Carnes</option>
+        <option value="Verduras">Verduras</option>
+        <option value="Congelados">Congelados</option>
+        <option value="Aderezos">Aderezos</option>
+        <option value="Lácteos">Lácteos</option>
+        <option value="Panadería">Panadería</option>
+        <option value="Aceites">Aceites</option>
+        <option value="Insumos">Insumos</option>
+        <option value="Otros">Otros</option>
+      </select>
+    </div>
 
-          {unidad !== "unidad" && (
-            <div className="col-md-3">
-              <input
-                type="number"
-                className="form-control"
-                placeholder={
-                  unidad === "l" ? "Volumen promedio (ml)" : "Peso promedio (g)"
-                }
-                value={pesoPromedio}
-                onChange={(e) => setPesoPromedio(e.target.value)}
-                min="0"
-                step="any"
-                required
-              />
-            </div>
-          )}
+    <div className="col-md-2">
+      <label htmlFor="fecha-vencimiento" className="form-label fw-semibold small text-dark mb-1">Fecha venc.</label>
+      <input
+        id="fecha-vencimiento"
+        type="date"
+        className="form-control form-control-sm"
+        value={fechaVencimiento}
+        onChange={(e) => setFechaVencimiento(e.target.value)}
+        required
+      />
+    </div>
 
-          <div className="col-md-2 d-flex gap-2">
-            <button className="btn btn-success w-100" type="submit">
-              {productoEditando ? "Actualizar" : "Agregar"}
-            </button>
-            {productoEditando && (
-              <button
-                type="button"
-                className="btn btn-secondary w-100"
-                onClick={limpiarFormulario}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </div>
-      </form>
+    {unidad !== "unidad" && (
+      <div className="col-md-2">
+        <label htmlFor="pesoPromedio" className="form-label fw-semibold small text-dark mb-1">
+          {unidad === "l" ? "Volumen (ml)" : "Peso (g)"}
+        </label>
+        <input
+          id="pesoPromedio"
+          type="number"
+          className="form-control form-control-sm"
+          value={pesoPromedio}
+          onChange={(e) => setPesoPromedio(e.target.value)}
+          min="0"
+          step="any"
+          required
+        />
+      </div>
+    )}
+
+    <div className="col-md-1 d-flex flex-column gap-1">
+      <button className="btn btn-success btn-sm" type="submit">
+        {productoEditando ? "Actualizar" : "Agregar"}
+      </button>
+      {productoEditando && (
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={limpiarFormulario}
+        >
+          Cancelar
+        </button>
+      )}
+    </div>
+  </div>
+</form>
+</div>
 
       <h5>Productos agregados</h5>
       {productos.length === 0 ? (
@@ -218,7 +232,7 @@ export default function ProductForm() {
     </small>
   )}
   <div className="text-muted small">
-    Vence: {new Date(prod.fechaVencimiento).toLocaleDateString("es-AR")}
+    Venc. original: {new Date(prod.fechaVencimiento).toLocaleDateString("es-AR")}
   </div>
   <div className="text-muted small">
     Creado: {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} — 

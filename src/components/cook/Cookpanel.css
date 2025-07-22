@@ -1,0 +1,18 @@
+.small-modal {
+  font-size: 0.875rem; /* texto más pequeño */
+  max-width: 500px;    /* opcional: limita el ancho */
+  margin: auto;
+}
+
+.small-modal h5 {
+  font-size: 1.1rem;
+}
+
+.small-modal .form-label-sm {
+  font-size: 0.85rem;
+}
+
+.small-modal .btn {
+  font-size: 0.9rem;
+  padding: 6px 12px;
+}
