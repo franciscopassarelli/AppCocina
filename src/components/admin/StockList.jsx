@@ -46,7 +46,6 @@ export default function StockList() {
   return (
     <div className="mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-       
         <button
           className="btn btn-outline-secondary poisition-fixed"
           onClick={() => setMostrarHistorial(!mostrarHistorial)}
@@ -61,22 +60,20 @@ export default function StockList() {
           <ul className="mb-0">
             {productosCriticos.map((p) => (
               <li key={p._id}>
-                {p.nombre} — {p.stock.toFixed(2)} {p.unidad}
+                {p.nombre} — {typeof p.stock === "number" ? p.stock.toFixed(2) : "N/A"} {p.unidad}
               </li>
             ))}
           </ul>
         </div>
       )}
 
-
-
       {/* Tabla de stock actual — solo visible si NO está activo el historial */}
       {!mostrarHistorial && (
         <div className="table-responsive">
-           <h4 className="d-flex align-items-center gap-2">
-          📦 Stock actual —
-          <span className="text-muted fs-6">{obtenerFechaActual()}</span>
-        </h4>
+          <h4 className="d-flex align-items-center gap-2">
+            📦 Stock actual —
+            <span className="text-muted fs-6">{obtenerFechaActual()}</span>
+          </h4>
           <table className="table table-bordered table-striped align-middle">
             <thead className="table-dark">
               <tr>
@@ -104,7 +101,7 @@ export default function StockList() {
                   <tr key={p._id}>
                     <td style={{ backgroundColor: bgColor, color: textColor }}>{p.nombre}</td>
                     <td style={{ backgroundColor: bgColor, color: textColor }}>
-                      {p.stock.toFixed(2)}
+                      {typeof p.stock === "number" ? p.stock.toFixed(2) : "N/A"}
                     </td>
                     <td style={{ backgroundColor: bgColor, color: textColor }}>{p.unidad}</td>
                   </tr>
@@ -169,37 +166,40 @@ export default function StockList() {
                     transition={{ duration: 0.4 }}
                   >
                     <table className="table table-sm table-bordered table-striped align-middle text-center">
-  <thead className="table-dark small">
-    <tr>
-      <th>Producto</th>
-      <th>Fecha y hora producción</th>
-      <th>Uso</th>
-      <th>Unidades</th>
-      <th>Desperdicio</th>
-      <th>Vencimiento elaboración</th>
-    </tr>
-  </thead>
-  <tbody className="small">
-    {registrosActuales.map((registro) => {
-      const unidad = obtenerUnidad(registro.producto);
-      return (
-        <tr key={registro.id}>
-          <td>{registro.producto}</td>
-          <td>{formatearFechaHora(registro.fecha)}</td>
-          <td>{registro.uso} {unidad}</td>
-          <td>{registro.unidades}</td>
-          <td>{registro.desperdicio} {unidad}</td>
-          <td>
-            {registro.fechaVencimiento
-              ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
-              : "—"}
-          </td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
-
+                      <thead className="table-dark small">
+                        <tr>
+                          <th>Producto</th>
+                          <th>Fecha y hora producción</th>
+                          <th>Uso</th>
+                          <th>Unidades</th>
+                          <th>Desperdicio</th>
+                          <th>Vencimiento elaboración</th>
+                        </tr>
+                      </thead>
+                      <tbody className="small">
+                        {registrosActuales.map((registro) => {
+                          const unidad = obtenerUnidad(registro.producto);
+                          return (
+                            <tr key={registro.id}>
+                              <td>{registro.producto}</td>
+                              <td>{formatearFechaHora(registro.fecha)}</td>
+                              <td>
+                                {registro.uso} {unidad}
+                              </td>
+                              <td>{registro.unidades}</td>
+                              <td>
+                                {registro.desperdicio} {unidad}
+                              </td>
+                              <td>
+                                {registro.fechaVencimiento
+                                  ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
+                                  : "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </motion.div>
                 </AnimatePresence>
               </div>

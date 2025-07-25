@@ -10,6 +10,7 @@ const productoSchema = new mongoose.Schema({
   fechaCreacion: { type: Date, default: Date.now },
   fechaActualizacion: { type: Date, default: Date.now },
   fechaVencimiento: { type: Date, required: true },
+  facturaRemito: { type: String, required: true },
 });
 
 // Middleware para actualizar `fechaActualizacion` automáticamente

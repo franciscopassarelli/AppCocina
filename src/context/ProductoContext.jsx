@@ -56,6 +56,20 @@ export function ProductoProvider({ children }) {
     }
   };
 
+
+
+  const agregarLote = async (productoId, loteData) => {
+  try {
+    const res = await axios.patch(`${API_PRODUCTOS_URL}/${productoId}/lotes`, loteData);
+    setProductos((prev) =>
+      prev.map((p) => (p._id === productoId ? res.data : p))
+    );
+  } catch (err) {
+    console.error("Error al agregar lote:", err);
+  }
+};
+
+
   // Actualizar producto completo
   const actualizarProducto = async (id, productoActualizado) => {
     try {
@@ -117,6 +131,7 @@ export function ProductoProvider({ children }) {
         historial,
         historialPorDia,
         agregarRegistroHistorial,
+        agregarLote,
       }}
     >
       {children}

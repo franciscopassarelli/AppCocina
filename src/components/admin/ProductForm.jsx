@@ -17,18 +17,30 @@ export default function ProductForm() {
   const [productoEditando, setProductoEditando] = useState(null);
   const [departamento, setDepartamento] = useState("Otros");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
+  const [facturaRemito , setFacturaRemito] = useState("");
 
-  useEffect(() => {
-    if (productoEditando) {
-      setNombre(productoEditando.nombre);
-      setStock(productoEditando.stock.toString());
-      setUnidad(productoEditando.unidad);
-      setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
-      setDepartamento(productoEditando.departamento || "Carnes");
-      setStockCritico(productoEditando.stockCritico?.toString() || "");
-      setFechaVencimiento(productoEditando.fechaVencimiento?.split("T")[0] || "");
+useEffect(() => {
+  if (productoEditando) {
+    setNombre(productoEditando.nombre);
+    setStock(productoEditando.stock.toString());
+    setUnidad(productoEditando.unidad);
+    setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
+    setDepartamento(productoEditando.departamento || "Carnes");
+    setStockCritico(productoEditando.stockCritico?.toString() || "");
+
+    const vencimiento = productoEditando.fechaVencimiento;
+    if (typeof vencimiento === "string" && vencimiento.includes("T")) {
+      setFechaVencimiento(vencimiento.split("T")[0]);
+    } else if (typeof vencimiento === "string") {
+      setFechaVencimiento(vencimiento); // por si viene sin T
+    } else {
+      setFechaVencimiento("");
     }
-  }, [productoEditando]);
+
+    setFacturaRemito(productoEditando.facturaRemito || "");
+  }
+}, [productoEditando]);
+
 
   const limpiarFormulario = () => {
     setNombre("");
@@ -39,12 +51,13 @@ export default function ProductForm() {
     setProductoEditando(null);
     setDepartamento("Insumos");
     setFechaVencimiento("");
+    setFacturaRemito("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento) return;
+    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito ) return;
     if (unidad !== "unidad" && !pesoPromedio) return;
 
     const productoData = {
@@ -54,7 +67,8 @@ export default function ProductForm() {
       pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
       departamento,
       stockCritico: parseFloat(stockCritico),
-      fechaVencimiento: new Date(fechaVencimiento),
+      fechaVencimiento: fechaVencimiento,
+      facturaRemito,
     };
 
     try {
@@ -85,7 +99,7 @@ export default function ProductForm() {
     <>
 
     <div className="card card-body mb-4 shadow-sm">
-      <form onSubmit={handleSubmit} className="mb-4">
+  <form onSubmit={handleSubmit} className="mb-4">
   <h5 className="mb-3 fw-bold text-success">{productoEditando ? "Editar producto" : "Nuevo producto"}</h5>
   <div className="row g-2 align-items-end">
 
@@ -102,7 +116,7 @@ export default function ProductForm() {
     </div>
 
     <div className="col-md-1">
-      <label htmlFor="stock" className="form-label fw-semibold small text-dark mb-1">Stock</label>
+      <label htmlFor="stock" className="form-label fw-semibold small text-dark mb-1">Stock kg</label>
       <input
         id="stock"
         type="number"
@@ -114,6 +128,27 @@ export default function ProductForm() {
         required
       />
     </div>
+
+    
+    {unidad !== "unidad" && (
+   <div className="col-auto">
+        <label htmlFor="pesoPromedio" className="form-label fw-semibold small text-dark mb-1">
+          {unidad === "l" ? "Volumen (ml)" : "Peso (g)"}
+        </label>
+        <input
+          id="pesoPromedio"
+          type="number"
+          className="form-control form-control-sm"
+          value={pesoPromedio}
+          onChange={(e) => setPesoPromedio(e.target.value)}
+          min="0"
+          step="any"
+          required
+          style={{ maxWidth: '90px' }}
+        />
+      </div>
+     
+    )}
 
     <div className="col-md-1">
       <label htmlFor="stockCritico" className="form-label fw-semibold small text-dark mb-1">Crítico</label>
@@ -143,13 +178,14 @@ export default function ProductForm() {
       </select>
     </div>
 
-    <div className="col-md-2">
+    <div className="col-auto">
       <label htmlFor="departamento" className="form-label fw-semibold small text-dark mb-1">Departamento</label>
       <select
         id="departamento"
         className="form-select form-select-sm"
         value={departamento}
         onChange={(e) => setDepartamento(e.target.value)}
+        
       >
         <option value="Carnes">Carnes</option>
         <option value="Verduras">Verduras</option>
@@ -157,11 +193,26 @@ export default function ProductForm() {
         <option value="Aderezos">Aderezos</option>
         <option value="Lácteos">Lácteos</option>
         <option value="Panadería">Panadería</option>
-        <option value="Aceites">Aceites</option>
         <option value="Insumos">Insumos</option>
-        <option value="Otros">Otros</option>
+        <option className="fw-semibold text-dark" value="Limpieza">Limpieza</option>
+        <option className="fw-semibold text-dark" value="Bebidas">Maquinaria</option>
+        <option className="fw-semibold text-dark" value="Otros">Otros</option>
       </select>
+      
     </div>
+
+     <div className="col-auto">
+        <label htmlFor="facturaRemito" className="form-label fw-semibold small text-dark mb-1">Factura/Remito</label>
+        <input
+          id="facturaRemito"
+          type="text"
+          className="form-control form-control-sm"
+          value={facturaRemito}
+          onChange={(e) => setFacturaRemito(e.target.value)}
+          required
+           style={{ maxWidth: '110px' }}
+        />
+      </div>
 
     <div className="col-md-2">
       <label htmlFor="fecha-vencimiento" className="form-label fw-semibold small text-dark mb-1">Fecha venc.</label>
@@ -174,24 +225,6 @@ export default function ProductForm() {
         required
       />
     </div>
-
-    {unidad !== "unidad" && (
-      <div className="col-md-2">
-        <label htmlFor="pesoPromedio" className="form-label fw-semibold small text-dark mb-1">
-          {unidad === "l" ? "Volumen (ml)" : "Peso (g)"}
-        </label>
-        <input
-          id="pesoPromedio"
-          type="number"
-          className="form-control form-control-sm"
-          value={pesoPromedio}
-          onChange={(e) => setPesoPromedio(e.target.value)}
-          min="0"
-          step="any"
-          required
-        />
-      </div>
-    )}
 
     <div className="col-md-1 d-flex flex-column gap-1">
       <button className="btn btn-success btn-sm" type="submit">
@@ -231,13 +264,26 @@ export default function ProductForm() {
       (Crítico: {prod.stockCritico})
     </small>
   )}
-  <div className="text-muted small">
-    Venc. original: {new Date(prod.fechaVencimiento).toLocaleDateString("es-AR")}
-  </div>
+<div className="text-muted small">
+  Venc. original: {
+    prod.fechaVencimiento
+      ? (() => {
+          const [año, mes, día] = prod.fechaVencimiento.split("T")[0].split("-");
+          return `${día}/${mes}/${año}`;
+        })()
+      : "Sin fecha"
+  }
+</div>
+
+
   <div className="text-muted small">
     Creado: {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} — 
     Actualizado: {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
   </div>
+
+  <div className="text-muted small">
+    Factura/Remito: {prod.facturaRemito || "N/A"}
+</div>
 </div>
 
               <div className="d-flex gap-2">
