@@ -14,17 +14,6 @@ const productoSchema = new mongoose.Schema({
   facturaRemito: { type: String, required: true },
 });
 
-// Middleware para actualizar fechaActualizacion automáticamente
-productoSchema.pre("save", function (next) {
-  this.fechaActualizacion = new Date();
-  next();
-});
-
-productoSchema.pre("findOneAndUpdate", function (next) {
-  this.set({ fechaActualizacion: new Date() });
-  next();
-});
-
 // Exportar el modelo
 module.exports = mongoose.model("Producto", productoSchema);
 

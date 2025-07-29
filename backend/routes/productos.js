@@ -5,10 +5,11 @@ const Producto = require("../models/Producto");
 // 🟢 Obtener todos los productos
 router.get("/", async (req, res) => {
   try {
-const productos = await Producto.find().populate("lotes");
-    res.json(productos);
+const productos = await Producto.find();
+    res.json(productos);  
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Error al obtener productos:", err.message);
+    res.status(500).json({ error: "Error al obtener productos" });
   }
 });
 
