@@ -11,7 +11,7 @@ const allowedOrigins = [
   "https://app-cocina.vercel.app", // frontend en producción
 ];
 
-app.use(cors({
+app.use(cors({ 
   origin: allowedOrigins
 }));
 
@@ -23,18 +23,14 @@ mongoose.connect(uri)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-
-  // 👉 Ruta de test para verificar funcionamiento
+// 👉 Ruta de test para verificar funcionamiento
 app.get("/api", (req, res) => {
   res.send("✅ API funcionando correctamente");
 });
 
-
 // 🛣️ Rutas
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
-// 🟢 Middleware para manejar rutas de productos y historial
-
 
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);

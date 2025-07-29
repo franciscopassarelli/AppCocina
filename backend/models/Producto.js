@@ -1,4 +1,5 @@
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
+
 
 const productoSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
@@ -13,10 +14,17 @@ const productoSchema = new mongoose.Schema({
   facturaRemito: { type: String, required: true },
 });
 
-// Middleware para actualizar `fechaActualizacion` automáticamente
+// Middleware para actualizar fechaActualizacion automáticamente
+productoSchema.pre("save", function (next) {
+  this.fechaActualizacion = new Date();
+  next();
+});
+
 productoSchema.pre("findOneAndUpdate", function (next) {
   this.set({ fechaActualizacion: new Date() });
   next();
 });
 
+// Exportar el modelo
 module.exports = mongoose.model("Producto", productoSchema);
+

@@ -7,6 +7,7 @@ const historialSchema = new mongoose.Schema({
   unidades: { type: Number, required: true },
   desperdicio: { type: Number, required: true },
   fechaVencimiento: { type: Date }, // fecha de vencimiento del producto
+  facturaRemito: { type: String }, // referencia a la factura o remito
 });
 
 module.exports = mongoose.model("Historial", historialSchema);

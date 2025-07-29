@@ -5,23 +5,27 @@ const Producto = require("../models/Producto");
 // 🟢 Obtener todos los productos
 router.get("/", async (req, res) => {
   try {
-    const productos = await Producto.find();
+const productos = await Producto.find().populate("lotes");
     res.json(productos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 🟢 Crear un nuevo producto
+
 router.post("/", async (req, res) => {
   try {
+    console.log("🔍 Datos recibidos:", req.body); // 👈 Agregá esto
     const nuevoProducto = new Producto(req.body);
     const guardado = await nuevoProducto.save();
     res.status(201).json(guardado);
   } catch (err) {
+    console.error("❌ Error al crear producto:", err.message);
     res.status(400).json({ error: err.message });
   }
 });
+
+
 
 // 🟡 Actualizar un producto por ID (usa findOneAndUpdate para activar el middleware)
 router.put("/:id", async (req, res) => {
@@ -48,5 +52,9 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ error: "Error al eliminar producto" });
   }
 });
+
+
+
+
 
 module.exports = router;
