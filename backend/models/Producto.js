@@ -12,6 +12,15 @@ const productoSchema = new mongoose.Schema({
   fechaActualizacion: { type: Date, default: Date.now },
   fechaVencimiento: { type: Date, required: true },
   facturaRemito: { type: String, required: true },
+ lotes: [
+    {
+      numeroFactura: String,
+      cantidad: Number,
+      lote: String,
+      fechaVencimiento: Date,
+      fechaIngreso: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 // Exportar el modelo

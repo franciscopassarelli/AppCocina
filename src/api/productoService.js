@@ -17,7 +17,3 @@ export const agregarProducto = async (producto) => {
 
 
 
-export const actualizarStock = async (id, nuevoStock) => {
-  const res = await axios.put(`${API_URL}/${id}`, { stock: nuevoStock });
-  return res.data;
-};

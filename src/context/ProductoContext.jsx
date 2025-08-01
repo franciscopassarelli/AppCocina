@@ -54,6 +54,13 @@ export function ProductoProvider({ children }) {
     }
   };
 
+
+  const obtenerYActualizarProductos = async () => {
+  const data = await obtenerProductos();
+  setProductos(data);
+};
+
+
   const actualizarProducto = async (id, productoActualizado) => {
     try {
       console.log("✏️ Actualizando producto:", productoActualizado);
@@ -111,6 +118,7 @@ export function ProductoProvider({ children }) {
         historial,
         historialPorDia,
         agregarRegistroHistorial,
+        obtenerYActualizarProductos, // 👈 importante
       }}
     >
       {children}

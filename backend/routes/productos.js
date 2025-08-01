@@ -14,6 +14,27 @@ const productos = await Producto.find();
 });
 
 
+// 🟡 Actualizar un producto por ID
+router.put("/:id", async (req, res) => {
+  try {
+    const actualizado = await Producto.findOneAndUpdate(
+      { _id: req.params.id },
+      {
+        $set: {
+          ...req.body,
+          fechaActualizacion: new Date(),
+        },
+      },
+      { new: true }
+    );
+    res.json(actualizado);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+
+
 router.post("/", async (req, res) => {
   try {
     console.log("🔍 Datos recibidos:", req.body); // 👈 Agregá esto
@@ -26,21 +47,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-
-
-// 🟡 Actualizar un producto por ID (usa findOneAndUpdate para activar el middleware)
-router.put("/:id", async (req, res) => {
-  try {
-    const actualizado = await Producto.findOneAndUpdate(
-      { _id: req.params.id },
-      { $set: req.body },
-      { new: true }
-    );
-    res.json(actualizado);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
 
 
 
