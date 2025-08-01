@@ -14,6 +14,7 @@ export function ProductoProvider({ children }) {
 
   const API_PRODUCTOS_URL = import.meta.env.VITE_API_PRODUCTOS_URL;
   const API_HISTORIAL_URL = import.meta.env.VITE_API_HISTORIAL_URL;
+  const API_LOTES_URL = import.meta.env.VITE_API_LOTES_URL;
 
   useEffect(() => {
     // Cargar productos
@@ -100,6 +101,55 @@ export function ProductoProvider({ children }) {
     });
   };
 
+  // 🆕 Funciones para manejo de lotes
+  const obtenerLotesProducto = async (productoId) => {
+    try {
+      const res = await axios.get(`${API_LOTES_URL}/producto/${productoId}`);
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error al obtener lotes:", err);
+      return [];
+    }
+  };
+
+  const agregarLote = async (loteData) => {
+    try {
+      console.log("📤 Enviando nuevo lote al backend:", loteData);
+      const res = await axios.post(API_LOTES_URL, loteData);
+      
+      // Actualizar el producto en el estado local
+      if (res.data.producto) {
+        setProductos((prev) =>
+          prev.map((p) => (p._id === res.data.producto._id ? res.data.producto : p))
+        );
+      }
+      
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error al agregar lote:", err);
+      throw err;
+    }
+  };
+
+  const actualizarLote = async (loteId, loteData) => {
+    try {
+      const res = await axios.put(`${API_LOTES_URL}/${loteId}`, loteData);
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error al actualizar lote:", err);
+      throw err;
+    }
+  };
+
+  const eliminarLote = async (loteId) => {
+    try {
+      await axios.delete(`${API_LOTES_URL}/${loteId}`);
+    } catch (err) {
+      console.error("❌ Error al eliminar lote:", err);
+      throw err;
+    }
+  };
+
   return (
     <ProductoContext.Provider
       value={{
@@ -111,6 +161,11 @@ export function ProductoProvider({ children }) {
         historial,
         historialPorDia,
         agregarRegistroHistorial,
+        // 🆕 Funciones de lotes
+        obtenerLotesProducto,
+        agregarLote,
+        actualizarLote,
+        eliminarLote,
       }}
     >
       {children}

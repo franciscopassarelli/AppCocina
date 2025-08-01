@@ -31,9 +31,11 @@ app.get("/api", (req, res) => {
 // 🛣️ Rutas
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
+const loteRoutes = require("./routes/lotes");
 
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);
+app.use("/api/lotes", loteRoutes);
 
 // 🚀 Server
 const PORT = process.env.PORT || 5000;
