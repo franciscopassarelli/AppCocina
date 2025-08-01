@@ -7,6 +7,8 @@ export default function ProductForm() {
     agregarProducto,
     actualizarProducto,
     eliminarProducto,
+    obtenerLotesProducto,
+    agregarLote,
   } = useProductos();
 
   const [nombre, setNombre] = useState("");
@@ -18,6 +20,14 @@ export default function ProductForm() {
   const [departamento, setDepartamento] = useState("Otros");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
+  
+  // 🆕 Estados para el modal de agregar stock
+  const [mostrarModalStock, setMostrarModalStock] = useState(false);
+  const [productoParaStock, setProductoParaStock] = useState(null);
+  const [nuevoStock, setNuevoStock] = useState("");
+  const [nuevaFechaVencimiento, setNuevaFechaVencimiento] = useState("");
+  const [nuevaFacturaRemito, setNuevaFacturaRemito] = useState("");
+  const [lotesProducto, setLotesProducto] = useState([]);
 
  
 
@@ -96,6 +106,57 @@ export default function ProductForm() {
       if (productoEditando && productoEditando._id === id) limpiarFormulario();
     } catch (err) {
       console.error("Error al eliminar producto:", err);
+    }
+  };
+
+  // 🆕 Funciones para manejar agregar stock
+  const abrirModalStock = async (producto) => {
+    setProductoParaStock(producto);
+    setMostrarModalStock(true);
+    setNuevoStock("");
+    setNuevaFechaVencimiento("");
+    setNuevaFacturaRemito("");
+    
+    // Cargar lotes existentes del producto
+    try {
+      const lotes = await obtenerLotesProducto(producto._id);
+      setLotesProducto(lotes);
+    } catch (err) {
+      console.error("Error al cargar lotes:", err);
+      setLotesProducto([]);
+    }
+  };
+
+  const cerrarModalStock = () => {
+    setMostrarModalStock(false);
+    setProductoParaStock(null);
+    setNuevoStock("");
+    setNuevaFechaVencimiento("");
+    setNuevaFacturaRemito("");
+    setLotesProducto([]);
+  };
+
+  const handleAgregarStock = async (e) => {
+    e.preventDefault();
+    
+    if (!nuevoStock || !nuevaFechaVencimiento || !nuevaFacturaRemito) {
+      alert("Por favor completa todos los campos");
+      return;
+    }
+
+    try {
+      await agregarLote({
+        productoId: productoParaStock._id,
+        stock: parseFloat(nuevoStock),
+        fechaVencimiento: nuevaFechaVencimiento,
+        facturaRemito: nuevaFacturaRemito
+      });
+      
+      alert("Stock agregado exitosamente");
+      cerrarModalStock();
+    } catch (err) {
+      console.error("Error al agregar stock:", err);
+      alert("Error al agregar stock");
     }
   };
 
@@ -325,7 +386,7 @@ export default function ProductForm() {
                   </button>
                   <button
                     className="btn btn-sm btn-outline-success"
-                    onClick={() => setProductoParaStock(prod)}
+                    onClick={() => abrirModalStock(prod)}
                   >
                     Agregar stock
                   </button>
@@ -334,6 +395,124 @@ export default function ProductForm() {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* 🆕 Modal para agregar stock */}
+      {mostrarModalStock && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  Agregar stock a: <strong>{productoParaStock?.nombre}</strong>
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={cerrarModalStock}
+                ></button>
+              </div>
+              
+              <div className="modal-body">
+                {/* Información actual del producto */}
+                <div className="alert alert-info">
+                  <strong>Stock actual:</strong> {productoParaStock?.stock} {productoParaStock?.unidad}
+                </div>
+
+                {/* Formulario para nuevo lote */}
+                <form onSubmit={handleAgregarStock}>
+                  <div className="row g-3">
+                    <div className="col-md-4">
+                      <label htmlFor="nuevoStock" className="form-label">
+                        Cantidad a agregar ({productoParaStock?.unidad})
+                      </label>
+                      <input
+                        id="nuevoStock"
+                        type="number"
+                        className="form-control"
+                        value={nuevoStock}
+                        onChange={(e) => setNuevoStock(e.target.value)}
+                        min="0"
+                        step="any"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-md-4">
+                      <label htmlFor="nuevaFechaVencimiento" className="form-label">
+                        Fecha de vencimiento
+                      </label>
+                      <input
+                        id="nuevaFechaVencimiento"
+                        type="date"
+                        className="form-control"
+                        value={nuevaFechaVencimiento}
+                        onChange={(e) => setNuevaFechaVencimiento(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-md-4">
+                      <label htmlFor="nuevaFacturaRemito" className="form-label">
+                        Factura/Remito
+                      </label>
+                      <input
+                        id="nuevaFacturaRemito"
+                        type="text"
+                        className="form-control"
+                        value={nuevaFacturaRemito}
+                        onChange={(e) => setNuevaFacturaRemito(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-3">
+                    <button type="submit" className="btn btn-success me-2">
+                      Agregar stock
+                    </button>
+                    <button type="button" className="btn btn-secondary" onClick={cerrarModalStock}>
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+
+                {/* Mostrar lotes existentes */}
+                {lotesProducto.length > 0 && (
+                  <div className="mt-4">
+                    <h6>Lotes existentes:</h6>
+                    <div className="table-responsive">
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Stock</th>
+                            <th>Fecha Venc.</th>
+                            <th>Factura/Remito</th>
+                            <th>Fecha Creación</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lotesProducto.map((lote) => (
+                            <tr key={lote._id}>
+                              <td>{lote.stock} {productoParaStock?.unidad}</td>
+                              <td>
+                                {new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}
+                              </td>
+                              <td>{lote.facturaRemito}</td>
+                              <td>
+                                {new Date(lote.fechaCreacion).toLocaleDateString("es-AR")}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
