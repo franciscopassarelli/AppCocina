@@ -64,7 +64,7 @@ export default function ProveedorDashboard() {
 
   return (
     <div className="container py-4">
-      <h1 className="">Solo componente de prueba , no esta listo</h1>
+      <h1 className="">Solo componente de prueba</h1>
       <h4>{proveedorEditando ? "Editar proveedor" : "Nuevo proveedor"}</h4>
       <form onSubmit={handleSubmit} className="mb-4">
         <div className="row g-2">

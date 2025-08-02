@@ -3,7 +3,7 @@ import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
-import "../cook/Cookpanel.css"; // Asegúrate de tener este archivo CSS para estilos adicionales
+import "../cook/Cookpanel.css"; 
 
 export default function CookPanel() {
   const {
@@ -39,78 +39,104 @@ export default function CookPanel() {
   const esLiquido = unidad === "l";
   const esInsumoUnidad = unidad === "unidad";
 
+const handleRegistrar = async () => {
+  const uso = parseFloat(usoDelDia);
+  const cantUnidades = parseInt(unidades);
 
-
- 
-
-
-  const handleRegistrar = async () => {
-    const uso = parseFloat(usoDelDia);
-    const cantUnidades = parseInt(unidades);
-    
-    if (!productoSeleccionado) return;
-     if (!fechaVencimientoElaborado) {
-    mostrarMensajeAlerta("Por favor seleccioná una fecha de vencimiento");
+  if (!productoSeleccionado || !fechaVencimientoElaborado) {
+    mostrarMensajeAlerta("Por favor completá todos los campos.");
     return;
   }
-    if (esInsumoUnidad && !cantUnidades) return;
-    if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
 
-    let nuevoStock = productoSeleccionado.stock;
-    let desperdicio = 0;
-    let cantidadUtil = 0;
+  if (esInsumoUnidad && !cantUnidades) return;
+  if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
 
-    if (esInsumoUnidad) {
-      nuevoStock = Math.max(productoSeleccionado.stock - cantUnidades, 0);
-      cantidadUtil = cantUnidades;
-    } else {
-      cantidadUtil = (cantUnidades * productoSeleccionado.pesoPromedio) / 1000;
-      desperdicio = Math.max(0, uso - cantidadUtil);
-      nuevoStock = Math.max(productoSeleccionado.stock - uso, 0);
-    }
+  let cantidadUtil = 0;
+  let desperdicio = 0;
 
-    const nuevoRegistro = {
-      producto: productoSeleccionado.nombre,
-      fecha: new Date(),
-      uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
-      unidades: cantUnidades,
-      desperdicio: parseFloat(desperdicio.toFixed(3)),
-      fechaVencimiento: fechaVencimientoElaborado ? new Date(fechaVencimientoElaborado) : null,
-    };
+  if (!esInsumoUnidad) {
+    cantidadUtil = (cantUnidades * productoSeleccionado.pesoPromedio) / 1000;
+    desperdicio = Math.max(0, uso - cantidadUtil);
+  } else {
+    cantidadUtil = cantUnidades;
+  }
+
+  let usoRestante = esInsumoUnidad ? cantUnidades : uso;
+
+  // 🧠 Lógica para descontar desde los lotes por orden de vencimiento
+  let lotesUtilizados = [];
+  let nuevosLotes = [...(productoSeleccionado.lotes || [])]
+    .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento))
+    .map((lote) => {
+      if (usoRestante <= 0 || lote.cantidad <= 0) return lote;
+
+      const disponible = lote.cantidad;
+      const aDescontar = Math.min(disponible, usoRestante);
+      usoRestante -= aDescontar;
+
+      lotesUtilizados.push({
+        lote: lote.lote,
+        cantidad: aDescontar,
+        fechaVencimiento: lote.fechaVencimiento,
+        numeroFactura: lote.numeroFactura,
+      });
+
+      return {
+        ...lote,
+        cantidad: disponible - aDescontar,
+        usado: disponible - aDescontar === 0, 
+      };
+    });
 
  
 
+  // ✅ Nuevo stock como suma de lotes restantes
+  const nuevoStock = nuevosLotes.reduce((acc, l) => acc + l.cantidad, 0);
 
-    try {
-      setCargando(true);
-
-      await fetch(`${API_URL}/productos/${productoSeleccionado._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock: nuevoStock }),
-      });
-
-      await fetch(`${API_URL}/historial`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevoRegistro),
-      });
-
-      await actualizarStock(productoSeleccionado._id, nuevoStock);
-      agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
-
-      setUsoDelDia("");
-      setUnidades("");
-      setProductoIdSeleccionado(null);
-
-      mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
-    } catch (err) {
-      console.error("❌ Error:", err.message);
-      mostrarMensajeAlerta("Hubo un error al registrar el uso");
-    } finally {
-      setCargando(false);
-    }
+  const nuevoRegistro = {
+    producto: productoSeleccionado.nombre,
+    fecha: new Date(),
+    uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
+    unidades: cantUnidades,
+    desperdicio: parseFloat(desperdicio.toFixed(3)),
+    fechaVencimiento: new Date(fechaVencimientoElaborado),
+    // lotesUtilizados, // 👉 Podés guardar esta info en el historial si querés trazabilidad
   };
+
+  try {
+    setCargando(true);
+
+    await fetch(`${API_URL}/productos/${productoSeleccionado._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        stock: nuevoStock,
+        lotes: nuevosLotes,
+      }),
+    });
+
+    await fetch(`${API_URL}/historial`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nuevoRegistro),
+    });
+
+    await actualizarStock(productoSeleccionado._id, nuevoStock);
+    agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
+
+    setUsoDelDia("");
+    setUnidades("");
+    setProductoIdSeleccionado(null);
+
+    mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
+  } catch (err) {
+    console.error("❌ Error:", err.message);
+    mostrarMensajeAlerta("Hubo un error al registrar el uso");
+  } finally {
+    setCargando(false);
+  }
+};
+
 
   const cantidadUtil = productoSeleccionado && unidades
     ? esInsumoUnidad

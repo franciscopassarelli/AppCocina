@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProductos } from "../../context/ProductoContext";
-import "../../index.css"; // Asegúrate de tener este archivo CSS para los estilos
+import * as XLSX from "xlsx"; // 👈 Asegurate de tener esto
+import "../../index.css";
 
 export default function StockList() {
   const { productos, historialPorDia } = useProductos();
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
   const [indiceDia, setIndiceDia] = useState(0);
-  const [direccion, setDireccion] = useState(0); // 1 para adelante, -1 para atrás
+  const [direccion, setDireccion] = useState(0);
 
   const formatearFechaHora = (fechaISO) => {
     const fecha = new Date(fechaISO);
@@ -18,13 +19,12 @@ export default function StockList() {
   };
 
   const obtenerFechaActual = () => {
-    const opciones = {
+    return new Date().toLocaleDateString("es-AR", {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
-    };
-    return new Date().toLocaleDateString("es-AR", opciones);
+    });
   };
 
   const obtenerUnidad = (nombreProducto) => {
@@ -43,11 +43,57 @@ export default function StockList() {
   const fechaActual = historialOrdenado[indiceDia]?.[0];
   const registrosActuales = historialOrdenado[indiceDia]?.[1] || [];
 
+  // 📥 Exporta todo el historial en una sola hoja
+  const exportarHistorialCompleto = () => {
+    const registrosTotales = historialOrdenado.flatMap(([fecha, registros]) =>
+      registros.map((registro) => ({
+        Producto: registro.producto,
+        "Fecha y hora producción": formatearFechaHora(registro.fecha),
+        Uso: `${registro.uso} ${obtenerUnidad(registro.producto)}`,
+        Unidades: registro.unidades,
+        Desperdicio: `${registro.desperdicio} ${obtenerUnidad(registro.producto)}`,
+        "Vencimiento elaboración": registro.fechaVencimiento
+          ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
+          : "—",
+      }))
+    );
+
+    const ws = XLSX.utils.json_to_sheet(registrosTotales);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historial Total");
+    XLSX.writeFile(wb, "historial_completo.xlsx");
+  };
+
+  // 📁 Exporta el historial en pestañas separadas por día
+  const exportarHistorialPorDia = () => {
+  const wb = XLSX.utils.book_new();
+
+  historialOrdenado.forEach(([fechaISO, registros]) => {
+    const nombreHoja = new Date(fechaISO).toISOString().split("T")[0]; // ✅ sin caracteres inválidos
+
+    const registrosFormateados = registros.map((registro) => ({
+      Producto: registro.producto,
+      "Fecha y hora producción": formatearFechaHora(registro.fecha),
+      Uso: `${registro.uso} ${obtenerUnidad(registro.producto)}`,
+      Unidades: registro.unidades,
+      Desperdicio: `${registro.desperdicio} ${obtenerUnidad(registro.producto)}`,
+      "Vencimiento elaboración": registro.fechaVencimiento
+        ? new Date(registro.fechaVencimiento).toLocaleDateString("es-AR")
+        : "—",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(registrosFormateados);
+    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+  });
+
+  XLSX.writeFile(wb, "historial_por_dia.xlsx");
+};
+
   return (
     <div className="mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <button
-          className="btn btn-outline-secondary poisition-fixed"
+          className="btn btn-outline-secondary"
           onClick={() => setMostrarHistorial(!mostrarHistorial)}
         >
           {mostrarHistorial ? "Volver al panel de stock" : "Ver historial cocina"}
@@ -67,12 +113,10 @@ export default function StockList() {
         </div>
       )}
 
-      {/* Tabla de stock actual — solo visible si NO está activo el historial */}
       {!mostrarHistorial && (
         <div className="table-responsive">
           <h4 className="d-flex align-items-center gap-2">
-            📦 Stock actual —
-            <span className="text-muted fs-6">{obtenerFechaActual()}</span>
+            📦 Stock actual — <span className="text-muted fs-6">{obtenerFechaActual()}</span>
           </h4>
           <table className="table table-bordered table-striped align-middle">
             <thead className="table-dark">
@@ -112,7 +156,6 @@ export default function StockList() {
         </div>
       )}
 
-      {/* Historial con carrusel */}
       {mostrarHistorial && (
         <div className="mt-5">
           <h3 className="mb-3">
@@ -128,6 +171,17 @@ export default function StockList() {
                 : "Sin datos"}
             </span>
           </h3>
+
+          {historialOrdenado.length > 0 && (
+            <div className="d-flex gap-2 mb-3 flex-wrap">
+              <button className="btn btn-success" onClick={exportarHistorialCompleto}>
+                📥 Exportar historial completo
+              </button>
+              <button className="btn btn-primary" onClick={exportarHistorialPorDia}>
+                📁 Exportar historial por día
+              </button>
+            </div>
+          )}
 
           {historialOrdenado.length === 0 ? (
             <p className="text-muted">No hay registros aún.</p>

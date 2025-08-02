@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import AddStock from "./AddStock";
+import FormularioProducto from "./FormularioProducto"; // Asegurate que la ruta esté bien
 
 export default function ProductForm() {
   const {
@@ -20,32 +21,28 @@ export default function ProductForm() {
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
   const [productoParaStock, setProductoParaStock] = useState(null);
-
-  // Estado para controlar qué lotes están visibles (por producto _id)
   const [lotesVisibles, setLotesVisibles] = useState({});
 
   useEffect(() => {
-    if (productoEditando) {
-      setNombre(productoEditando.nombre);
-      setStock(productoEditando.stock.toString());
-      setUnidad(productoEditando.unidad);
-      setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
-      setDepartamento(productoEditando.departamento || "Carnes");
-      setStockCritico(productoEditando.stockCritico?.toString() || "");
-      setFacturaRemito(productoEditando.facturaRemito || "");
+  if (productoEditando) {
+    setNombre(productoEditando.nombre);
+    setStock(productoEditando.stock.toString());
+    setUnidad(productoEditando.unidad);
+    setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
+    setDepartamento(productoEditando.departamento || "Carnes");
+    setStockCritico(productoEditando.stockCritico?.toString() || "");
+    setFacturaRemito(productoEditando.facturaRemito || "");
 
-      const vencimiento = productoEditando.fechaVencimiento;
-      if (typeof vencimiento === "string" && vencimiento.includes("T")) {
-        setFechaVencimiento(vencimiento.split("T")[0]);
-      } else if (typeof vencimiento === "string") {
-        setFechaVencimiento(vencimiento);
-      } else {
-        setFechaVencimiento("");
-      }
+    const vencimiento = new Date(productoEditando.fechaVencimiento);
+    const fechaLocal = new Date(
+      vencimiento.getTime() + Math.abs(vencimiento.getTimezoneOffset() * 60000)
+    )
+      .toISOString()
+      .split("T")[0];
+    setFechaVencimiento(fechaLocal);
+  }
+}, [productoEditando]);
 
-      setFacturaRemito(productoEditando.facturaRemito || "");
-    }
-  }, [productoEditando]);
 
   const limpiarFormulario = () => {
     setNombre("");
@@ -66,16 +63,27 @@ export default function ProductForm() {
       return;
     if (unidad !== "unidad" && !pesoPromedio) return;
 
-    const productoData = {
-      nombre,
-      stock: parseFloat(stock),
-      unidad,
-      pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
-      departamento,
-      stockCritico: parseFloat(stockCritico),
-      fechaVencimiento,
-      facturaRemito,
-    };
+   const loteInicial = {
+  lote: "Lote inicial",
+  cantidad: parseFloat(stock),
+  cantidadDisponible: parseFloat(stock),
+  fechaVencimiento,
+  numeroFactura: facturaRemito,
+  fechaIngreso: new Date().toISOString(),
+};
+
+const productoData = {
+  nombre,
+  stock: parseFloat(stock),
+  unidad,
+  pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
+  departamento,
+  stockCritico: parseFloat(stockCritico),
+  fechaVencimiento,
+  facturaRemito,
+  lotes: [loteInicial], // 👈 Agregamos el primer lote
+};
+
 
     try {
       if (productoEditando) {
@@ -104,7 +112,7 @@ export default function ProductForm() {
       };
 
       await actualizarProducto(productoId, productoActualizado);
-      await obtenerYActualizarProductos(); // Asegúrate que esta función refresque los productos
+      // ✅ asegurate de tener la función obtenerYActualizarProductos si querés refrescar los datos
       setProductoParaStock(null);
     } catch (err) {
       console.error("Error al agregar stock:", err);
@@ -121,7 +129,6 @@ export default function ProductForm() {
     }
   };
 
-  // Toggle para mostrar u ocultar lotes de un producto
   const toggleLotes = (productoId) => {
     setLotesVisibles((prev) => ({
       ...prev,
@@ -131,14 +138,28 @@ export default function ProductForm() {
 
   return (
     <>
-      {/* Formulario (igual que antes) */}
-      <div className="card card-body mb-4 shadow-sm">
-        <form onSubmit={handleSubmit} className="mb-4">
-          {/* ... campos del formulario ... */}
-          {/* (Usa tu código actual para el formulario, no lo copio aquí para no alargar) */}
-          {/* Puedes mantener el formulario igual que en tu código */}
-        </form>
-      </div>
+      {/* 🔁 Formulario separado */}
+      <FormularioProducto
+        onSubmit={handleSubmit}
+        nombre={nombre}
+        stock={stock}
+        unidad={unidad}
+        pesoPromedio={pesoPromedio}
+        stockCritico={stockCritico}
+        departamento={departamento}
+        fechaVencimiento={fechaVencimiento}
+        facturaRemito={facturaRemito}
+        productoEditando={productoEditando}
+        setNombre={setNombre}
+        setStock={setStock}
+        setUnidad={setUnidad}
+        setPesoPromedio={setPesoPromedio}
+        setStockCritico={setStockCritico}
+        setDepartamento={setDepartamento}
+        setFechaVencimiento={setFechaVencimiento}
+        setFacturaRemito={setFacturaRemito}
+        limpiarFormulario={limpiarFormulario}
+      />
 
       {productoParaStock && (
         <AddStock
@@ -157,34 +178,31 @@ export default function ProductForm() {
             <li key={prod._id} className="list-group-item d-flex flex-column">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <strong>{prod.nombre}</strong> — {prod.departamento} — {prod.stock}{" "}
-                  {prod.unidad}
+                  <strong>{prod.nombre}</strong> — {prod.departamento} — {prod.stock} {prod.unidad}
                   {prod.unidad !== "unidad" &&
                     ` — ${prod.pesoPromedio} ${prod.unidad === "l" ? "ml" : "g"}`}
                   {prod.stockCritico !== undefined && (
                     <small className="text-muted ms-2">(Crítico: {prod.stockCritico})</small>
                   )}
                   <div className="text-muted small">
-                    Venc. original:{" "}
+                    Venc.:{" "}
                     {prod.fechaVencimiento
                       ? (() => {
-                          const [año, mes, día] = prod.fechaVencimiento
-                            .split("T")[0]
-                            .split("-");
+                          const [año, mes, día] = prod.fechaVencimiento.split("T")[0].split("-");
                           return `${día}/${mes}/${año}`;
                         })()
                       : "Sin fecha"}
                   </div>
-
                   <div className="text-muted small">
                     Creado: {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} — Actualizado:{" "}
                     {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
                   </div>
-
                   <div className="text-muted small">
-                    Factura/Remitos:<strong> {prod.facturaRemito || "N/A"} </strong>
+                    Factura/Remito: <strong>{prod.facturaRemito || "N/A"}</strong>
                   </div>
+                
                 </div>
+
 
                 <div className="d-flex gap-2">
                   <button
@@ -197,12 +215,12 @@ export default function ProductForm() {
                     className="btn btn-sm btn-outline-success"
                     onClick={() => setProductoParaStock(prod)}
                   >
-                    Agregar stock
+                    Agregar Lote
                   </button>
                 </div>
               </div>
 
-              {/* Botón para mostrar/ocultar lotes */}
+              {/* Lotes */}
               {prod.lotes && prod.lotes.length > 0 && (
                 <>
                   <button
@@ -213,34 +231,53 @@ export default function ProductForm() {
                     {lotesVisibles[prod._id] ? "Ocultar lotes ▲" : "Ver lotes ▼"}
                   </button>
 
-                  {/* Collapse */}
                   {lotesVisibles[prod._id] && (
-                    <div className="mt-2">
-                      <h6 className="text-muted mb-1">Lotes registrados:</h6>
-                      <table className="table table-sm table-bordered">
-                        <thead>
-                          <tr>
-                            <th>Factura/Remito</th>
-                            <th>Cantidad</th>
-                            <th>Lote</th>
-                            <th>Vencimiento</th>
-                            <th>Fecha ingreso</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {prod.lotes.map((lote, idx) => (
-                            <tr key={idx}>
-                              <td>{lote.numeroFactura}</td>
-                              <td>{lote.cantidad}</td>
-                              <td>{lote.lote}</td>
-                              <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
-                              <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+  <div className="mt-2">
+    <h6 className="text-muted mb-1">Lotes registrados:</h6>
+    <table className="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th>Factura/Remito</th>
+          <th>Cantidad</th>
+          <th>Disponible</th>
+          <th>Lote</th>
+          <th>Vencimiento</th>
+          <th>Fecha ingreso</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {prod.lotes.map((lote, idx) => {
+          const cantidadTotal = lote.cantidad;
+          const cantidadDisponible = lote.cantidadDisponible ?? lote.cantidad; // fallback por si no existe
+          let estado = "Disponible";
+          let estadoClase = "text-success";
+
+          if (cantidadDisponible === 0) {
+            estado = "Usado";
+            estadoClase = "text-danger";
+          } else if (cantidadDisponible < cantidadTotal) {
+            estado = "Parcial";
+            estadoClase = "text-warning";
+          }
+
+          return (
+            <tr key={idx}>
+              <td>{lote.numeroFactura}</td>
+              <td>{cantidadTotal}</td>
+              <td>{cantidadDisponible}</td>
+              <td>{lote.lote}</td>
+              <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
+              <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
+              <td className={estadoClase}>{estado}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+)}
+
                 </>
               )}
             </li>
