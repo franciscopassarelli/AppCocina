@@ -67,7 +67,7 @@ export default function ProductForm() {
   lote: "Lote inicial",
   cantidad: parseFloat(stock),
   cantidadDisponible: parseFloat(stock),
-  fechaVencimiento,
+  fechaVencimiento: new Date(fechaVencimiento + "T00:00:00").toISOString(), // ⬅️ asegurás horario local a medianoche
   numeroFactura: facturaRemito,
   fechaIngreso: new Date().toISOString(),
 };
@@ -137,7 +137,10 @@ const productoData = {
   };
 
   return (
+
+
     <>
+
       {/* 🔁 Formulario separado */}
       <FormularioProducto
         onSubmit={handleSubmit}
@@ -161,6 +164,10 @@ const productoData = {
         limpiarFormulario={limpiarFormulario}
       />
 
+      <div className="container py-4">
+    <div className="row justify-content-center">
+      <div className="col-12 col-md-10 col-lg-8">
+
       {productoParaStock && (
         <AddStock
           producto={productoParaStock}
@@ -168,6 +175,9 @@ const productoData = {
           onClose={() => setProductoParaStock(null)}
         />
       )}
+       </div>
+    </div>
+  </div>
 
       <h5>Productos agregados</h5>
       {productos.length === 0 ? (
@@ -202,7 +212,7 @@ const productoData = {
                   </div>
                 
                 </div>
-
+   
 
                 <div className="d-flex gap-2">
                   <button
@@ -219,6 +229,8 @@ const productoData = {
                   </button>
                 </div>
               </div>
+
+              
 
               {/* Lotes */}
               {prod.lotes && prod.lotes.length > 0 && (
@@ -281,7 +293,9 @@ const productoData = {
             </li>
           ))}
         </ul>
+      
       )}
+     
     </>
   );
 }
