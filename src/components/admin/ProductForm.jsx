@@ -238,8 +238,7 @@ const productoData = {
       <thead>
         <tr>
           <th>Factura/Remito</th>
-          <th>Cantidad</th>
-          <th>Disponible</th>
+          <th>Cantidad kg</th>
           <th>Lote</th>
           <th>Vencimiento</th>
           <th>Fecha ingreso</th>
@@ -265,7 +264,6 @@ const productoData = {
             <tr key={idx}>
               <td>{lote.numeroFactura}</td>
               <td>{cantidadTotal}</td>
-              <td>{cantidadDisponible}</td>
               <td>{lote.lote}</td>
               <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
               <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
