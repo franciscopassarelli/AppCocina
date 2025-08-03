@@ -159,7 +159,7 @@ export default function StockList() {
       {mostrarHistorial && (
         <div className="mt-5">
           <h3 className="mb-3">
-            🗂️ Historial de registros —
+            🗂️ Historial de registros cocina—
             <span className="text-muted fs-6 ms-2">
               {fechaActual
                 ? new Date(fechaActual).toLocaleDateString("es-AR", {

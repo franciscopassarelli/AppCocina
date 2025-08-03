@@ -24,74 +24,74 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
   };
 
   return (
-    <div className="card card-body border border-success border-2 mb-3 p-3">
+    <div
+      className="p-4 border border-light rounded shadow"
+      style={{
+        backgroundColor: "#1c1c1c",
+        color: "#fff",
+        maxWidth: "600px",
+        margin: "0 auto",
+        fontSize: "0.95rem",
+      }}
+    >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h6 className="fw-bold text-success m-0">
           ➕ Agregar stock: {producto.nombre}
         </h6>
-        <button
-          type="button"
-          className="btn-close"
-          aria-label="Cerrar"
-          onClick={onClose}
-        ></button>
+  
       </div>
 
-      <form onSubmit={handleSubmit} className="row row-cols-1 row-cols-md-auto g-2">
-        <div className="col">
-          <label className="form-label small mb-1">Factura/Remito</label>
+      <form onSubmit={handleSubmit} className="row g-3">
+        <div className="col-md-6">
+          <label className="form-label small">Factura/Remito</label>
           <input
             type="text"
-            className="form-control form-control-sm w-100"
+            className="form-control form-control-sm bg-dark text-white border-secondary"
             value={numeroFactura}
             onChange={(e) => setNumeroFactura(e.target.value)}
             required
           />
         </div>
 
-        <div className="col">
-          <label className="form-label small mb-1">Cantidad</label>
+        <div className="col-md-6">
+          <label className="form-label small">Cantidad</label>
           <input
             type="number"
-            className="form-control form-control-sm w-100"
+            className="form-control form-control-sm bg-dark text-white border-secondary"
             value={cantidad}
             onChange={(e) => setCantidad(e.target.value)}
             required
           />
         </div>
 
-        <div className="col">
-          <label className="form-label small mb-1">Lote</label>
+        <div className="col-md-6">
+          <label className="form-label small">Lote</label>
           <input
             type="text"
-            className="form-control form-control-sm w-100"
+            className="form-control form-control-sm bg-dark text-white border-secondary"
             value={lote}
             onChange={(e) => setLote(e.target.value)}
             required
           />
         </div>
 
-        <div className="col">
-          <label className="form-label small mb-1">Fecha de vencimiento</label>
+        <div className="col-md-6">
+          <label className="form-label small">Fecha de vencimiento</label>
           <input
             type="date"
-            className="form-control form-control-sm w-100"
+            className="form-control form-control-sm bg-dark text-white border-secondary"
             value={fechaVencimiento}
             onChange={(e) => setFechaVencimiento(e.target.value)}
             required
           />
         </div>
 
-        <div className="col d-flex align-items-end gap-2">
-          <button type="submit" className="btn btn-success btn-sm">
-            ✔️
+        <div className="col-12 d-flex gap-2 justify-content-end mt-2">
+          <button type="submit" className="btn btn-success btn-sm px-3">
+            ✔️ Guardar
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={onClose}
-          >
-            ✖️
+          <button type="button" className="btn btn-secondary btn-sm px-3" onClick={onClose}>
+            ✖️ Cancelar
           </button>
         </div>
       </form>
