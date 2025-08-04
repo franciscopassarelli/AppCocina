@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaUserCog, FaTruck } from "react-icons/fa";
+import { GiCook } from "react-icons/gi";
 import { useProductos } from "../../context/ProductoContext";
+import "../styles/Navbar.css"; // Asegúrate de tener este archivo CSS para estilos personalizados
 
 export default function Navbar() {
   const { pathname } = useLocation();
   const { productos } = useProductos();
   const [mostrarAlertas, setMostrarAlertas] = useState(false);
 
-  const productosAlertaRoja = productos.filter(
-    (p) => p.stock <= p.stockCritico
-  );
+  const productosAlertaRoja = productos.filter((p) => p.stock <= p.stockCritico);
   const productosAlertaAmarilla = productos.filter(
     (p) => p.stock > p.stockCritico && p.stock <= p.stockCritico * 2
   );
@@ -43,6 +43,7 @@ export default function Navbar() {
               style={{ fontSize: "1.2rem" }}
               onClick={() => setMostrarAlertas(!mostrarAlertas)}
               aria-label="Mostrar alertas de stock"
+              title="Alertas de stock"
             >
               <FaBell />
               {hayAlertas && (
@@ -57,14 +58,7 @@ export default function Navbar() {
 
             {mostrarAlertas && (
               <div
-                className="dropdown-menu show mt-2 p-2 text-start"
-                style={{
-                  minWidth: "280px",
-                  maxHeight: "300px",
-                  overflowY: "auto",
-                  right: 0,
-                  left: "auto",
-                }}
+                className="dropdown-menu show mt-2 p-2 text-start alert-dropdown"
                 onClick={() => setMostrarAlertas(false)}
               >
                 <h6 className="dropdown-header">Alertas de stock</h6>
@@ -93,30 +87,38 @@ export default function Navbar() {
             )}
           </li>
 
-          <li className="nav-item">
-            <Link
-              className={`nav-link ${pathname === "/admin" ? "active" : ""}`}
-              to="/admin"
-            >
-              Admin
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link
-              className={`nav-link ${pathname === "/cook" ? "active" : ""}`}
-              to="/cook"
-            >
-              Cocina
-            </Link>
-          </li>
-          <li className="nav-item">
-           <Link
-             className={`nav-link ${pathname === "/proveedor" ? "active" : ""}`}
-             to="/proveedor"
-          >
-    Proveedores
+          {/* Menú de navegación con íconos */}
+      <li className="nav-item w-100">
+  <Link
+    className={`nav-link nav-btn ${pathname === "/admin" ? "active" : ""}`}
+    to="/admin"
+    title="Admin"
+  >
+    <FaUserCog className="nav-icon" />
+    <span className="nav-label">Admin</span>
   </Link>
 </li>
+<li className="nav-item w-100">
+  <Link
+    className={`nav-link nav-btn ${pathname === "/cook" ? "active" : ""}`}
+    to="/cook"
+    title="Cocina"
+  >
+    <GiCook className="nav-icon" />
+    <span className="nav-label">Cocina</span>
+  </Link>
+</li>
+<li className="nav-item w-100">
+  <Link
+    className={`nav-link nav-btn ${pathname === "/proveedor" ? "active" : ""}`}
+    to="/proveedor"
+    title="Proveedores"
+  >
+    <FaTruck className="nav-icon" />
+    <span className="nav-label">Proveedores</span>
+  </Link>
+</li>
+
 
         </ul>
       </div>

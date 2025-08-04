@@ -1,0 +1,56 @@
+/* Estilo base para los botones */
+.nav-btn {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  width: auto; /* por defecto, que se acomode al contenido */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: left;
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* Ícono */
+.nav-icon {
+  font-size: 1.2rem;
+}
+
+/* Texto */
+.nav-label {
+  display: inline;
+}
+
+/* 🔽 En dispositivos pequeños (mobile), hacer botón full width y texto a la izquierda */
+@media (max-width: 768px) {
+  .nav-item {
+    width: 100%;
+  }
+
+  .nav-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .nav-label {
+    display: inline;
+  }
+
+  .nav-icon {
+    font-size: 1.3rem;
+  }
+}
+
+/* 🔽 En pantallas grandes, mantener todo como estaba */
+@media (min-width: 769px) {
+  .nav-label {
+    display: inline;
+  }
+}

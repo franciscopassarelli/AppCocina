@@ -217,7 +217,7 @@ export default function StockList() {
                     initial={{ x: direccion > 0 ? 300 : -300, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: direccion > 0 ? -300 : 300, opacity: 0 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 1.0 }}
                   >
                     <table className="table table-sm table-bordered table-striped align-middle text-center">
                       <thead className="table-dark small">
