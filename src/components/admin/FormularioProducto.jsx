@@ -1,6 +1,7 @@
 // components/FormularioProducto.jsx
 
 import React from "react";
+import "../styles/FormularioProducto.css"; // Import your CSS styles
 
 export default function FormularioProducto({
   onSubmit,
@@ -24,7 +25,7 @@ export default function FormularioProducto({
   limpiarFormulario,
 }) {
   return (
-    <div className="card card-body mb-4 shadow-sm">
+    <div className="card card-body mb-4 shadow-sm formulario-producto">
       <form onSubmit={onSubmit} className="mb-4">
         <h5 className="mb-3 fw-bold text-success">
           {productoEditando ? "Editar producto" : "Nuevo producto"}

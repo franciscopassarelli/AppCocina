@@ -1,0 +1,34 @@
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.badge-nombre {
+  background-color: #eaf4ff;
+  color: #004080;
+}
+
+.badge-stock {
+  background-color: #e0f7e9;
+  color: #007d43;
+}
+
+.badge-peso {
+  background-color: #fff4cc;
+  color: #7d5a00;
+}
+
+.badge-critico {
+  background-color: #ffe5e5;
+  color: #a80000;
+}
+
+.producto-info {
+  background-color: #f9f9f9;
+}
+
+

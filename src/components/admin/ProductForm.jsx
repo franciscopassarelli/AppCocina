@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import FormularioProducto from "./FormularioProducto";
 import ModalAddStock from "../admin/ModalAddStock";
+import "../styles/ProductForm.css"; // Asegúrate de que la ruta sea correcta
 
 
 
@@ -167,6 +168,8 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
 
     <>
 
+    
+
       {/* 🔁 Formulario separado */}
       <FormularioProducto
         onSubmit={handleSubmit}
@@ -189,6 +192,8 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
         setFacturaRemito={setFacturaRemito}
         limpiarFormulario={limpiarFormulario}
       />
+
+    
 
       <div className="container py-4">
     <div className="row justify-content-center">
@@ -235,31 +240,42 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
     <ul className="list-group">
       {productosDepto.map((prod) => (
         <li key={prod._id} className="list-group-item d-flex flex-column">
+          
           <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <strong>{prod.nombre}</strong> — {prod.stock} {prod.unidad}
-              {prod.unidad !== "unidad" &&
-                ` — ${prod.pesoPromedio} ${prod.unidad === "l" ? "ml" : "g"}`}
-              {prod.stockCritico !== undefined && (
-                <small className="text-muted ms-2">(Crítico: {prod.stockCritico})</small>
-              )}
-              <div className="text-muted small">
-                Venc.:{" "}
-                {prod.fechaVencimiento
-                  ? (() => {
-                      const [año, mes, día] = prod.fechaVencimiento.split("T")[0].split("-");
-                      return `${día}/${mes}/${año}`;
-                    })()
-                  : "Sin fecha"}
-              </div>
-              <div className="text-muted small">
-                Creado: {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} — Actualizado:{" "}
-                {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
-              </div>
-              <div className="text-muted small">
-                Factura/Remito: <strong>{prod.facturaRemito || "N/A"}</strong>
-              </div>
-            </div>
+           <div className="producto-info p-2 rounded bg-light-subtle">
+  <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+    <span className="badge badge-nombre">{prod.nombre}</span>
+    <span className="badge badge-stock">{prod.stock} {prod.unidad}</span>
+    {prod.unidad !== "unidad" && (
+      <span className="badge badge-peso">
+        {prod.pesoPromedio} {prod.unidad === "l" ? "ml" : "g"} (unidad)
+      </span>
+    )}
+    {prod.stockCritico !== undefined && (
+      <span className="badge badge-critico">Crítico: {prod.stockCritico}</span>
+    )}
+  </div>
+
+  <div className="text-muted small mb-1">
+    <strong>Venc.:</strong>{" "}
+    {prod.fechaVencimiento
+      ? (() => {
+          const [año, mes, día] = prod.fechaVencimiento.split("T")[0].split("-");
+          return `${día}/${mes}/${año}`;
+        })()
+      : "Sin fecha"}
+  </div>
+
+  <div className="text-muted small mb-1">
+    <strong>Creado:</strong> {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} —{" "}
+    <strong>Actualizado:</strong> {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
+  </div>
+
+  <div className="text-muted small">
+    <strong>Factura/Remito:</strong> {prod.facturaRemito || "N/A"}
+  </div>
+</div>
+
 
             <div className="d-flex gap-2">
               <button
@@ -295,7 +311,7 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
                     <thead>
                       <tr>
                         <th>Factura/Remito</th>
-                        <th>Cantidad kg</th>
+                        <th>Cantidad</th>
                         <th>Lote</th>
                         <th>Vencimiento</th>
                         <th>Fecha ingreso</th>
