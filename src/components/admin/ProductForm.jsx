@@ -278,19 +278,20 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
 
 
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => handleEliminar(prod._id)}
-              >
-                Borrar
-              </button>
-              <button
-                className="btn btn-sm btn-outline-success"
-                onClick={() => setProductoParaStock(prod)}
-              >
-                Agregar Lote
-              </button>
-            </div>
+  <button
+    className="button-red-sm"
+    onClick={() => handleEliminar(prod._id)}
+  >
+    Borrar
+  </button>
+  <button
+    className="button-green-sm"
+    onClick={() => setProductoParaStock(prod)}
+  >
+    Agregar Lote
+  </button>
+</div>
+
           </div>
 
           {/* ▼▼▼ Lotes ▼▼▼ */}

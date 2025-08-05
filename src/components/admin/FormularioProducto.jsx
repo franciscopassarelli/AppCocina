@@ -173,9 +173,11 @@ export default function FormularioProducto({
 
           {/* Botones */}
           <div className="col-md-1 d-flex flex-column gap-1">
-            <button className="btn btn-success btn-sm" type="submit">
-              {productoEditando ? "Actualizar" : "Agregar"}
-            </button>
+         <button className="button-green-sm" type="submit">
+  {productoEditando ? "Actualizar" : "Agregar"}
+</button>
+
+
             {productoEditando && (
               <button
                 type="button"

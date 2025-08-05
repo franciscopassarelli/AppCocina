@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import "../styles/AddStock.css"; // Import your CSS styles
+
 
 export default function AddStock({ producto, onAgregarStock, onClose }) {
   const [numeroFactura, setNumeroFactura] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [lote, setLote] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -87,13 +90,14 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
         </div>
 
         <div className="col-12 d-flex gap-2 justify-content-end mt-2">
-          <button type="submit" className="btn btn-success btn-sm px-3">
-            ✔️ Guardar
-          </button>
-          <button type="button" className="btn btn-secondary btn-sm px-3" onClick={onClose}>
-            ✖️ Cancelar
-          </button>
-        </div>
+  <button type="submit" className="button-save">
+    ✔️ Guardar
+  </button>
+  <button type="button" className="button-cancel" onClick={onClose}>
+    ✖️ Cancelar
+  </button>
+</div>
+
       </form>
     </div>
   );

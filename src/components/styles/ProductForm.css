@@ -32,3 +32,53 @@
 }
 
 
+/* 🔴 Botón Borrar - estilo rojo */
+.button-red-sm {
+  background-image: linear-gradient(-180deg, #ff4e50, #c0392b);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+  color: #fff;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 0.85rem;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 14px;
+  border: none;
+  transition: box-shadow 0.2s, transform 0.1s ease-in-out;
+}
+
+.button-red-sm:hover {
+  box-shadow: rgba(255, 0, 0, 0.4) 0 3px 8px;
+}
+
+.button-red-sm:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
+/* 🟢 Botón Agregar Lote - estilo verde */
+.button-green-sm {
+  background-image: linear-gradient(-180deg, #00c851, #007e33);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+  color: #fff;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 0.85rem;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 14px;
+  border: none;
+  transition: box-shadow 0.2s, transform 0.1s ease-in-out;
+}
+
+.button-green-sm:hover {
+  box-shadow: rgba(0, 200, 81, 0.4) 0 3px 8px;
+}
+
+.button-green-sm:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
