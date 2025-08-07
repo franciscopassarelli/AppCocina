@@ -3,6 +3,9 @@ import { useProductos } from "../../context/ProductoContext";
 import FormularioProducto from "./FormularioProducto";
 import ModalAddStock from "../admin/ModalAddStock";
 import "../styles/ProductForm.css"; // Asegúrate de que la ruta sea correcta
+import AlertaStockModal from "../admin/AlertaStockModal";
+
+
 
 
 
@@ -168,7 +171,9 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
 
     <>
 
-    
+ <AlertaStockModal productos={productos} />
+
+
 
       {/* 🔁 Formulario separado */}
       <FormularioProducto
