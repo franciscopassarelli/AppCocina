@@ -39,7 +39,7 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
     >
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h6 className="fw-bold text-success m-0">
-          ➕ Agregar stock: {producto.nombre}
+          Agregar stock: {producto.nombre}
         </h6>
   
       </div>
@@ -90,12 +90,13 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
         </div>
 
         <div className="col-12 d-flex gap-2 justify-content-end mt-2">
-  <button type="submit" className="button-save">
-    ✔️ Guardar
-  </button>
-  <button type="button" className="button-cancel" onClick={onClose}>
-    ✖️ Cancelar
-  </button>
+<button type="button" className="button-cancel" onClick={onClose}>
+  <i className="bi bi-x-circle-fill me-1"></i> Cancelar
+</button>
+ <button type="submit" className="button-save">
+  <i className="bi bi-check-circle-fill me-1"></i> Guardar
+</button>
+
 </div>
 
       </form>

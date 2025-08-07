@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
 import "../cook/Cookpanel.css"; 
+import AlertaStockModal from "../admin/AlertaStockModal"
 
 export default function CookPanel() {
   const {
@@ -158,6 +159,7 @@ const handleRegistrar = async () => {
 
   return (
     <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
+      <AlertaStockModal productos={productos} /> 
       <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
         <GiChefToque size={40} />
         <span>Panel de Cocina</span>

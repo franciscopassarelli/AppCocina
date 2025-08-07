@@ -2,12 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import FormularioProducto from "./FormularioProducto";
 import ModalAddStock from "../admin/ModalAddStock";
-import "../styles/ProductForm.css"; // Asegúrate de que la ruta sea correcta
+import "../styles/ProductForm.css"; 
 import AlertaStockModal from "../admin/AlertaStockModal";
-
-
-
-
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function ProductForm() {
   const {
@@ -91,7 +88,7 @@ const productoData = {
   stockCritico: parseFloat(stockCritico),
   fechaVencimiento,
   facturaRemito,
-  lotes: [loteInicial], // 👈 Agregamos el primer lote
+  lotes: [loteInicial], 
 };
 
 
@@ -122,7 +119,7 @@ const productoData = {
       };
 
       await actualizarProducto(productoId, productoActualizado);
-      // ✅ asegurate de tener la función obtenerYActualizarProductos si querés refrescar los datos
+      // asegurate de tener la función obtenerYActualizarProductos si querés refrescar los datos
       setProductoParaStock(null);
     } catch (err) {
       console.error("Error al agregar stock:", err);
@@ -283,18 +280,14 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
 
 
             <div className="d-flex gap-2">
-  <button
-    className="button-red-sm"
-    onClick={() => handleEliminar(prod._id)}
-  >
-    Borrar
-  </button>
-  <button
-    className="button-green-sm"
-    onClick={() => setProductoParaStock(prod)}
-  >
-    Agregar Lote
-  </button>
+<button className="button-red-sm" onClick={() => handleEliminar(prod._id)}>
+  <i className="bi bi-trash3 me-1"></i> Borrar
+</button>
+
+<button className="button-green-sm" onClick={() => setProductoParaStock(prod)}>
+  <i className="bi bi-plus-circle me-1"></i> Agregar Lote
+</button>
+
 </div>
 
           </div>
