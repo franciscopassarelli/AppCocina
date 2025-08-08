@@ -31,6 +31,11 @@ app.get("/api", (req, res) => {
 // 🛣️ Rutas
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
+const recipesRouter = require('./routes/recipes');
+const productionRunsRouter = require('./routes/productionRuns');
+
+app.use('/api/recipes', recipesRouter);
+app.use('/api/production-runs', productionRunsRouter);
 
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);

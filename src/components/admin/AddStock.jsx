@@ -57,7 +57,7 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label small">Cantidad</label>
+          <label className="form-label small">CANTIDAD DE FACTURA/REMITO</label>
           <input
             type="number"
             className="form-control form-control-sm bg-dark text-white border-secondary"
@@ -68,7 +68,7 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
         </div>
 
         <div className="col-md-6">
-          <label className="form-label small">Lote</label>
+          <label className="form-label small">CANTIDAD QUE SE CONTO</label>
           <input
             type="text"
             className="form-control form-control-sm bg-dark text-white border-secondary"

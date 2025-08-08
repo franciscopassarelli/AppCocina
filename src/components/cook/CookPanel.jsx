@@ -3,16 +3,22 @@ import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
-import "../cook/Cookpanel.css"; 
-import AlertaStockModal from "../admin/AlertaStockModal"
+import "../cook/Cookpanel.css";
+import AlertaStockModal from "../admin/AlertaStockModal";
+import ModalAddStock from "../admin/ModalAddStock";
+import ProductionPlanModal from "../production/ProductionPlanModal";
+import ProductionConfirmModal from "../production/ProductionConfirmModal";
+import { getRecipes } from "../../api/recipes.js";
 
 export default function CookPanel() {
   const {
     productos,
     actualizarStock,
     agregarRegistroHistorial,
+    actualizarProducto, // 👈 necesario para ingreso rápido de stock
   } = useProductos();
 
+  // ===== Estado existente =====
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const [usoDelDia, setUsoDelDia] = useState("");
   const [unidades, setUnidades] = useState("");
@@ -22,12 +28,45 @@ export default function CookPanel() {
   const [departamentoActivo, setDepartamentoActivo] = useState(null);
   const [fechaVencimientoElaborado, setFechaVencimientoElaborado] = useState("");
 
+  // ===== Producción (recetas / runs) =====
+  const [recipes, setRecipes] = useState([]);
+  const [showPlan, setShowPlan] = useState(false);
+  const [activeRun, setActiveRun] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const productoSeleccionado = productos.find(
-    (p) => p._id === productoIdSeleccionado
-  );
+  // ===== Ingreso rápido de stock =====
+  const [showQuickStock, setShowQuickStock] = useState(false);
+  const [productoParaStock, setProductoParaStock] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
+  const productoSeleccionado = productos.find((p) => p._id === productoIdSeleccionado);
+  const API_URL = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
+
+  useEffect(() => {
+  let cancelado = false;
+
+  const fetchRecipes = async () => {
+    try {
+      const list = await getRecipes(API_URL);
+      if (!cancelado) setRecipes(list);
+    } catch (e) {
+      console.error("Error cargando recetas:", e);
+    }
+  };
+
+  // carga inicial
+  fetchRecipes();
+
+  // refrescar cuando RecipeAdmin dispare el evento
+  const handler = () => fetchRecipes();
+  window.addEventListener("recipes:changed", handler);
+
+  // cleanup
+  return () => {
+    cancelado = true;
+    window.removeEventListener("recipes:changed", handler);
+  };
+}, [API_URL]);
+
 
   const mostrarMensajeAlerta = (mensaje) => {
     setAlerta(mensaje);
@@ -40,110 +79,124 @@ export default function CookPanel() {
   const esLiquido = unidad === "l";
   const esInsumoUnidad = unidad === "unidad";
 
-const handleRegistrar = async () => {
-  const uso = parseFloat(usoDelDia);
-  const cantUnidades = parseInt(unidades);
+  // ===== Registrar uso manual (flujo existente) =====
+  const handleRegistrar = async () => {
+    const uso = parseFloat(usoDelDia);
+    const cantUnidades = parseInt(unidades);
 
-  if (!productoSeleccionado || !fechaVencimientoElaborado) {
-    mostrarMensajeAlerta("Por favor completá todos los campos.");
-    return;
-  }
+    if (!productoSeleccionado || !fechaVencimientoElaborado) {
+      mostrarMensajeAlerta("Por favor completá todos los campos.");
+      return;
+    }
 
-  if (esInsumoUnidad && !cantUnidades) return;
-  if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
+    if (esInsumoUnidad && !cantUnidades) return;
+    if (!esInsumoUnidad && (!uso || !cantUnidades)) return;
 
-  let cantidadUtil = 0;
-  let desperdicio = 0;
+    let cantidadUtil = 0;
+    let desperdicio = 0;
 
-  if (!esInsumoUnidad) {
-    cantidadUtil = (cantUnidades * productoSeleccionado.pesoPromedio) / 1000;
-    desperdicio = Math.max(0, uso - cantidadUtil);
-  } else {
-    cantidadUtil = cantUnidades;
-  }
+    if (!esInsumoUnidad) {
+      cantidadUtil = (cantUnidades * productoSeleccionado.pesoPromedio) / 1000;
+      desperdicio = Math.max(0, uso - cantidadUtil);
+    } else {
+      cantidadUtil = cantUnidades;
+    }
 
-  let usoRestante = esInsumoUnidad ? cantUnidades : uso;
+    let usoRestante = esInsumoUnidad ? cantUnidades : uso;
 
-  // 🧠 Lógica para descontar desde los lotes por orden de vencimiento
-  let lotesUtilizados = [];
-  let nuevosLotes = [...(productoSeleccionado.lotes || [])]
-    .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento))
-    .map((lote) => {
-      if (usoRestante <= 0 || lote.cantidad <= 0) return lote;
-
-      const disponible = lote.cantidad;
-      const aDescontar = Math.min(disponible, usoRestante);
-      usoRestante -= aDescontar;
-
-      lotesUtilizados.push({
-        lote: lote.lote,
-        cantidad: aDescontar,
-        fechaVencimiento: lote.fechaVencimiento,
-        numeroFactura: lote.numeroFactura,
+    // FEFO local por lotes
+    let lotesUtilizados = [];
+    let nuevosLotes = [...(productoSeleccionado.lotes || [])]
+      .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento))
+      .map((lote) => {
+        if (usoRestante <= 0 || lote.cantidad <= 0) return lote;
+        const disponible = lote.cantidad;
+        const aDescontar = Math.min(disponible, usoRestante);
+        usoRestante -= aDescontar;
+        lotesUtilizados.push({
+          lote: lote.lote,
+          cantidad: aDescontar,
+          fechaVencimiento: lote.fechaVencimiento,
+          numeroFactura: lote.numeroFactura,
+        });
+        return { ...lote, cantidad: disponible - aDescontar, usado: disponible - aDescontar === 0 };
       });
 
-      return {
-        ...lote,
-        cantidad: disponible - aDescontar,
-        usado: disponible - aDescontar === 0, 
-      };
-    });
+    const nuevoStock = nuevosLotes.reduce((acc, l) => acc + l.cantidad, 0);
 
- 
+    const nuevoRegistro = {
+      producto: productoSeleccionado.nombre,
+      fecha: new Date(),
+      uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
+      unidades: cantUnidades,
+      desperdicio: parseFloat(desperdicio.toFixed(3)),
+      fechaVencimiento: new Date(fechaVencimientoElaborado),
+    };
 
-  // ✅ Nuevo stock como suma de lotes restantes
-  const nuevoStock = nuevosLotes.reduce((acc, l) => acc + l.cantidad, 0);
+    try {
+      setCargando(true);
 
-  const nuevoRegistro = {
-    producto: productoSeleccionado.nombre,
-    fecha: new Date(),
-    uso: esInsumoUnidad ? 0 : parseFloat(uso.toFixed(2)),
-    unidades: cantUnidades,
-    desperdicio: parseFloat(desperdicio.toFixed(3)),
-    fechaVencimiento: new Date(fechaVencimientoElaborado),
-    // lotesUtilizados, // 👉 Podés guardar esta info en el historial si querés trazabilidad
+      await fetch(`${API_URL}/productos/${productoSeleccionado._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: nuevoStock, lotes: nuevosLotes }),
+      });
+
+      await fetch(`${API_URL}/historial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevoRegistro),
+      });
+
+      await actualizarStock(productoSeleccionado._id, nuevoStock);
+      agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
+
+      setUsoDelDia("");
+      setUnidades("");
+      setProductoIdSeleccionado(null);
+
+      mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
+    } catch (err) {
+      console.error("❌ Error:", err.message);
+      mostrarMensajeAlerta("Hubo un error al registrar el uso");
+    } finally {
+      setCargando(false);
+    }
   };
 
-  try {
-    setCargando(true);
+  // ===== Ingreso rápido de stock (agregar lote desde cocina) =====
+  const handleAgregarStock = async (productoId, nuevoLote) => {
+    try {
+      const producto = productos.find((p) => p._id === productoId);
+      if (!producto) return;
 
-    await fetch(`${API_URL}/productos/${productoSeleccionado._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        stock: nuevoStock,
-        lotes: nuevosLotes,
-      }),
-    });
+      const nuevoStock = (producto.stock || 0) + (nuevoLote.cantidad || 0);
+      const lotesActualizados = [...(producto.lotes || []), nuevoLote];
 
-    await fetch(`${API_URL}/historial`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(nuevoRegistro),
-    });
+      const productoActualizado = { ...producto, stock: nuevoStock, lotes: lotesActualizados };
 
-    await actualizarStock(productoSeleccionado._id, nuevoStock);
-    agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
+      await actualizarProducto(productoId, productoActualizado);
+      setProductoParaStock(null);
+      setShowQuickStock(false);
+      mostrarMensajeAlerta(`Lote agregado a ${producto.nombre}`);
+    } catch (err) {
+      console.error("Error al agregar stock:", err);
+      mostrarMensajeAlerta("Error al agregar stock");
+    }
+  };
 
-    setUsoDelDia("");
-    setUnidades("");
-    setProductoIdSeleccionado(null);
-
-    mostrarMensajeAlerta(`Uso registrado correctamente para ${productoSeleccionado.nombre}`);
-  } catch (err) {
-    console.error("❌ Error:", err.message);
-    mostrarMensajeAlerta("Hubo un error al registrar el uso");
-  } finally {
-    setCargando(false);
+  // ===== Producción: callbacks =====
+  function handleStarted(run) {
+    setActiveRun(run); // startedAt → timer oculto en backend
+    setShowConfirm(true);
   }
-};
 
-
-  const cantidadUtil = productoSeleccionado && unidades
-    ? esInsumoUnidad
-      ? parseInt(unidades)
-      : (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
-    : 0;
+  const cantidadUtil =
+    productoSeleccionado && unidades
+      ? esInsumoUnidad
+        ? parseInt(unidades)
+        : (parseInt(unidades) * productoSeleccionado.pesoPromedio) / 1000
+      : 0;
 
   const desperdicio =
     !esInsumoUnidad && usoDelDia && cantidadUtil
@@ -159,7 +212,8 @@ const handleRegistrar = async () => {
 
   return (
     <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
-      <AlertaStockModal productos={productos} /> 
+      <AlertaStockModal productos={productos} />
+
       <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
         <GiChefToque size={40} />
         <span>Panel de Cocina</span>
@@ -192,22 +246,53 @@ const handleRegistrar = async () => {
         </div>
       )}
 
+      {/* ===== Ingreso rápido de stock ===== */}
+      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+        <h5 className="mb-3">Ingreso rápido de stock</h5>
+        <div className="d-flex gap-2 align-items-center flex-wrap">
+          <select
+            className="form-select form-select-sm bg-dark text-white"
+            style={{ minWidth: 260 }}
+            onChange={(e) => {
+              const prod = productos.find((p) => p._id === e.target.value);
+              setProductoParaStock(prod || null);
+            }}
+          >
+            <option value="">Seleccionar producto…</option>
+            {productos.map((p) => (
+              <option key={p._id} value={p._id}>
+                {p.nombre} ({p.stock} {p.unidad})
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn btn-success btn-sm"
+            disabled={!productoParaStock}
+            onClick={() => setShowQuickStock(true)}
+          >
+            Agregar lote
+          </button>
+        </div>
+      </div>
+
+      {/* ===== Producción (recetas) ===== */}
+      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+        <h5 className="mb-2">Producción</h5>
+        <p className="small text-muted">Planificar → iniciar (timer) → confirmar (descuento automático por FEFO)</p>
+        <button className="btn btn-outline-light btn-sm" onClick={() => setShowPlan(true)}>
+          Nueva producción
+        </button>
+      </div>
+
+      {/* ===== Listado por departamento (flujo existente) ===== */}
       {!productoSeleccionado && (
         <div>
           {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
             <motion.div
               key={depto}
               className="text-white my-3 py-2 px-3 rounded border mx-auto"
-              style={{
-                cursor: "pointer",
-                backgroundColor: "#111",
-                borderColor: "#444",
-                width: "95%",
-                maxWidth: "900px",
-              }}
-              onClick={() =>
-                setDepartamentoActivo(depto === departamentoActivo ? null : depto)
-              }
+              style={{ cursor: "pointer", backgroundColor: "#111", borderColor: "#444", width: "95%", maxWidth: "900px" }}
+              onClick={() => setDepartamentoActivo(depto === departamentoActivo ? null : depto)}
               whileHover={{ scale: 1.015 }}
             >
               <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
@@ -227,14 +312,7 @@ const handleRegistrar = async () => {
                       <motion.button
                         key={prod._id}
                         className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
-                        style={{
-                          backgroundColor: "#222",
-                          color: "white",
-                          border: "1px solid white",
-                          borderRadius: "10px",
-                          minWidth: "170px",
-                          minHeight: "120px",
-                        }}
+                        style={{ backgroundColor: "#222", color: "white", border: "1px solid white", borderRadius: "10px", minWidth: "170px", minHeight: "120px" }}
                         onClick={() => setProductoIdSeleccionado(prod._id)}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -244,7 +322,7 @@ const handleRegistrar = async () => {
                       >
                         <strong style={{ fontSize: "1.1rem" }}>{prod.nombre}</strong>
                         <div className="small mt-2 text-secondary">
-                          Stock: {prod.stock.toFixed(2)} {prod.unidad}
+                          Stock: {Number(prod.stock).toFixed(2)} {prod.unidad}
                         </div>
                       </motion.button>
                     ))}
@@ -277,97 +355,119 @@ const handleRegistrar = async () => {
               exit={{ scale: 0.7, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-             <div className="modal-content bg-dark text-white p-3 border border-light small-modal">
-  <h5 className="mb-2">{productoSeleccionado.nombre}</h5>
-  <p className="fs-6 mb-3">
-    <strong>Stock actual:</strong>{" "}
-    {productoSeleccionado.stock.toFixed(2)} {productoSeleccionado.unidad}
-  </p>
+              <div className="modal-content bg-dark text-white p-3 border border-light small-modal">
+                <h5 className="mb-2">{productoSeleccionado.nombre}</h5>
+                <p className="fs-6 mb-3">
+                  <strong>Stock actual:</strong> {Number(productoSeleccionado.stock).toFixed(2)} {productoSeleccionado.unidad}
+                </p>
 
-  <div className="row g-2 mb-2">
-    {!esInsumoUnidad && (
-      <div className="col-md-6">
-        <label className="form-label form-label-sm">
-          Uso del día ({esLiquido ? "litros" : "kg"}):
-        </label>
-        <input
-          type="number"
-          className="form-control form-control-sm"
-          value={usoDelDia}
-          onChange={(e) => setUsoDelDia(e.target.value)}
-          placeholder="Ej: 10"
-          step="0.1"
-          min="0"
-        />
-      </div>
-    )}
-    <div className={esInsumoUnidad ? "col-md-12" : "col-md-6"}>
-      <label className="form-label form-label-sm">
-        Unidades {esInsumoUnidad ? "a descontar" : "producidas"}:
-      </label>
-      <input
-        type="number"
-        className="form-control form-control-sm"
-        value={unidades}
-        onChange={(e) => setUnidades(e.target.value)}
-        placeholder="Ej: 55"
-        min="0"
-      />
-    </div>
-  </div>
+                <div className="row g-2 mb-2">
+                  {!esInsumoUnidad && (
+                    <div className="col-md-6">
+                      <label className="form-label form-label-sm">Uso del día ({esLiquido ? "litros" : "kg"}):</label>
+                      <input
+                        type="number"
+                        className="form-control form-control-sm"
+                        value={usoDelDia}
+                        onChange={(e) => setUsoDelDia(e.target.value)}
+                        placeholder="Ej: 10"
+                        step="0.1"
+                        min="0"
+                      />
+                    </div>
+                  )}
+                  <div className={esInsumoUnidad ? "col-md-12" : "col-md-6"}>
+                    <label className="form-label form-label-sm">Unidades {esInsumoUnidad ? "a descontar" : "producidas"}:</label>
+                    <input
+                      type="number"
+                      className="form-control form-control-sm"
+                      value={unidades}
+                      onChange={(e) => setUnidades(e.target.value)}
+                      placeholder="Ej: 55"
+                      min="0"
+                    />
+                  </div>
+                </div>
 
-  {!esInsumoUnidad && (
-    <div className="text-start mb-2 small">
-      <p><strong>Cantidad útil:</strong> {cantidadUtil.toFixed(3)} {unidad}</p>
-      <p><strong>Desperdicio:</strong> {desperdicio} {unidad}</p>
-      <p><strong>Promedio por unidad:</strong>{" "}
-        {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
-      </p>
-      <p><strong>Vencimiento original del producto comprado:</strong>{" "}
-        {new Date(productoSeleccionado.fechaVencimiento).toLocaleDateString("es-AR")}
-      </p>
-    </div>
-  )}
+                {!esInsumoUnidad && (
+                  <div className="text-start mb-2 small">
+                    <p>
+                      <strong>Cantidad útil:</strong> {cantidadUtil.toFixed(3)} {unidad}
+                    </p>
+                    <p>
+                      <strong>Desperdicio:</strong> {desperdicio} {unidad}
+                    </p>
+                    <p>
+                      <strong>Promedio por unidad:</strong> {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
+                    </p>
+                    <p>
+                      <strong>Vencimiento original del producto comprado:</strong> {new Date(productoSeleccionado.fechaVencimiento).toLocaleDateString("es-AR")}
+                    </p>
+                  </div>
+                )}
 
-  <div className="mb-2">
-    <label className="form-label form-label-sm">Elegí cuando vence el producto elaborado:</label>
-    <input
-      type="date"
-      className="form-control form-control-sm"
-      value={fechaVencimientoElaborado}
-      onChange={(e) => setFechaVencimientoElaborado(e.target.value)}
-      required
-    />
-  </div>
+                <div className="mb-2">
+                  <label className="form-label form-label-sm">Elegí cuando vence el producto elaborado:</label>
+                  <input
+                    type="date"
+                    className="form-control form-control-sm"
+                    value={fechaVencimientoElaborado}
+                    onChange={(e) => setFechaVencimientoElaborado(e.target.value)}
+                    required
+                  />
+                </div>
 
-  <button
-    className="btn btn-success btn-sm w-100"
-    onClick={handleRegistrar}
-    disabled={cargando}
-  >
-    {cargando ? (
-      <div className="d-flex justify-content-center align-items-center gap-2">
-        <div className="spinner-border spinner-border-sm text-light" role="status" />
-        Registrando...
-      </div>
-    ) : (
-      esInsumoUnidad ? "Descontar unidades" : "Registrar uso"
-    )}
-  </button>
+                <button className="btn btn-success btn-sm w-100" onClick={handleRegistrar} disabled={cargando}>
+                  {cargando ? (
+                    <div className="d-flex justify-content-center align-items-center gap-2">
+                      <div className="spinner-border spinner-border-sm text-light" role="status" />
+                      Registrando...
+                    </div>
+                  ) : esInsumoUnidad ? (
+                    "Descontar unidades"
+                  ) : (
+                    "Registrar uso"
+                  )}
+                </button>
 
-  <button
-    className="btn btn-secondary btn-sm w-100 mt-2"
-    onClick={() => setProductoIdSeleccionado(null)}
-    disabled={cargando}
-  >
-    Cerrar
-  </button>
-</div>
-
+                <button className="btn btn-secondary btn-sm w-100 mt-2" onClick={() => setProductoIdSeleccionado(null)} disabled={cargando}>
+                  Cerrar
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ===== Modales ===== */}
+      <ModalAddStock
+        show={showQuickStock}
+        producto={productoParaStock}
+        onAgregarStock={handleAgregarStock}
+        onClose={() => setShowQuickStock(false)}
+      />
+
+      <ProductionPlanModal
+        apiBase={API_URL}
+        recipes={recipes}
+        productos={productos}   // 👈 para mostrar disponible/faltante y checklist
+        show={showPlan}
+        onClose={() => setShowPlan(false)}
+        onStarted={handleStarted}
+      />
+
+      <ProductionConfirmModal
+        apiBase={API_URL}
+        show={showConfirm}
+        run={activeRun}
+        productosFinales={productos}
+        onClose={(ok) => {
+          setShowConfirm(false);
+          if (ok) {
+            // Podés refrescar productos desde el contexto si lo necesitás
+          }
+        }}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const obtenerProductos = async () => {
-  const res = await axios.get(API_URL);
+  const res = await axios.get(`${API_URL}/productos`);
   return res.data;
 };
 

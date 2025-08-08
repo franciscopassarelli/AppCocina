@@ -128,8 +128,8 @@ export default function FormularioProducto({
               value={departamento}
               onChange={(e) => setDepartamento(e.target.value)}
             >
-              <option value="Carnes">Carnes</option>
-              <option value="Verduras">Verduras</option>
+              <option value="Carnes">Carnicería</option>
+              <option value="Verduras">Verdulería</option>
               <option value="Congelados">Congelados</option>
               <option value="Aderezos">Aderezos</option>
               <option value="Lácteos">Lácteos</option>

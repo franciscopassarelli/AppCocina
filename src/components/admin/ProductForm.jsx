@@ -310,8 +310,8 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
                     <thead>
                       <tr>
                         <th>Factura/Remito</th>
-                        <th>Cantidad</th>
-                        <th>Lote</th>
+                        <th>CANTIDAD DE FACTURA/REMITO</th>
+                        <th>CANTIDAD QUE SE CONTO</th>
                         <th>Vencimiento</th>
                         <th>Fecha ingreso</th>
                         <th>Estado</th>

@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import AdminDashboard from "./pages/AdminDashboard";
 import CookDashboard from "./pages/CookDashboard";
+import RecipeAdmin from "./pages/RecipeAdmin";
 import ProveedorDashboard from "./pages/ProveedorDashboard"; // 👈 Nuevo
 import Navbar from "./components/common/Navbar";
 
@@ -19,11 +20,13 @@ export default function App() {
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/cook" element={<CookDashboard />} />
-        <Route path="/proveedor" element={<ProveedorDashboard />} /> {/* 👈 Nuevo */}
-        <Route path="*" element={<Navigate to="/cook" />} />
-      </Routes>
+  <Route path="/" element={<Navigate to="/cook" replace />} />
+  <Route path="/admin" element={<AdminDashboard />} />
+  <Route path="/cook" element={<CookDashboard />} />
+  <Route path="/proveedor" element={<ProveedorDashboard />} />
+  <Route path="/recipeadmin" element={<RecipeAdmin />} />
+  <Route path="*" element={<Navigate to="/cook" replace />} />
+     </Routes>
     </Router>
   );
 }
