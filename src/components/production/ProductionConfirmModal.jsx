@@ -9,22 +9,28 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run, pr
 
   if (!show || !run) return null;
 
+  
+
   async function handleConfirm() {
-    setLoading(true);
-    try {
-      await confirmRun(apiBase, run._id, {
-        unidadesProducidas: Number(producidas || 0),
-        productoFinalId: productoFinalId || undefined,
-        fechaVencimientoProductoFinal: fechaVenc || undefined,
-      });
-      onClose(true);
-    } catch (e) {
-      console.error(e);
-      onClose(false);
-    } finally {
-      setLoading(false);
-    }
+  setLoading(true);
+  try {
+    await confirmRun(apiBase, run._id, {
+      unidadesProducidas: Number(producidas || 0),
+      productoFinalId: productoFinalId || undefined,
+      fechaVencimientoProductoFinal: fechaVenc || undefined,
+    });
+
+    // 🔥 Notificar a toda la app que hay nuevas producciones
+    window.dispatchEvent(new CustomEvent("runs:changed"));
+
+    onClose(true);
+  } catch (e) {
+    console.error(e);
+    onClose(false);
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="alerta-overlay" onClick={() => onClose(false)}>

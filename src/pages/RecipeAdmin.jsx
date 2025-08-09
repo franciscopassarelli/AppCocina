@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
 import { getRecipes, createRecipe, updateRecipe, deleteRecipe } from "../api/recipes";
+import ProductionRunsList from "../components/production/ProductionRunsList";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
@@ -462,8 +463,15 @@ export default function RecipeAdmin() {
               </div>
             </div>
           </div>
+       
         </div>
+        
       )}
+       <div className="mt-4">
+      <h4 className="mb-3">Producciones realizadas</h4>
+      <ProductionRunsList apiBase={API_BASE} />
     </div>
+    </div>
+    
   );
 }

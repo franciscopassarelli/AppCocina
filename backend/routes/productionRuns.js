@@ -19,6 +19,24 @@ function calcularRequeridos(recipe, unidades) {
   }));
 }
 
+
+
+// GET /production-runs  → lista de corridas de producción
+router.get('/', async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const runs = await ProductionRun
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    res.json(runs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // POST /production-runs/start
 router.post('/start', async (req, res) => {
   try {

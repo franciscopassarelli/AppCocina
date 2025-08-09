@@ -21,3 +21,9 @@ export async function confirmRun(API_BASE, id, body) {
 export function exportRuns(API_BASE) {
   window.location.href = `${API_BASE}/production-runs/export`;
 }
+
+export async function getRuns(API_BASE) {
+  const res = await fetch(`${API_BASE}/production-runs`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
