@@ -122,8 +122,9 @@ export default function Navbar() {
               <span className="nav-label">Cocina</span>
             </Link>
           </li>
-
-          <li className="nav-item w-100">
+ {/* Nuevo: enlace a RecipeAdmin 
+ 
+ <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${pathname === "/proveedor" ? "active" : ""}`}
               to="/proveedor"
@@ -132,7 +133,8 @@ export default function Navbar() {
               <FaTruck className="nav-icon" />
               <span className="nav-label">Proveedores</span>
             </Link>
-          </li>
+          </li>*/}
+          
 
           {/* Nuevo: enlace a RecipeAdmin */}
           <li className="nav-item w-100">

@@ -2,36 +2,40 @@ import React, { useEffect, useState } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../styles/AlertaStock.css";
 
-export default function AlertaStockModal({ productos }) {
+export default function AlertaStockModal({ productos, visible, onClose }) {
   const [alertas, setAlertas] = useState([]);
-  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const hoy = new Date();
     const alertasDetectadas = productos.flatMap((producto) => {
       const alertasProducto = [];
 
-      if (producto.stock < producto.stockCritico) {
+      const stock = Number(producto.stock);
+      const stockCritico = Number(producto.stockCritico);
+
+      if (!isNaN(stock) && !isNaN(stockCritico) && stock <= stockCritico) {
         alertasProducto.push({
           tipo: "stock",
           mensaje: `${producto.nombre} tiene bajo stock (${producto.stock} ${producto.unidad})`,
         });
       }
 
-      const fechaVenc = new Date(producto.fechaVencimiento);
-      const diferenciaDias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
+      if (producto.fechaVencimiento) {
+        const fechaVenc = new Date(producto.fechaVencimiento);
+        const diferenciaDias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
 
-      if (!isNaN(diferenciaDias)) {
-        if (diferenciaDias <= 10 && diferenciaDias > 5) {
-          alertasProducto.push({
-            tipo: "vencimiento-próximo",
-            mensaje: `${producto.nombre} vence en ${diferenciaDias} días`,
-          });
-        } else if (diferenciaDias <= 5 && diferenciaDias >= 0) {
-          alertasProducto.push({
-            tipo: "vencimiento-urgente",
-            mensaje: `${producto.nombre} vence en ${diferenciaDias} días. Tomar acción urgente.`,
-          });
+        if (!isNaN(diferenciaDias)) {
+          if (diferenciaDias <= 10 && diferenciaDias > 5) {
+            alertasProducto.push({
+              tipo: "vencimiento-próximo",
+              mensaje: `${producto.nombre} vence en ${diferenciaDias} días`,
+            });
+          } else if (diferenciaDias <= 5 && diferenciaDias >= 0) {
+            alertasProducto.push({
+              tipo: "vencimiento-urgente",
+              mensaje: `${producto.nombre} vence en ${diferenciaDias} días. Tomar acción urgente.`,
+            });
+          }
         }
       }
 
@@ -77,8 +81,8 @@ export default function AlertaStockModal({ productos }) {
         </ul>
 
         <div className="text-end">
-          <button className="btn btn-sm btn-outline-light" onClick={() => setVisible(false)}>
-          Cerrar
+          <button className="btn btn-sm btn-outline-light" onClick={onClose}>
+            Cerrar
           </button>
         </div>
       </div>

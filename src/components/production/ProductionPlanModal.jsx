@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { startRun } from "../../api/productionRuns";
+import { motion } from "framer-motion";
+
 
 export default function ProductionPlanModal({
   apiBase,
@@ -76,38 +78,60 @@ export default function ProductionPlanModal({
       <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
         <h5 className="mb-2">Insumos requeridos</h5>
 
-        <div className="mb-2">
-          <label className="form-label">Receta</label>
-          <select
-            className="form-select form-select-sm"
-            value={recipeId}
-            onChange={(e) => {
-              setRecipeId(e.target.value);
-              setChecked({});
-            }}
-          >
-            <option value="">Seleccioná…</option>
-            {recipes.map((r) => (
-              <option key={r._id} value={r._id}>
-                {r.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* ===== Selector de receta con cards pequeñas ===== */}
+<div className="mb-2">
+  <label className="form-label">Receta</label>
+  <div className="d-flex flex-wrap gap-2">
+    {recipes.map((r) => {
+      const activa = recipeId === r._id;
+      return (
+        <motion.button
+          key={r._id}
+          className="shadow-sm text-white text-center p-2"
+          style={{
+            backgroundColor: activa ? "#28a745" : "#222",
+            border: activa ? "2px solid #28a745" : "1px solid #6c6c6cff",
+            borderRadius: "8px",
+            minWidth: "120px",
+            minHeight: "60px",
+            fontSize: "0.9rem"
+          }}
+          onClick={() => {
+            setRecipeId(r._id);
+            setChecked({});
+          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {r.nombre}
+        </motion.button>
+      );
+    })}
+  </div>
+</div>
 
-        <div className="mb-3">
-          <label className="form-label">Cantidad a producir (unidades)</label>
-          <input
-            className="form-control form-control-sm"
-            type="number"
-            min={0}
-            value={cantidad}
-            onChange={(e) => {
-              setCantidad(e.target.value);
-              setChecked({});
-            }}
-          />
-        </div>
+
+  <div className="mb-3">
+  <label className="form-label fw-bold">Cantidad a producir (unidades)</label>
+  <div className="input-group input-group-lg" style={{ maxWidth: "250px" }}>
+    <span className="input-group-text">📦</span>
+    <input
+      type="number"
+      min={0}
+      className="form-control"
+      value={cantidad}
+      onChange={(e) => {
+        setCantidad(e.target.value);
+        setChecked({});
+      }}
+    />
+  </div>
+</div>
+
+
 
         {recipe && (
           <ul className="list-unstyled small mb-3">
@@ -125,10 +149,10 @@ export default function ProductionPlanModal({
                   />
                   <div>
                     <strong>{ing.nombreProducto}</strong>{" "}
-                    <span className="text-muted">
+                    <span className="text-white">
                       — requerido: {ing.total} {ing.unidadBase}
                     </span>
-                    <div className="text-muted">
+                    <div className="text-info">
                       disponible: {Number(ing.disponible).toFixed(3)} (en stock)
                     </div>
                   </div>
@@ -142,13 +166,7 @@ export default function ProductionPlanModal({
           <button className="btn btn-secondary btn-sm" onClick={onClose}>
             Cancelar
           </button>
-          <button
-            className="btn btn-outline-light btn-sm"
-            disabled={!recipeId || !cantidad}
-            onClick={() => handleStart(false)}
-          >
-            Solo iniciar (sin consumir)
-          </button>
+        
           <button
             className="btn btn-success btn-sm"
             disabled={!recipeId || !cantidad || !allChecked}
@@ -159,9 +177,6 @@ export default function ProductionPlanModal({
           </button>
         </div>
 
-        <div className="mt-2 small text-muted">
-          * El descuento real se hace por FEFO. Si consumís ahora, al confirmar no vuelve a descontar; solo cerrará el run y registrará el tiempo y unidades producidas.
-        </div>
       </div>
     </div>
   );

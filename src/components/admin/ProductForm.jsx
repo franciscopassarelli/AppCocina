@@ -27,6 +27,19 @@ export default function ProductForm() {
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
   const departamentosUnicos = [...new Set(productos.map((p) => p.departamento))];
+  const [mostrarAlertaStock, setMostrarAlertaStock] = useState(false);
+
+useEffect(() => {
+  if (productos.length === 0) {
+    setMostrarAlertaStock(false);
+    return;
+  }
+  const hayAlerta = productos.some(
+    p => p.stock <= p.stockCritico || new Date(p.fechaVencimiento) < new Date()
+  );
+  setMostrarAlertaStock(hayAlerta);
+}, [productos]);
+
 
 
 
@@ -168,7 +181,11 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
 
     <>
 
- <AlertaStockModal productos={productos} />
+ <AlertaStockModal
+      productos={productos}
+      visible={mostrarAlertaStock}
+      onClose={() => setMostrarAlertaStock(false)}
+    />
 
 
 

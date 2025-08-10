@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
 import "../cook/Cookpanel.css";
-import AlertaStockModal from "../admin/AlertaStockModal";
+import AlertaStockModal from "../admin/AlertaStockModal.jsx"
 import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
@@ -23,10 +23,12 @@ export default function CookPanel() {
   const [usoDelDia, setUsoDelDia] = useState("");
   const [unidades, setUnidades] = useState("");
   const [alerta, setAlerta] = useState(null);
-  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true)
   const [cargando, setCargando] = useState(false);
-  const [departamentoActivo, setDepartamentoActivo] = useState(null);
+  const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
+  const [departamentoActivoListado, setDepartamentoActivoListado] = useState(null);
   const [fechaVencimientoElaborado, setFechaVencimientoElaborado] = useState("");
+  
 
   // ===== Producción (recetas / runs) =====
   const [recipes, setRecipes] = useState([]);
@@ -212,8 +214,11 @@ export default function CookPanel() {
 
   return (
     <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
-      <AlertaStockModal productos={productos} />
-
+ <AlertaStockModal
+        productos={productos}
+        visible={mostrarAlertaStock}
+        onClose={() => setMostrarAlertaStock(false)}
+      />
       <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
         <GiChefToque size={40} />
         <span>Panel de Cocina</span>
@@ -245,46 +250,97 @@ export default function CookPanel() {
           {alerta}
         </div>
       )}
+{/* ===== Ingreso rápido de stock ===== */}
+<div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+  <h5 className="mb-3 text-center">Ingreso rápido de stock</h5>
 
-      {/* ===== Ingreso rápido de stock ===== */}
-      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
-        <h5 className="mb-3">Ingreso rápido de stock</h5>
-        <div className="d-flex gap-2 align-items-center flex-wrap">
-          <select
-            className="form-select form-select-sm bg-dark text-white"
-            style={{ minWidth: 260 }}
-            onChange={(e) => {
-              const prod = productos.find((p) => p._id === e.target.value);
-              setProductoParaStock(prod || null);
-            }}
+  {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
+    <motion.div
+      key={depto}
+      className="text-white my-3 py-2 px-3 rounded border mx-auto"
+      style={{
+        cursor: "pointer",
+        backgroundColor: "#111",
+        borderColor: "#444",
+        width: "95%",
+        maxWidth: "900px"
+      }}
+      onClick={() => {
+  // Abrir departamento en ingreso rápido
+  setDepartamentoActivoRapido(depto === departamentoActivoRapido ? null : depto);
+  // Cerrar listado normal
+  setDepartamentoActivoListado(null);
+}}
+
+      whileHover={{ scale: 1.015 }}
+    >
+      <h5
+        className="mb-2 text-center text-uppercase"
+        style={{ letterSpacing: "1px" }}
+      >
+        {depto}
+      </h5>
+
+      <AnimatePresence>
+        {departamentoActivoRapido === depto && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
           >
-            <option value="">Seleccionar producto…</option>
-            {productos.map((p) => (
-              <option key={p._id} value={p._id}>
-                {p.nombre} ({p.stock} {p.unidad})
-              </option>
+            {productosDepto.map((p) => (
+              <motion.button
+                key={p._id}
+                className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
+                style={{
+                  backgroundColor: "#222",
+                  color: "white",
+                  border: "1px solid white",
+                  borderRadius: "10px",
+                  minWidth: "170px",
+                  minHeight: "120px"
+                }}
+                onClick={() => {
+                  setProductoParaStock(p);
+                  setShowQuickStock(true);
+                }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <strong style={{ fontSize: "1.1rem" }}>{p.nombre}</strong>
+                <div className="small mt-2 text-secondary">
+                  Stock: {Number(p.stock).toFixed(2)} {p.unidad}
+                </div>
+              </motion.button>
             ))}
-          </select>
-          <button
-            className="btn btn-success btn-sm"
-            disabled={!productoParaStock}
-            onClick={() => setShowQuickStock(true)}
-          >
-            Agregar lote
-          </button>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  ))}
+</div>
+
+
 
       {/* ===== Producción (recetas) ===== */}
+
+      
       <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
         <h5 className="mb-2">Producción</h5>
-        <p className="small text-muted">Planificar → iniciar (timer) → confirmar (descuento automático por FEFO)</p>
+        <p className="small text-info">Planificar → iniciar (timer) → confirmar</p>
         <button className="btn btn-outline-light btn-sm" onClick={() => setShowPlan(true)}>
           Nueva producción
         </button>
       </div>
 
       {/* ===== Listado por departamento (flujo existente) ===== */}
+      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+  <h5 className="mb-3 text-center">Uso Manual del stock</h5>
       {!productoSeleccionado && (
         <div>
           {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
@@ -292,7 +348,13 @@ export default function CookPanel() {
               key={depto}
               className="text-white my-3 py-2 px-3 rounded border mx-auto"
               style={{ cursor: "pointer", backgroundColor: "#111", borderColor: "#444", width: "95%", maxWidth: "900px" }}
-              onClick={() => setDepartamentoActivo(depto === departamentoActivo ? null : depto)}
+              onClick={() => {
+  // Abrir departamento en listado normal
+  setDepartamentoActivoListado(depto === departamentoActivoListado ? null : depto);
+  // Cerrar ingreso rápido
+  setDepartamentoActivoRapido(null);
+}}
+
               whileHover={{ scale: 1.015 }}
             >
               <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
@@ -300,7 +362,7 @@ export default function CookPanel() {
               </h5>
 
               <AnimatePresence>
-                {departamentoActivo === depto && (
+                {departamentoActivoListado === depto && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -333,6 +395,7 @@ export default function CookPanel() {
           ))}
         </div>
       )}
+      </div>
 
       <AnimatePresence>
         {productoSeleccionado && (

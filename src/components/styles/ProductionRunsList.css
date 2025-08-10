@@ -1,0 +1,67 @@
+/* ProductionRunsList.css */
+
+.custom-table {
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  width: 100%;
+}
+
+.custom-table th,
+.custom-table td {
+  vertical-align: middle;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.table-dark th {
+  background-color: #343a40 !important;
+  color: #f8f9fa !important;
+  border-bottom: none !important;
+}
+
+.table-row-even {
+  background-color: #212529;
+  color: #f8f9fa;
+}
+
+.table-row-odd {
+  background-color: #2c3034;
+  color: #e9ecef;
+}
+
+.table-row-even:hover,
+.table-row-odd:hover {
+  background-color: #495057;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Responsividad */
+
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+  }
+  
+  /* Opcional: reducir columnas en móvil (mostrar solo lo esencial) */
+  .custom-table th:nth-child(3),
+  .custom-table th:nth-child(5),
+  .custom-table td:nth-child(3),
+  .custom-table td:nth-child(5) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-table th,
+  .custom-table td {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+}
