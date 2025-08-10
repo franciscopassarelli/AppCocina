@@ -290,11 +290,17 @@ export default function RecipeAdmin() {
               <i className="bi bi-trash" />
             </button>
           </td>
+          
+                      
         </tr>
       ))}
     </tbody>
   </table>
 </div>
+        <button type="button" className="btn btn-outline-secondary btn-sm mb-3" onClick={addFila}>
+          <i className="bi bi-plus-circle me-1" /> Agregar ingrediente
+        </button>      
+
 
         <div className="text-end">
           <button className="btn btn-success" disabled={guardando}>
