@@ -3,6 +3,8 @@ import { useProductos } from "../context/ProductoContext";
 import { getRecipes, createRecipe, updateRecipe, deleteRecipe } from "../api/recipes";
 import ProductionRunsList from "../components/production/ProductionRunsList";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "../components/styles/RecipeAdmin.css";
+
 
 const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
 
@@ -228,78 +230,71 @@ export default function RecipeAdmin() {
         </div>
 
         <h6 className="mt-2">Ingredientes</h6>
-        <div className="table-responsive">
-          <table className="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th style={{ minWidth: 240 }}>Producto</th>
-                <th style={{ width: 120 }}>Unidad base</th>
-                <th style={{ width: 160 }}>Cant. por unidad</th>
-                <th style={{ width: 60 }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {ingredientes.map((ing, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <select
-                      className="form-select form-select-sm"
-                      value={ing.productoId}
-                      onChange={(e) => onChangeProducto(idx, e.target.value)}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {productos.map((p) => (
-                        <option key={p._id} value={p._id}>
-                          {p.nombre} — stock: {p.stock} {p.unidad}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <select
-                      className="form-select form-select-sm"
-                      value={ing.unidadBase}
-                      onChange={(e) => setCampo(idx, "unidadBase", e.target.value)}
-                    >
-                      {UNIDADES.map((u) => (
-                        <option key={u} value={u}>
-                          {u}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      className="form-control form-control-sm"
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={ing.cantidadPorUnidad}
-                      onChange={(e) => setCampo(idx, "cantidadPorUnidad", e.target.value)}
-                      placeholder="ej: 1000 (g), 0.5 (l)"
-                    />
-                  </td>
-                  <td className="text-end">
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger btn-sm"
-                      onClick={() => delFila(idx)}
-                    >
-                      <i className="bi bi-trash" />
-                    </button>
-                  </td>
-                </tr>
+     <div className="table-responsive responsive-table">
+  <table className="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th style={{ minWidth: 240 }}>Producto</th>
+        <th style={{ width: 120 }}>Unidad base</th>
+        <th style={{ width: 160 }}>Cant. por unidad</th>
+        <th style={{ width: 60 }}></th>
+      </tr>
+    </thead>
+    <tbody>
+      {ingredientes.map((ing, idx) => (
+        <tr key={idx}>
+          <td data-label="Producto">
+            <select
+              className="form-select form-select-sm"
+              value={ing.productoId}
+              onChange={(e) => onChangeProducto(idx, e.target.value)}
+            >
+              <option value="">Seleccionar...</option>
+              {productos.map((p) => (
+                <option key={p._id} value={p._id}>
+                  {p.nombre} — stock: {p.stock} {p.unidad}
+                </option>
               ))}
-              <tr>
-                <td colSpan={4}>
-                  <button type="button" className="btn btn-outline-secondary btn-sm" onClick={addFila}>
-                    <i className="bi bi-plus-circle me-1" /> Agregar ingrediente
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            </select>
+          </td>
+          <td data-label="Unidad base">
+            <select
+              className="form-select form-select-sm"
+              value={ing.unidadBase}
+              onChange={(e) => setCampo(idx, "unidadBase", e.target.value)}
+            >
+              {UNIDADES.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+          </td>
+          <td data-label="Cantidad">
+            <input
+              className="form-control form-control-sm"
+              type="number"
+              min="0"
+              step="any"
+              value={ing.cantidadPorUnidad}
+              onChange={(e) => setCampo(idx, "cantidadPorUnidad", e.target.value)}
+              placeholder="ej: 1000 (g), 0.5 (l)"
+            />
+          </td>
+          <td data-label="Acciones" className="text-end">
+            <button
+              type="button"
+              className="btn btn-outline-danger btn-sm"
+              onClick={() => delFila(idx)}
+            >
+              <i className="bi bi-trash" />
+            </button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
         <div className="text-end">
           <button className="btn btn-success" disabled={guardando}>

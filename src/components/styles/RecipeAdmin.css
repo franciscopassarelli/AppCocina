@@ -1,0 +1,59 @@
+/* Estilos generales */
+.table td, 
+.table th {
+  vertical-align: middle;
+}
+
+/* 📱 Ajustes para móviles */
+@media (max-width: 768px) {
+  /* Hace que la tabla se vea tipo tarjetas/lista */
+  .responsive-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .responsive-table table {
+    border: 0;
+  }
+
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table tr {
+    margin-bottom: 1rem;
+    display: block;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+
+  .responsive-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: 0.5rem;
+    color: #555;
+  }
+
+  /* Inputs y selects a pantalla completa */
+  .form-control,
+  .form-select {
+    width: 100% !important;
+    font-size: 0.9rem;
+  }
+}

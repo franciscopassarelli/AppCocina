@@ -1,67 +1,114 @@
-/* ProductionRunsList.css */
+/* Contenedor header: separa título/acciones y se apila en mobile */
+.header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-bottom: .5rem;
+}
 
-.custom-table {
-  border-collapse: separate;
-  border-spacing: 0 8px;
+.header-bar .actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+/* Asegura scroll horizontal en pantallas medianas si hace falta */
+.table-responsive {
   width: 100%;
+  overflow-x: auto;
 }
 
-.custom-table th,
-.custom-table td {
-  vertical-align: middle;
-  padding: 12px 15px;
-  text-align: left;
+/* Textos útiles */
+.nowrap {
+  white-space: nowrap;
 }
 
-.table-dark th {
-  background-color: #343a40 !important;
-  color: #f8f9fa !important;
-  border-bottom: none !important;
+/* Consumidos: permite salto de línea natural. Truncamos en desktop si se hace infinito */
+.consumidos-cell {
+  max-width: 680px;
+  white-space: normal;
+  word-break: break-word;
 }
 
-.table-row-even {
-  background-color: #212529;
-  color: #f8f9fa;
-}
+/* Rayado custom (ya lo usás) */
+.table-row-even { background-color: #ffffff; }
+.table-row-odd  { background-color: #f8f9fa; }
 
-.table-row-odd {
-  background-color: #2c3034;
-  color: #e9ecef;
-}
-
-.table-row-even:hover,
-.table-row-odd:hover {
-  background-color: #495057;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-/* Responsividad */
-
+/* ====== Mobile-first Cards (≤ 768px) ====== */
 @media (max-width: 768px) {
-  .table-responsive {
-    overflow-x: auto;
-  }
-
-  .custom-table th,
-  .custom-table td {
-    padding: 8px 10px;
-    font-size: 0.85rem;
-  }
-  
-  /* Opcional: reducir columnas en móvil (mostrar solo lo esencial) */
-  .custom-table th:nth-child(3),
-  .custom-table th:nth-child(5),
-  .custom-table td:nth-child(3),
-  .custom-table td:nth-child(5) {
+  /* Oculta encabezado de tabla y convierte filas a “tarjeta” */
+  .custom-table thead {
     display: none;
   }
+
+  .custom-table,
+  .custom-table tbody,
+  .custom-table tr,
+  .custom-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .custom-table tr {
+    border: 1px solid #e3e3e3;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    background: #fff;
+  }
+
+  .custom-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border: none !important;
+    padding: 6px 0;
+    gap: 10px;
+  }
+
+  /* Etiqueta (columna) a la izquierda */
+  .custom-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #6c757d;
+    flex: 0 0 46%;
+    max-width: 46%;
+  }
+
+  /* Valor a la derecha */
+  .custom-table td {
+    color: #212529;
+  }
+
+  /* Ajustes de células largas */
+  .custom-table td.nowrap {
+    white-space: normal; /* deja envolver en mobile */
+  }
+
+  .consumidos-cell {
+    max-height: none;
+  }
+
+  /* Botonera arriba: apilar y ocupar ancho completo si hace falta */
+  .header-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-bar .actions {
+    width: 100%;
+  }
+
+  .header-bar .actions .btn {
+    flex: 1 1 48%;
+  }
 }
 
-@media (max-width: 480px) {
-  .custom-table th,
-  .custom-table td {
-    font-size: 0.75rem;
-    padding: 6px 8px;
+/* ====== Compacidad en pantallas muy chicas (≤ 380px) ====== */
+@media (max-width: 380px) {
+  .custom-table td::before {
+    flex-basis: 40%;
+    max-width: 40%;
   }
 }

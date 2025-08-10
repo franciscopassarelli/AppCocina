@@ -11,6 +11,7 @@ const ConsumidoLoteSchema = new Schema(
     lote: String,
     cantidad: { type: Number, min: 0 },
     fechaVencimiento: Date,
+    
   },
   { _id: false }
 );
@@ -57,6 +58,7 @@ const ProductionRunSchema = new Schema(
   {
     recipeId: { type: Schema.Types.ObjectId, ref: 'Recipe', required: true },
     recipeNombre: { type: String, required: true },
+    fechaVencimientoProductoFinal: { type: Date },
 
     unidadesPlanificadas: { type: Number, required: true, min: 0 },
     unidadesProducidas: { type: Number, default: 0, min: 0 },

@@ -202,6 +202,9 @@ router.post('/:id/confirm', async (req, res) => {
 
     // cerrar run
     run.unidadesProducidas = Number(unidadesProducidas || 0);
+    run.fechaVencimientoProductoFinal = fechaVencimientoProductoFinal
+  ? new Date(fechaVencimientoProductoFinal)
+  : null;
     run.endedAt = new Date();
     run.durationSec = Math.round((run.endedAt - run.startedAt) / 1000);
 
