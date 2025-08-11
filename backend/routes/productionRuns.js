@@ -19,8 +19,6 @@ function calcularRequeridos(recipe, unidades) {
   }));
 }
 
-
-
 // GET /production-runs  → lista de corridas de producción
 router.get('/', async (req, res) => {
   try {
@@ -138,15 +136,18 @@ router.post('/:id/consume', async (req, res) => {
   }
 });
 
-
-
-
 // POST /production-runs/:id/confirm  → cerrar (si no consumiste antes, descuenta ahora)
 router.post('/:id/confirm', async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { unidadesProducidas, fechaVencimientoProductoFinal, productoFinalId } = req.body;
+    const {
+      unidadesProducidas,
+      fechaVencimientoProductoFinal,
+      productoFinalId,
+      preparadoPor, 
+    } = req.body;
+
     const run = await ProductionRun.findById(req.params.id).session(session);
     if (!run) return res.status(404).json({ error: 'Run not found' });
 
@@ -206,8 +207,13 @@ router.post('/:id/confirm', async (req, res) => {
     // cerrar run
     run.unidadesProducidas = Number(unidadesProducidas || 0);
     run.fechaVencimientoProductoFinal = fechaVencimientoProductoFinal
-  ? new Date(fechaVencimientoProductoFinal)
-  : null;
+      ? new Date(fechaVencimientoProductoFinal)
+      : null;
+
+    if (preparadoPor) {
+      run.preparadoPor = String(preparadoPor).trim(); // 👈 guardar nombre
+    }
+
     run.endedAt = new Date();
     run.durationSec = Math.round((run.endedAt - run.startedAt) / 1000);
 
@@ -265,6 +271,7 @@ router.get('/export', async (_req, res) => {
     const header = [
       'createdAt',
       'recipeNombre',
+      'preparadoPor',             
       'unidadesPlanificadas',
       'unidadesProducidas',
       'startedAt',
@@ -275,6 +282,7 @@ router.get('/export', async (_req, res) => {
       [
         r.createdAt?.toISOString() || '',
         JSON.stringify(r.recipeNombre || ''),
+        JSON.stringify(r.preparadoPor || ''), // 👈 nuevo en CSV
         r.unidadesPlanificadas || 0,
         r.unidadesProducidas || 0,
         r.startedAt ? r.startedAt.toISOString() : '',
@@ -303,6 +311,5 @@ router.get("/active", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-
 
 module.exports = router;

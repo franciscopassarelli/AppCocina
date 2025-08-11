@@ -30,7 +30,6 @@ export default function ProductionRunsList({ apiBase }) {
 
   // Función para exportar a Excel
   function exportToExcel() {
-    // Mapear datos para exportar en formato plano
     const data = runs.map((r) => {
       const inicio = r.startedAt ? new Date(r.startedAt).toLocaleString("es-AR") : "—";
       const dur = r.durationSec
@@ -54,6 +53,7 @@ export default function ProductionRunsList({ apiBase }) {
       return {
         Inicio: inicio,
         Receta: r.recipeNombre,
+        "Preparado por": r.preparadoPor || "", // 👈 nuevo en Excel
         Planificadas: r.unidadesPlanificadas,
         Producidas: r.unidadesProducidas ?? 0,
         Duración: dur,
@@ -62,18 +62,11 @@ export default function ProductionRunsList({ apiBase }) {
       };
     });
 
-    // Crear worksheet y workbook
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Producciones");
 
-    // Generar buffer Excel
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    // Descargar archivo
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(blob, "producciones.xlsx");
   }
@@ -107,6 +100,7 @@ export default function ProductionRunsList({ apiBase }) {
               <tr>
                 <th>Inicio</th>
                 <th>Receta</th>
+                <th>Preparado por</th>
                 <th>Planif.</th>
                 <th>Producidas</th>
                 <th>Duración</th>
@@ -143,11 +137,12 @@ export default function ProductionRunsList({ apiBase }) {
                   >
                     <td data-label="Inicio">{inicio}</td>
                     <td data-label="Receta" className="nowrap">{r.recipeNombre}</td>
+                    <td data-label="Preparado por" className="nowrap">{r.preparadoPor || "—"}</td>
                     <td data-label="Planif.">{r.unidadesPlanificadas}</td>
                     <td data-label="Producidas">{r.unidadesProducidas ?? 0}</td>
                     <td data-label="Duración">{dur}</td>
                     <td data-label="Vencimiento">{fechaVencFormateada}</td>
-                    <td data-label="Insumos consumidos" >{consumidos}</td>
+                    <td data-label="Insumos consumidos">{consumidos}</td>
                   </tr>
                 );
               })}

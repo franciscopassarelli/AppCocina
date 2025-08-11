@@ -10,6 +10,7 @@ export default function ProductionConfirmModal({
   const [producidas, setProducidas] = useState("");
   const [fechaVenc, setFechaVenc] = useState("");
   const [noAplicaVenc, setNoAplicaVenc] = useState(false);
+  const [nombreOperario, setNombreOperario] = useState(""); // 👈 nuevo
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -19,6 +20,7 @@ export default function ProductionConfirmModal({
     setProducidas("");
     setFechaVenc("");
     setNoAplicaVenc(false);
+    setNombreOperario(run?.preparadoPor || ""); // por si ya existe
   }, [run, show]);
 
   if (!show || !run) return null;
@@ -28,6 +30,12 @@ export default function ProductionConfirmModal({
     const nProducidas = Number(producidas);
     if (!Number.isFinite(nProducidas) || nProducidas <= 0) {
       setErrorMsg("Ingresá la cantidad de unidades producidas (mayor a 0).");
+      return;
+    }
+
+    const nombre = (nombreOperario || "").trim();
+    if (!nombre) {
+      setErrorMsg("Ingresá el nombre de quien produjo la receta.");
       return;
     }
 
@@ -61,7 +69,7 @@ export default function ProductionConfirmModal({
     try {
       const payload = {
         unidadesProducidas: nProducidas,
-        // solo enviamos la fecha si aplica
+        preparadoPor: nombre,
         ...(noAplicaVenc ? {} : { fechaVencimientoProductoFinal: fechaVenc }),
       };
 
@@ -82,15 +90,33 @@ export default function ProductionConfirmModal({
     loading ||
     !producidas ||
     Number(producidas) <= 0 ||
-    (!noAplicaVenc && !fechaVenc);
+    (!noAplicaVenc && !fechaVenc) ||
+    !(nombreOperario || "").trim(); // 👈 deshabilita si no hay nombre
 
   return (
     <div className="alerta-overlay" onClick={() => onClose(false)}>
       <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
         <h5 className="mb-2">Confirmar producción – {run.recipeNombre}</h5>
-        <p className="small text-muted">Planificado: {run.unidadesPlanificadas}</p>
+        <p className="small text-info">Planificado: {run.unidadesPlanificadas}</p>
 
         {errorMsg && <div className="alert alert-danger py-1 mb-2">{errorMsg}</div>}
+
+        {/* Nombre del operario */}
+        <div className="mb-2">
+          <label className="form-label">
+            Nombre de quien produjo <span className="text-danger">*</span>
+          </label>
+          <input
+            type="text"
+            className="form-control form-control-sm"
+            value={nombreOperario}
+            onChange={(e) => setNombreOperario(e.target.value)}
+            maxLength={80}
+            placeholder="Ej: Juan Pérez"
+            autoFocus
+            required
+          />
+        </div>
 
         <div className="mb-2">
           <label className="form-label">

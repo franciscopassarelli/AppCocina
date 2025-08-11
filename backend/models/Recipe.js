@@ -4,9 +4,10 @@ const { Schema, model } = require('mongoose');
 const IngredientSchema = new Schema({
   productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
   nombreProducto: { type: String, required: true },
-  unidadBase: { type: String, enum: ['kg', 'g', 'l', 'unidad'], required: true },
+  // 👇 alineado con lo que usás en toda la app
+  unidadBase: { type: String, enum: ['g', 'kg', 'ml', 'l', 'unidad'], required: true },
   cantidadPorUnidad: { type: Number, required: true, min: 0 },
-});
+}, { _id: false });
 
 const RecipeSchema = new Schema(
   {

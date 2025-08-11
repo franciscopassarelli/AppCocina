@@ -71,7 +71,12 @@ export default function RecipeAdmin() {
               ...ing,
               productoId,
               nombreProducto: prod ? prod.nombre : "",
-              unidadBase: prod?.unidad === "kg" ? "g" : prod?.unidad === "l" ? "ml" : "unidad",
+              unidadBase:
+             prod?.unidad === "kg" || prod?.unidad === "g"
+               ? "g"
+               : prod?.unidad === "l" || prod?.unidad === "ml"
+               ? "ml"
+               : "unidad",
             }
           : ing
       )
@@ -150,7 +155,12 @@ export default function RecipeAdmin() {
               ...ing,
               productoId,
               nombreProducto: prod ? prod.nombre : "",
-              unidadBase: prod?.unidad === "kg" ? "g" : prod?.unidad === "l" ? "ml" : "unidad",
+              unidadBase:
+             prod?.unidad === "kg" || prod?.unidad === "g"
+               ? "g"
+               : prod?.unidad === "l" || prod?.unidad === "ml"
+               ? "ml"
+               : "unidad",
             }
           : ing
       ),

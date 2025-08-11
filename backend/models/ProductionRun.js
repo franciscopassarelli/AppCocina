@@ -11,7 +11,6 @@ const ConsumidoLoteSchema = new Schema(
     lote: String,
     cantidad: { type: Number, min: 0 },
     fechaVencimiento: Date,
-    
   },
   { _id: false }
 );
@@ -72,6 +71,9 @@ const ProductionRunSchema = new Schema(
 
     // Quién inició la corrida (opcional)
     creadoPor: { type: String },
+
+    // Quién produjo (se setea al confirmar)
+    preparadoPor: { type: String }, // 👈 nuevo
 
     // Estado del run: 'open' al iniciar, 'closed' al confirmar
     status: {

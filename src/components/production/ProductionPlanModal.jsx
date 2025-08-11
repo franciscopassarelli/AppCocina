@@ -16,6 +16,34 @@ export default function ProductionPlanModal({
   const [checked, setChecked] = useState({}); // idx -> bool
   const [msg, setMsg] = useState(null); // Para mensajes de error o éxito
 
+
+  const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
+
+function formatCantidad(cant, unidadBase) {
+  const n = Number(cant) || 0;
+
+  if (unidadBase === "g") {
+    if (n >= 1000) return `${nf2.format(n / 1000)} kg`;
+    return `${nf0.format(n)} g`;
+  }
+  if (unidadBase === "kg") {
+    if (n < 1 && n > 0) return `${nf0.format(n * 1000)} g`;
+    return `${nf2.format(n)} kg`;
+  }
+  if (unidadBase === "ml") {
+    if (n >= 1000) return `${nf2.format(n / 1000)} l`;
+    return `${nf0.format(n)} ml`;
+  }
+  if (unidadBase === "l") {
+    if (n < 1 && n > 0) return `${nf0.format(n * 1000)} ml`;
+    return `${nf2.format(n)} l`;
+  }
+  // unidad “unidad”
+  return nf0.format(n);
+}
+
+
   const recipe = useMemo(() => recipes.find((r) => r._id === recipeId), [
     recipes,
     recipeId,
@@ -23,37 +51,36 @@ export default function ProductionPlanModal({
 
   // Calcular requeridos según cantidad elegida
   const requeridos = useMemo(() => {
-  if (!recipe || !cantidad) return [];
-  const n = Number(cantidad) || 0;
-  return recipe.ingredientes.map((ing, idx) => {
-    const total = +(Number(ing.cantidadPorUnidad || 0) * n).toFixed(3);
-    const prod = productos?.find((p) => p._id === ing.productoId);
-    const disponibleRaw = prod?.stock ?? 0;
-    let disponible = disponibleRaw;
+    if (!recipe || !cantidad) return [];
+    const n = Number(cantidad) || 0;
+    return recipe.ingredientes.map((ing, idx) => {
+      const total = +(Number(ing.cantidadPorUnidad || 0) * n).toFixed(3);
+      const prod = productos?.find((p) => p._id === ing.productoId);
+      const disponibleRaw = prod?.stock ?? 0;
+      let disponible = disponibleRaw;
 
-    if (prod) {
-      if (prod.unidad === "kg" && ing.unidadBase === "g") {
-        disponible = disponibleRaw * 1000;
-      } else if (prod.unidad === "g" && ing.unidadBase === "kg") {
-        disponible = disponibleRaw / 1000;
-      } else if (prod.unidad === "l" && ing.unidadBase === "ml") {
-        disponible = disponibleRaw * 1000;
-      } else if (prod.unidad === "ml" && ing.unidadBase === "l") {
-        disponible = disponibleRaw / 1000;
+      if (prod) {
+        if (prod.unidad === "kg" && ing.unidadBase === "g") {
+          disponible = disponibleRaw * 1000;
+        } else if (prod.unidad === "g" && ing.unidadBase === "kg") {
+          disponible = disponibleRaw / 1000;
+        } else if (prod.unidad === "l" && ing.unidadBase === "ml") {
+          disponible = disponibleRaw * 1000;
+        } else if (prod.unidad === "ml" && ing.unidadBase === "l") {
+          disponible = disponibleRaw / 1000;
+        }
       }
-    }
 
-    return {
-      idx,
-      productoId: ing.productoId,
-      nombreProducto: ing.nombreProducto,
-      unidadBase: ing.unidadBase,
-      total,
-      disponible,
-    };
-  });
-}, [recipe, cantidad, productos]);
-
+      return {
+        idx,
+        productoId: ing.productoId,
+        nombreProducto: ing.nombreProducto,
+        unidadBase: ing.unidadBase,
+        total,
+        disponible,
+      };
+    });
+  }, [recipe, cantidad, productos]);
 
   const allChecked =
     requeridos.length > 0 && requeridos.every((r) => checked[r.idx]);
@@ -84,6 +111,8 @@ export default function ProductionPlanModal({
         unidadesPlanificadas: Number(cantidad),
       });
 
+      let updatedRun = run;
+
       if (consumirAhora) {
         // 2) Consumir sólo los insumos tildados
         const items = requeridos
@@ -92,6 +121,7 @@ export default function ProductionPlanModal({
             productoId: r.productoId,
             cantidad: r.total,
             unidad: r.unidadBase,
+            nombreProducto: r.nombreProducto, // opcional: útil para UI
           }));
 
         const res = await fetch(`${apiBase}/production-runs/${run._id}/consume`, {
@@ -109,10 +139,18 @@ export default function ProductionPlanModal({
             throw new Error(t);
           }
         }
+
+        // ✅ tomar el run actualizado del backend { ok: true, run }
+        try {
+          const payload = await res.json();
+          if (payload?.run) updatedRun = payload.run;
+        } catch {
+          // si no hay JSON (no debería pasar), dejamos updatedRun = run
+        }
       }
 
       setMsg({ type: "success", text: "Producción iniciada correctamente" });
-      onStarted?.(run);
+      onStarted?.(updatedRun); // 👈 subimos el run actualizado (con ingredientesConsumidos)
       onClose?.();
       setRecipeId("");
       setCantidad("");
@@ -139,71 +177,66 @@ export default function ProductionPlanModal({
           </div>
         )}
 
-     {/* Selector de receta */}
-<div className="mb-2">
-  <label className="form-label">Receta</label>
-  {/* ⬇️ aquí reemplazás el .map viejo por el nuevo con isBlocked */}
-  <div className="d-flex flex-wrap gap-2">
-    {recipes.map((r) => {
-      const activa = recipeId === r._id;
-      const isBlocked = blockedRecipes?.includes(r._id) || blockedRecipes?.includes(r.nombre);
+        {/* Selector de receta */}
+        <div className="mb-2">
+          <label className="form-label">Receta</label>
+          {/* ⬇️ aquí reemplazás el .map viejo por el nuevo con isBlocked */}
+          <div className="d-flex flex-wrap gap-2">
+            {recipes.map((r) => {
+              const activa = recipeId === r._id;
+              const isBlocked =
+                blockedRecipes?.includes(r._id) || blockedRecipes?.includes(r.nombre);
 
-      return (
-        <motion.button
-          key={r._id}
-          className="shadow-sm text-white text-center p-2 position-relative"
-          style={{
-            backgroundColor: activa ? "#28a745" : "#222",
-            border: activa
-              ? "2px solid #28a745"
-              : "1px solid #6c6c6cff",
-            borderRadius: "8px",
-            minWidth: "120px",
-            minHeight: "60px",
-            fontSize: "0.9rem",
-            opacity: isBlocked ? 0.6 : 1,
-            cursor: isBlocked ? "not-allowed" : "pointer",
-          }}
-          disabled={isBlocked}
-          title={
-            isBlocked
-              ? "Ya hay una producción activa para esta receta"
-              : "Seleccionar receta"
-          }
-          onClick={() => {
-            if (isBlocked) return;
-            setRecipeId(r._id);
-            setChecked({});
-            setMsg(null);
-          }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.2 }}
-          whileHover={!isBlocked ? { scale: 1.05 } : undefined}
-          whileTap={!isBlocked ? { scale: 0.95 } : undefined}
-        >
-          {r.nombre}
-          {isBlocked && (
-            <span
-              className="badge bg-danger position-absolute"
-              style={{ top: -8, right: -8 }}
-            >
-              En producción
-            </span>
-          )}
-        </motion.button>
-      );
-    })}
-  </div>
-</div>
-
+              return (
+                <motion.button
+                  key={r._id}
+                  className="shadow-sm text-white text-center p-2 position-relative"
+                  style={{
+                    backgroundColor: activa ? "#28a745" : "#222",
+                    border: activa ? "2px solid #28a745" : "1px solid #6c6c6cff",
+                    borderRadius: "8px",
+                    minWidth: "120px",
+                    minHeight: "60px",
+                    fontSize: "0.9rem",
+                    opacity: isBlocked ? 0.6 : 1,
+                    cursor: isBlocked ? "not-allowed" : "pointer",
+                  }}
+                  disabled={isBlocked}
+                  title={
+                    isBlocked
+                      ? "Ya hay una producción activa para esta receta"
+                      : "Seleccionar receta"
+                  }
+                  onClick={() => {
+                    if (isBlocked) return;
+                    setRecipeId(r._id);
+                    setChecked({});
+                    setMsg(null);
+                  }}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                  whileHover={!isBlocked ? { scale: 1.05 } : undefined}
+                  whileTap={!isBlocked ? { scale: 0.95 } : undefined}
+                >
+                  {r.nombre}
+                  {isBlocked && (
+                    <span
+                      className="badge bg-danger position-absolute"
+                      style={{ top: -8, right: -8 }}
+                    >
+                      En producción
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="mb-3">
           <label className="form-label fw-bold">Cantidad a producir (unidades)</label>
-          <div
-            className="input-group input-group-lg"
-            style={{ maxWidth: "250px" }}
-          >
+          <div className="input-group input-group-lg" style={{ maxWidth: "250px" }}>
             <span className="input-group-text">📦</span>
             <input
               type="number"
@@ -240,7 +273,10 @@ export default function ProductionPlanModal({
                     <span className="text-white">
                       — requerido: {ing.total} {ing.unidadBase}
                     </span>
-                   <div className="text-info">disponible: {Number(ing.disponible).toFixed(2)} (en stock)</div>
+                    <div className="text-info">
+  disponible: {formatCantidad(ing.disponible, ing.unidadBase)} (en stock)
+</div>
+
                   </div>
                 </div>
               </li>
