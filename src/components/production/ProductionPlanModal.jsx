@@ -9,6 +9,7 @@ export default function ProductionPlanModal({
   show,
   onClose,
   onStarted,
+  blockedRecipes = [], // 👈 importante
 }) {
   const [recipeId, setRecipeId] = useState("");
   const [cantidad, setCantidad] = useState("");
@@ -22,22 +23,37 @@ export default function ProductionPlanModal({
 
   // Calcular requeridos según cantidad elegida
   const requeridos = useMemo(() => {
-    if (!recipe || !cantidad) return [];
-    const n = Number(cantidad) || 0;
-    return recipe.ingredientes.map((ing, idx) => {
-      const total = +(Number(ing.cantidadPorUnidad || 0) * n).toFixed(3);
-      const prod = productos?.find((p) => p._id === ing.productoId);
-      const disponible = prod?.stock ?? 0;
-      return {
-        idx,
-        productoId: ing.productoId,
-        nombreProducto: ing.nombreProducto,
-        unidadBase: ing.unidadBase,
-        total,
-        disponible,
-      };
-    });
-  }, [recipe, cantidad, productos]);
+  if (!recipe || !cantidad) return [];
+  const n = Number(cantidad) || 0;
+  return recipe.ingredientes.map((ing, idx) => {
+    const total = +(Number(ing.cantidadPorUnidad || 0) * n).toFixed(3);
+    const prod = productos?.find((p) => p._id === ing.productoId);
+    const disponibleRaw = prod?.stock ?? 0;
+    let disponible = disponibleRaw;
+
+    if (prod) {
+      if (prod.unidad === "kg" && ing.unidadBase === "g") {
+        disponible = disponibleRaw * 1000;
+      } else if (prod.unidad === "g" && ing.unidadBase === "kg") {
+        disponible = disponibleRaw / 1000;
+      } else if (prod.unidad === "l" && ing.unidadBase === "ml") {
+        disponible = disponibleRaw * 1000;
+      } else if (prod.unidad === "ml" && ing.unidadBase === "l") {
+        disponible = disponibleRaw / 1000;
+      }
+    }
+
+    return {
+      idx,
+      productoId: ing.productoId,
+      nombreProducto: ing.nombreProducto,
+      unidadBase: ing.unidadBase,
+      total,
+      disponible,
+    };
+  });
+}, [recipe, cantidad, productos]);
+
 
   const allChecked =
     requeridos.length > 0 && requeridos.every((r) => checked[r.idx]);
@@ -123,41 +139,64 @@ export default function ProductionPlanModal({
           </div>
         )}
 
-        {/* Selector de receta */}
-        <div className="mb-2">
-          <label className="form-label">Receta</label>
-          <div className="d-flex flex-wrap gap-2">
-            {recipes.map((r) => {
-              const activa = recipeId === r._id;
-              return (
-                <motion.button
-                  key={r._id}
-                  className="shadow-sm text-white text-center p-2"
-                  style={{
-                    backgroundColor: activa ? "#28a745" : "#222",
-                    border: activa ? "2px solid #28a745" : "1px solid #6c6c6cff",
-                    borderRadius: "8px",
-                    minWidth: "120px",
-                    minHeight: "60px",
-                    fontSize: "0.9rem",
-                  }}
-                  onClick={() => {
-                    setRecipeId(r._id);
-                    setChecked({});
-                    setMsg(null);
-                  }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.2 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {r.nombre}
-                </motion.button>
-              );
-            })}
-          </div>
-        </div>
+     {/* Selector de receta */}
+<div className="mb-2">
+  <label className="form-label">Receta</label>
+  {/* ⬇️ aquí reemplazás el .map viejo por el nuevo con isBlocked */}
+  <div className="d-flex flex-wrap gap-2">
+    {recipes.map((r) => {
+      const activa = recipeId === r._id;
+      const isBlocked = blockedRecipes?.includes(r._id) || blockedRecipes?.includes(r.nombre);
+
+      return (
+        <motion.button
+          key={r._id}
+          className="shadow-sm text-white text-center p-2 position-relative"
+          style={{
+            backgroundColor: activa ? "#28a745" : "#222",
+            border: activa
+              ? "2px solid #28a745"
+              : "1px solid #6c6c6cff",
+            borderRadius: "8px",
+            minWidth: "120px",
+            minHeight: "60px",
+            fontSize: "0.9rem",
+            opacity: isBlocked ? 0.6 : 1,
+            cursor: isBlocked ? "not-allowed" : "pointer",
+          }}
+          disabled={isBlocked}
+          title={
+            isBlocked
+              ? "Ya hay una producción activa para esta receta"
+              : "Seleccionar receta"
+          }
+          onClick={() => {
+            if (isBlocked) return;
+            setRecipeId(r._id);
+            setChecked({});
+            setMsg(null);
+          }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.2 }}
+          whileHover={!isBlocked ? { scale: 1.05 } : undefined}
+          whileTap={!isBlocked ? { scale: 0.95 } : undefined}
+        >
+          {r.nombre}
+          {isBlocked && (
+            <span
+              className="badge bg-danger position-absolute"
+              style={{ top: -8, right: -8 }}
+            >
+              En producción
+            </span>
+          )}
+        </motion.button>
+      );
+    })}
+  </div>
+</div>
+
 
         <div className="mb-3">
           <label className="form-label fw-bold">Cantidad a producir (unidades)</label>
@@ -201,9 +240,7 @@ export default function ProductionPlanModal({
                     <span className="text-white">
                       — requerido: {ing.total} {ing.unidadBase}
                     </span>
-                    <div className="text-info">
-                      disponible: {Number(ing.disponible).toFixed(3)} (en stock)
-                    </div>
+                   <div className="text-info">disponible: {Number(ing.disponible).toFixed(2)} (en stock)</div>
                   </div>
                 </div>
               </li>

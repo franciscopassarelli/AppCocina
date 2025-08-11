@@ -138,6 +138,9 @@ router.post('/:id/consume', async (req, res) => {
   }
 });
 
+
+
+
 // POST /production-runs/:id/confirm  → cerrar (si no consumiste antes, descuenta ahora)
 router.post('/:id/confirm', async (req, res) => {
   const session = await mongoose.startSession();
@@ -287,5 +290,19 @@ router.get('/export', async (_req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+// GET /production-runs/active → solo corridas activas
+router.get("/active", async (req, res) => {
+  try {
+    const runs = await ProductionRun.find({ endedAt: { $exists: false } })
+      .sort({ startedAt: -1 })
+      .lean();
+
+    res.json(runs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 module.exports = router;

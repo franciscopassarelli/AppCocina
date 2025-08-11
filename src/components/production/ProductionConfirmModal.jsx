@@ -6,47 +6,38 @@ export default function ProductionConfirmModal({
   show,
   onClose,
   run,
-  productosFinales,
 }) {
   const [producidas, setProducidas] = useState("");
-  const [productoFinalId, setProductoFinalId] = useState("");
   const [fechaVenc, setFechaVenc] = useState("");
+  const [noAplicaVenc, setNoAplicaVenc] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    if (productoFinalId) {
-      const prod = productosFinales.find((p) => p._id === productoFinalId);
-      if (prod?.fechaVencimiento) {
-        setFechaVenc(prod.fechaVencimiento);
-      } else {
-        setFechaVenc("");
-      }
-    } else {
-      setFechaVenc("");
-    }
+    // limpiar estado al cambiar de run o abrir/cerrar
     setErrorMsg("");
-  }, [productoFinalId, productosFinales]);
+    setProducidas("");
+    setFechaVenc("");
+    setNoAplicaVenc(false);
+  }, [run, show]);
 
   if (!show || !run) return null;
 
   async function handleConfirm() {
-    // Validar producto final
-    if (productoFinalId) {
-      const prod = productosFinales.find((p) => p._id === productoFinalId);
-      if (!prod) {
-        setErrorMsg("El producto final seleccionado no existe.");
-        return;
-      }
-      if ((prod.stock ?? 0) <= 0) {
-        setErrorMsg(`No hay stock disponible para ${prod.nombre}. No se puede confirmar.`);
-        return;
-      }
+    // Validaciones
+    const nProducidas = Number(producidas);
+    if (!Number.isFinite(nProducidas) || nProducidas <= 0) {
+      setErrorMsg("Ingresá la cantidad de unidades producidas (mayor a 0).");
+      return;
+    }
+
+    if (!noAplicaVenc && !fechaVenc) {
+      setErrorMsg("Seleccioná una fecha de vencimiento o marcá 'No aplica'.");
+      return;
     }
 
     // Validar insumos si están disponibles en run
     if (run?.ingredientesConsumidos) {
-      // Asumo que `ingredientesConsumidos` tiene un campo `disponible`
       const faltantes = run.ingredientesConsumidos.filter(
         (i) => i.disponible !== undefined && i.disponible < i.cantidad
       );
@@ -55,7 +46,9 @@ export default function ProductionConfirmModal({
           `Stock insuficiente para: ${faltantes
             .map(
               (f) =>
-                `${f.nombreProducto} (falta ${(f.cantidad - f.disponible).toFixed(2)} ${f.unidad})`
+                `${f.nombreProducto} (falta ${(f.cantidad - f.disponible).toFixed(
+                  2
+                )} ${f.unidad})`
             )
             .join(", ")}`
         );
@@ -66,14 +59,15 @@ export default function ProductionConfirmModal({
     setLoading(true);
     setErrorMsg("");
     try {
-      await confirmRun(apiBase, run._id, {
-        unidadesProducidas: Number(producidas || 0),
-        productoFinalId: productoFinalId || undefined,
-        fechaVencimientoProductoFinal: fechaVenc || undefined,
-      });
+      const payload = {
+        unidadesProducidas: nProducidas,
+        // solo enviamos la fecha si aplica
+        ...(noAplicaVenc ? {} : { fechaVencimientoProductoFinal: fechaVenc }),
+      };
+
+      await confirmRun(apiBase, run._id, payload);
 
       window.dispatchEvent(new CustomEvent("runs:changed"));
-
       onClose(true);
     } catch (e) {
       console.error(e);
@@ -84,6 +78,12 @@ export default function ProductionConfirmModal({
     }
   }
 
+  const confirmDisabled =
+    loading ||
+    !producidas ||
+    Number(producidas) <= 0 ||
+    (!noAplicaVenc && !fechaVenc);
+
   return (
     <div className="alerta-overlay" onClick={() => onClose(false)}>
       <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
@@ -93,38 +93,49 @@ export default function ProductionConfirmModal({
         {errorMsg && <div className="alert alert-danger py-1 mb-2">{errorMsg}</div>}
 
         <div className="mb-2">
-          <label className="form-label">Unidades producidas realmente</label>
+          <label className="form-label">
+            Unidades producidas realmente <span className="text-danger">*</span>
+          </label>
           <input
             type="number"
+            min={1}
             className="form-control form-control-sm"
             value={producidas}
             onChange={(e) => setProducidas(e.target.value)}
+            placeholder="Ej: 24"
+            required
           />
         </div>
 
-        <div className="mb-2">
-          <label className="form-label">(Opcional) Producto final a stockear</label>
-          <select
-            className="form-select form-select-sm"
-            value={productoFinalId}
-            onChange={(e) => setProductoFinalId(e.target.value)}
-          >
-            <option value="">No stockear</option>
-            {productosFinales.map((p) => (
-              <option key={p._id} value={p._id}>
-                {p.nombre} ({p.unidad}) — stock: {p.stock ?? 0}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="mb-3">
-          <label className="form-label">(Opcional) Vencimiento del producto final</label>
+          <div className="d-flex align-items-center justify-content-between">
+            <label className="form-label mb-0">
+              Fecha de vencimiento <span className="text-danger">*</span>
+            </label>
+            <div className="form-check">
+              <input
+                id="no-aplica-venc"
+                className="form-check-input"
+                type="checkbox"
+                checked={noAplicaVenc}
+                onChange={(e) => {
+                  setNoAplicaVenc(e.target.checked);
+                  if (e.target.checked) setFechaVenc("");
+                }}
+              />
+              <label className="form-check-label" htmlFor="no-aplica-venc">
+                No aplica
+              </label>
+            </div>
+          </div>
+
           <input
             type="date"
-            className="form-control form-control-sm"
+            className="form-control form-control-sm mt-2"
             value={fechaVenc}
             onChange={(e) => setFechaVenc(e.target.value)}
+            disabled={noAplicaVenc}
+            required={!noAplicaVenc}
           />
         </div>
 
@@ -138,7 +149,7 @@ export default function ProductionConfirmModal({
           </button>
           <button
             className="btn btn-success btn-sm"
-            disabled={loading}
+            disabled={confirmDisabled}
             onClick={handleConfirm}
           >
             {loading ? "Procesando…" : "Confirmar y descontar"}

@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
 import "../cook/Cookpanel.css";
-import AlertaStockModal from "../admin/AlertaStockModal.jsx"
+import AlertaStockModal from "../admin/AlertaStockModal.jsx";
 import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
+import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
+
 import { getRecipes } from "../../api/recipes.js";
 
 export default function CookPanel() {
@@ -18,22 +20,40 @@ export default function CookPanel() {
     actualizarProducto, // 👈 necesario para ingreso rápido de stock
   } = useProductos();
 
+  // ===== Helpers de persistencia local =====
+  const STORAGE_KEY = "activeRuns";
+  const readActiveRuns = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  };
+  const writeActiveRuns = (runs) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(runs));
+  };
+
   // ===== Estado existente =====
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const [usoDelDia, setUsoDelDia] = useState("");
   const [unidades, setUnidades] = useState("");
   const [alerta, setAlerta] = useState(null);
-  const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true)
+  const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true);
+  const [mostrarAlerta, setMostrarAlerta] = useState(false);
+
+  // Persistimos runs activos localmente
+  const [activeRuns, setActiveRuns] = useState(() => readActiveRuns()); // 👈 inicializa desde storage
+
+  const [confirmingRun, setConfirmingRun] = useState(null); // run que se confirma (modal)
   const [cargando, setCargando] = useState(false);
   const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
   const [departamentoActivoListado, setDepartamentoActivoListado] = useState(null);
   const [fechaVencimientoElaborado, setFechaVencimientoElaborado] = useState("");
-  
 
   // ===== Producción (recetas / runs) =====
   const [recipes, setRecipes] = useState([]);
   const [showPlan, setShowPlan] = useState(false);
-  const [activeRun, setActiveRun] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   // ===== Ingreso rápido de stock =====
@@ -43,32 +63,83 @@ export default function CookPanel() {
   const productoSeleccionado = productos.find((p) => p._id === productoIdSeleccionado);
   const API_URL = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
 
+  // ======= Persistencia y sincronización de activeRuns =======
+  // Guardar cada cambio en storage
   useEffect(() => {
-  let cancelado = false;
+    writeActiveRuns(activeRuns);
+  }, [activeRuns]);
 
-  const fetchRecipes = async () => {
-    try {
-      const list = await getRecipes(API_URL);
-      if (!cancelado) setRecipes(list);
-    } catch (e) {
-      console.error("Error cargando recetas:", e);
-    }
-  };
+  // Sincronizar entre pestañas/ventanas
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === STORAGE_KEY) {
+        setActiveRuns(e.newValue ? JSON.parse(e.newValue) : []);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-  // carga inicial
-  fetchRecipes();
+  // Avisar al intentar cerrar si hay runs activos
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      if (activeRuns.length > 0) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [activeRuns.length]);
 
-  // refrescar cuando RecipeAdmin dispare el evento
-  const handler = () => fetchRecipes();
-  window.addEventListener("recipes:changed", handler);
+  function handleStarted(run) {
+    // Se agrega y persiste; no descuenta nada todavía
+    setActiveRuns((prev) => [...prev, run]);
+    setConfirmingRun(null);
+    setShowPlan(false);
+  }
 
-  // cleanup
-  return () => {
-    cancelado = true;
-    window.removeEventListener("recipes:changed", handler);
-  };
-}, [API_URL]);
 
+  // Helper para obtener la clave única de una receta
+const recipeKeyOf = (r) => r?.recipeId || r?.recipe?._id || r?.recipeNombre || r?.recipeName;
+
+function handleStarted(run) {
+  const key = recipeKeyOf(run);
+  const exists = activeRuns.some(r => recipeKeyOf(r) === key);
+  if (exists) {
+    mostrarMensajeAlerta("⚠️ Ya hay una producción activa para esa receta.");
+    setShowPlan(false);
+    return;
+  }
+  setActiveRuns(prev => [...prev, run]);
+  setConfirmingRun(null);
+  setShowPlan(false);
+}
+
+
+  // ===== Carga de recetas =====
+  useEffect(() => {
+    let cancelado = false;
+
+    const fetchRecipes = async () => {
+      try {
+        const list = await getRecipes(API_URL);
+        if (!cancelado) setRecipes(list);
+      } catch (e) {
+        console.error("Error cargando recetas:", e);
+      }
+    };
+
+    fetchRecipes();
+
+    const handler = () => fetchRecipes();
+    window.addEventListener("recipes:changed", handler);
+
+    return () => {
+      cancelado = true;
+      window.removeEventListener("recipes:changed", handler);
+    };
+  }, [API_URL]);
 
   const mostrarMensajeAlerta = (mensaje) => {
     setAlerta(mensaje);
@@ -187,12 +258,6 @@ export default function CookPanel() {
     }
   };
 
-  // ===== Producción: callbacks =====
-  function handleStarted(run) {
-    setActiveRun(run); // startedAt → timer oculto en backend
-    setShowConfirm(true);
-  }
-
   const cantidadUtil =
     productoSeleccionado && unidades
       ? esInsumoUnidad
@@ -212,9 +277,20 @@ export default function CookPanel() {
     return acc;
   }, {});
 
+  // ===== Confirmación (cierra modal y quita de activos si OK) =====
+  function handleConfirmClose(ok, runId) {
+    setShowConfirm(false);
+    if (ok) {
+      setActiveRuns((prev) => prev.filter((r) => r._id !== runId));
+      // avisar a listados
+      window.dispatchEvent(new Event("runs:changed"));
+    }
+    setConfirmingRun(null);
+  }
+
   return (
     <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
- <AlertaStockModal
+      <AlertaStockModal
         productos={productos}
         visible={mostrarAlertaStock}
         onClose={() => setMostrarAlertaStock(false)}
@@ -250,151 +326,176 @@ export default function CookPanel() {
           {alerta}
         </div>
       )}
-{/* ===== Ingreso rápido de stock ===== */}
-<div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
-  <h5 className="mb-3 text-center">Ingreso rápido de stock</h5>
-
-  {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
-    <motion.div
-      key={depto}
-      className="text-white my-3 py-2 px-3 rounded border mx-auto"
-      style={{
-        cursor: "pointer",
-        backgroundColor: "#111",
-        borderColor: "#444",
-        width: "95%",
-        maxWidth: "900px"
-      }}
-      onClick={() => {
-  // Abrir departamento en ingreso rápido
-  setDepartamentoActivoRapido(depto === departamentoActivoRapido ? null : depto);
-  // Cerrar listado normal
-  setDepartamentoActivoListado(null);
-}}
-
-      whileHover={{ scale: 1.015 }}
-    >
-      <h5
-        className="mb-2 text-center text-uppercase"
-        style={{ letterSpacing: "1px" }}
-      >
-        {depto}
-      </h5>
-
-      <AnimatePresence>
-        {departamentoActivoRapido === depto && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
-          >
-            {productosDepto.map((p) => (
-              <motion.button
-                key={p._id}
-                className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
-                style={{
-                  backgroundColor: "#222",
-                  color: "white",
-                  border: "1px solid white",
-                  borderRadius: "10px",
-                  minWidth: "170px",
-                  minHeight: "120px"
-                }}
-                onClick={() => {
-                  setProductoParaStock(p);
-                  setShowQuickStock(true);
-                }}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <strong style={{ fontSize: "1.1rem" }}>{p.nombre}</strong>
-                <div className="small mt-2 text-secondary">
-                  Stock: {Number(p.stock).toFixed(2)} {p.unidad}
-                </div>
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  ))}
-</div>
-
-
 
       {/* ===== Producción (recetas) ===== */}
-
-      
-      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
-        <h5 className="mb-2">Producción</h5>
-        <p className="small text-info">Planificar → iniciar (timer) → confirmar</p>
-        <button className="btn btn-outline-light btn-sm" onClick={() => setShowPlan(true)}>
+      <div
+        className="container mb-4 p-4 rounded d-flex flex-column align-items-center justify-content-center"
+        style={{
+          background: "#222",
+          color: "#fff",
+          maxWidth: "500px",
+          margin: "0 auto",
+          boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
+          border: "2px solid #4caf50",
+        }}
+      >
+        <h3 className="mb-3" style={{ fontWeight: "700", letterSpacing: "1px" }}>
+          Producción
+        </h3>
+        <p className="mb-4 text-info" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
+          Planificar → iniciar (timer) → confirmar
+        </p>
+        <button className="button-green-lg" onClick={() => setShowPlan(true)}>
           Nueva producción
         </button>
       </div>
 
+      {/* Panel de producciones activas (persiste en storage) */}
+      <ActiveProductionsPanel
+        runs={activeRuns}
+        onConfirm={(run) => {
+          setConfirmingRun(run);
+          setShowConfirm(true);
+        }}
+      />
+
+      {confirmingRun && (
+        <ProductionConfirmModal
+          apiBase={API_URL}
+          show={showConfirm}
+          run={confirmingRun}
+          productosFinales={productos}
+          onClose={(ok) => handleConfirmClose(ok, confirmingRun?._id)}
+        />
+      )}
+
+      {/* ===== Ingreso rápido de stock ===== */}
+      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+        <h5 className="mb-3 text-center">Ingreso rápido de stock</h5>
+
+        {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
+          <motion.div
+            key={depto}
+            className="text-white my-3 py-2 px-3 rounded border mx-auto"
+            style={{
+              cursor: "pointer",
+              backgroundColor: "#111",
+              borderColor: "#444",
+              width: "95%",
+              maxWidth: "900px",
+            }}
+            onClick={() => {
+              // Abrir departamento en ingreso rápido
+              setDepartamentoActivoRapido(depto === departamentoActivoRapido ? null : depto);
+              // Cerrar listado normal
+              setDepartamentoActivoListado(null);
+            }}
+            whileHover={{ scale: 1.015 }}
+          >
+            <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
+              {depto}
+            </h5>
+
+            <AnimatePresence>
+              {departamentoActivoRapido === depto && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
+                >
+                  {productosDepto.map((p) => (
+                    <motion.button
+                      key={p._id}
+                      className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
+                      style={{
+                        backgroundColor: "#222",
+                        color: "white",
+                        border: "1px solid white",
+                        borderRadius: "10px",
+                        minWidth: "170px",
+                        minHeight: "120px",
+                      }}
+                      onClick={() => {
+                        setProductoParaStock(p);
+                        setShowQuickStock(true);
+                      }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <strong style={{ fontSize: "1.1rem" }}>{p.nombre}</strong>
+                      <div className="small mt-2 text-secondary">
+                        Stock: {Number(p.stock).toFixed(2)} {p.unidad}
+                      </div>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
+
       {/* ===== Listado por departamento (flujo existente) ===== */}
       <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
-  <h5 className="mb-3 text-center">Uso Manual del stock</h5>
-      {!productoSeleccionado && (
-        <div>
-          {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
-            <motion.div
-              key={depto}
-              className="text-white my-3 py-2 px-3 rounded border mx-auto"
-              style={{ cursor: "pointer", backgroundColor: "#111", borderColor: "#444", width: "95%", maxWidth: "900px" }}
-              onClick={() => {
-  // Abrir departamento en listado normal
-  setDepartamentoActivoListado(depto === departamentoActivoListado ? null : depto);
-  // Cerrar ingreso rápido
-  setDepartamentoActivoRapido(null);
-}}
+        <h5 className="mb-3 text-center">Uso Manual del stock</h5>
+        {!productoSeleccionado && (
+          <div>
+            {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
+              <motion.div
+                key={depto}
+                className="text-white my-3 py-2 px-3 rounded border mx-auto"
+                style={{ cursor: "pointer", backgroundColor: "#111", borderColor: "#444", width: "95%", maxWidth: "900px" }}
+                onClick={() => {
+                  // Abrir departamento en listado normal
+                  setDepartamentoActivoListado(depto === departamentoActivoListado ? null : depto);
+                  // Cerrar ingreso rápido
+                  setDepartamentoActivoRapido(null);
+                }}
+                whileHover={{ scale: 1.015 }}
+              >
+                <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
+                  {depto}
+                </h5>
 
-              whileHover={{ scale: 1.015 }}
-            >
-              <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
-                {depto}
-              </h5>
-
-              <AnimatePresence>
-                {departamentoActivoListado === depto && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
-                    className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
-                  >
-                    {productosDepto.map((prod) => (
-                      <motion.button
-                        key={prod._id}
-                        className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
-                        style={{ backgroundColor: "#222", color: "white", border: "1px solid white", borderRadius: "10px", minWidth: "170px", minHeight: "120px" }}
-                        onClick={() => setProductoIdSeleccionado(prod._id)}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <strong style={{ fontSize: "1.1rem" }}>{prod.nombre}</strong>
-                        <div className="small mt-2 text-secondary">
-                          Stock: {Number(prod.stock).toFixed(2)} {prod.unidad}
-                        </div>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
-        </div>
-      )}
+                <AnimatePresence>
+                  {departamentoActivoListado === depto && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
+                    >
+                      {productosDepto.map((prod) => (
+                        <motion.button
+                          key={prod._id}
+                          className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
+                          style={{ backgroundColor: "#222", color: "white", border: "1px solid white", borderRadius: "10px", minWidth: "170px", minHeight: "120px" }}
+                          onClick={() => setProductoIdSeleccionado(prod._id)}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <strong style={{ fontSize: "1.1rem" }}>{prod.nombre}</strong>
+                          <div className="small mt-2 text-secondary">
+                            Stock: {Number(prod.stock).toFixed(2)} {prod.unidad}
+                          </div>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -464,7 +565,8 @@ export default function CookPanel() {
                       <strong>Promedio por unidad:</strong> {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
                     </p>
                     <p>
-                      <strong>Vencimiento original del producto comprado:</strong> {new Date(productoSeleccionado.fechaVencimiento).toLocaleDateString("es-AR")}
+                      <strong>Vencimiento original del producto comprado:</strong>{" "}
+                      {new Date(productoSeleccionado.fechaVencimiento).toLocaleDateString("es-AR")}
                     </p>
                   </div>
                 )}
@@ -513,24 +615,22 @@ export default function CookPanel() {
       <ProductionPlanModal
         apiBase={API_URL}
         recipes={recipes}
-        productos={productos}   // 👈 para mostrar disponible/faltante y checklist
+        productos={productos} // 👈 para mostrar disponible/faltante y checklist
         show={showPlan}
         onClose={() => setShowPlan(false)}
         onStarted={handleStarted}
+        blockedRecipes={activeRuns.map(recipeKeyOf)}  // 👈 acá
       />
 
-      <ProductionConfirmModal
-        apiBase={API_URL}
-        show={showConfirm}
-        run={activeRun}
-        productosFinales={productos}
-        onClose={(ok) => {
-          setShowConfirm(false);
-          if (ok) {
-            // Podés refrescar productos desde el contexto si lo necesitás
-          }
-        }}
-      />
+      {confirmingRun && (
+        <ProductionConfirmModal
+          apiBase={API_URL}
+          show={showConfirm}
+          run={confirmingRun}
+          productosFinales={productos}
+          onClose={(ok) => handleConfirmClose(ok, confirmingRun?._id)}
+        />
+      )}
     </div>
   );
 }

@@ -147,9 +147,7 @@ export default function ProductionRunsList({ apiBase }) {
                     <td data-label="Producidas">{r.unidadesProducidas ?? 0}</td>
                     <td data-label="Duración">{dur}</td>
                     <td data-label="Vencimiento">{fechaVencFormateada}</td>
-                    <td data-label="Insumos consumidos" className="consumidos-cell">
-                      {consumidos}
-                    </td>
+                    <td data-label="Insumos consumidos" >{consumidos}</td>
                   </tr>
                 );
               })}
