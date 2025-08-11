@@ -1,114 +1,151 @@
-/* Contenedor header: separa título/acciones y se apila en mobile */
-.header-bar {
+/* ===== Header con píldoras ===== */
+.list-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: .75rem;
+  flex-wrap: wrap;
   margin-bottom: .5rem;
 }
-
-.header-bar .actions {
+.title-side { min-width: 220px; }
+.stat-group {
   display: flex;
-  gap: .5rem;
   flex-wrap: wrap;
+  gap: .4rem .5rem;
+  margin-top: .25rem;
+}
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  background: #f1f3f5;
+  border: 1px solid #e9ecef;
+  font-size: .85rem;
+  color: #212529;
+}
+.stat-range {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .9rem;
+  color: #6c757d;
+}
+.actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+/* ===== Tabla bien centrada/encasillada (desktop) ===== */
+.runs-table {
+  table-layout: fixed;            /* respeta colgroup si existe */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.runs-table th,
+.runs-table td {
+  vertical-align: middle;
+  text-align: center;             /* centrado por default */
+  padding: .6rem .5rem;
 }
 
-/* Asegura scroll horizontal en pantallas medianas si hace falta */
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
+/* Receta e Insumos mejor a la izquierda para lectura */
+.runs-table th:nth-child(2),
+.runs-table td:nth-child(2),
+.runs-table th:nth-child(8),
+.runs-table td:nth-child(8) {
+  text-align: left;
 }
 
-/* Textos útiles */
-.nowrap {
-  white-space: nowrap;
+/* Números a la derecha si preferís (descomentar si te gusta más)
+.runs-table th:nth-child(4),
+.runs-table td:nth-child(4),
+.runs-table th:nth-child(5),
+.runs-table td:nth-child(5) {
+  text-align: right;
+}
+*/
+
+/* Separadores verticales suaves (celdas encasilladas) */
+.runs-table thead th + th,
+.runs-table tbody td + td {
+  border-left: 1px solid #edf0f2;
 }
 
-/* Consumidos: permite salto de línea natural. Truncamos en desktop si se hace infinito */
-.consumidos-cell {
-  max-width: 680px;
-  white-space: normal;
-  word-break: break-word;
+/* Líneas horizontales sutiles */
+.runs-table tbody tr + tr td {
+  border-top: 1px solid #f3f4f6;
 }
 
-/* Rayado custom (ya lo usás) */
+/* Cabecera sticky con leve shadow al scrollear */
+.sticky-header th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 1px 0 rgba(0,0,0,.05);
+}
+
+/* Alternado suave */
 .table-row-even { background-color: #ffffff; }
-.table-row-odd  { background-color: #f8f9fa; }
+.table-row-odd  { background-color: #fbfcfd; }
 
-/* ====== Mobile-first Cards (≤ 768px) ====== */
+/* ===== Chips de insumos ===== */
+.chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .35rem;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  background: #f8f9fa;
+  color: #212529;
+  border: 1px solid #e9ecef;
+}
+.chip .chip-label { font-weight: 600; }
+.chip .chip-qty   { opacity: .85; }
+
+/* ===== Responsive (≤768px): tabla -> tarjetas ===== */
 @media (max-width: 768px) {
-  /* Oculta encabezado de tabla y convierte filas a “tarjeta” */
-  .custom-table thead {
-    display: none;
-  }
+  .actions { width: 100%; }
 
-  .custom-table,
-  .custom-table tbody,
-  .custom-table tr,
-  .custom-table td {
-    display: block;
-    width: 100%;
-  }
+  .runs-table thead { display: none; }
 
-  .custom-table tr {
-    border: 1px solid #e3e3e3;
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin: 10px 0;
+  .runs-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .25rem .75rem;
+    border: 1px solid #e9ecef !important;
+    border-radius: .75rem;
+    padding: .5rem .6rem;
+    margin-bottom: .75rem;
     background: #fff;
   }
-
-  .custom-table td {
+  .runs-table tbody td {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    border: none !important;
-    padding: 6px 0;
-    gap: 10px;
+    align-items: center;
+    border: 0 !important;
+    padding: .25rem .15rem;
+    text-align: right; /* label left / value right */
+    white-space: normal;
+    word-break: break-word;
   }
-
-  /* Etiqueta (columna) a la izquierda */
-  .custom-table td::before {
+  .runs-table tbody td::before {
     content: attr(data-label);
     font-weight: 600;
     color: #6c757d;
-    flex: 0 0 46%;
-    max-width: 46%;
+    margin-right: .75rem;
+    text-wrap: nowrap;
+    text-align: left;
   }
-
-  /* Valor a la derecha */
-  .custom-table td {
-    color: #212529;
+  /* Insumos a toda la fila y texto a la izquierda */
+  .runs-table tbody td[data-label="Insumos consumidos"] {
+    grid-column: 1 / -1;
+    align-items: flex-start;
+    text-align: left;
   }
-
-  /* Ajustes de células largas */
-  .custom-table td.nowrap {
-    white-space: normal; /* deja envolver en mobile */
-  }
-
-  .consumidos-cell {
-    max-height: none;
-  }
-
-  /* Botonera arriba: apilar y ocupar ancho completo si hace falta */
-  .header-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-bar .actions {
-    width: 100%;
-  }
-
-  .header-bar .actions .btn {
-    flex: 1 1 48%;
-  }
-}
-
-/* ====== Compacidad en pantallas muy chicas (≤ 380px) ====== */
-@media (max-width: 380px) {
-  .custom-table td::before {
-    flex-basis: 40%;
-    max-width: 40%;
-  }
+  .chips-wrap { margin-top: .25rem; }
 }

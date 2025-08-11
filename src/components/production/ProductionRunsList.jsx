@@ -1,8 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getRuns } from "../../api/productionRuns";
 import "../styles/ProductionRunsList.css";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+
+const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
+
+function formatDateTimeAR(value) {
+  if (!value) return "—";
+  try { return new Date(value).toLocaleString("es-AR"); } catch { return "—"; }
+}
+function formatDateAR(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const yy = d.getUTCFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+function formatDuration(sec) {
+  if (sec === undefined || sec === null) return "—";
+  const m = Math.floor(sec / 60), s = sec % 60, h = Math.floor(m / 60), mm = m % 60;
+  return h > 0 ? `${h}h ${mm}m ${s}s` : `${m}m ${s}s`;
+}
 
 export default function ProductionRunsList({ apiBase }) {
   const [runs, setRuns] = useState([]);
@@ -12,69 +34,77 @@ export default function ProductionRunsList({ apiBase }) {
     setLoading(true);
     try {
       const data = await getRuns(apiBase);
-      setRuns(data);
+      setRuns(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    refresh();
-  }, [apiBase]);
-
+  useEffect(() => { refresh(); }, [apiBase]);
   useEffect(() => {
     const h = () => refresh();
     window.addEventListener("runs:changed", h);
     return () => window.removeEventListener("runs:changed", h);
   }, []);
 
-  // Función para exportar a Excel
+  const { totalProducidas, firstDate, lastDate } = useMemo(() => {
+    let total = 0, min = null, max = null;
+    for (const r of runs) {
+      total += Number(r.unidadesProducidas || 0);
+      const d = r.startedAt ? new Date(r.startedAt) : null;
+      if (d && !isNaN(d)) { if (!min || d < min) min = d; if (!max || d > max) max = d; }
+    }
+    return { totalProducidas: total, firstDate: min, lastDate: max };
+  }, [runs]);
+
   function exportToExcel() {
     const data = runs.map((r) => {
-      const inicio = r.startedAt ? new Date(r.startedAt).toLocaleString("es-AR") : "—";
-      const dur = r.durationSec
-        ? `${Math.floor(r.durationSec / 60)}m ${r.durationSec % 60}s`
-        : "—";
+      const inicio = formatDateTimeAR(r.startedAt);
+      const dur = r.durationSec ? formatDuration(r.durationSec) : "—";
       const consumidos =
         (r.ingredientesConsumidos || [])
-          .map((c) => `${c.nombreProducto}: ${c.cantidad} ${c.unidad}`)
+          .map((c) => `${c.nombreProducto}: ${nf2.format(c.cantidad || 0)} ${c.unidad || ""}`)
           .join(" · ") || "—";
       const fechaVenc = r.fechaVencimiento || r.fechaVencimientoProductoFinal || null;
-      const fechaVencFormateada = fechaVenc
-        ? (() => {
-            const d = new Date(fechaVenc);
-            const year = d.getUTCFullYear();
-            const month = d.getUTCMonth() + 1;
-            const day = d.getUTCDate();
-            return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
-          })()
-        : "—";
-
       return {
         Inicio: inicio,
         Receta: r.recipeNombre,
-        "Preparado por": r.preparadoPor || "", // 👈 nuevo en Excel
+        "Preparado por": r.preparadoPor || "",
         Planificadas: r.unidadesPlanificadas,
         Producidas: r.unidadesProducidas ?? 0,
         Duración: dur,
-        "Fecha de vencimiento": fechaVencFormateada,
+        "Fecha de vencimiento": formatDateAR(fechaVenc),
         "Insumos consumidos": consumidos,
       };
     });
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Producciones");
-
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, "producciones.xlsx");
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Producciones");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(new Blob([buf], { type: "application/octet-stream" }), "producciones.xlsx");
   }
 
   return (
     <div className="card p-3 shadow-sm mt-4">
-      <div className="header-bar">
-        <h5 className="mb-0">Historial de producción</h5>
+      {/* Header */}
+      <div className="list-header">
+        <div className="title-side">
+          <h5 className="mb-1">Historial de producción</h5>
+          <div className="stat-group">
+            <span className="stat-pill">
+              <i className="bi bi-activity me-1" /> {runs.length} corridas
+            </span>
+            <span className="stat-pill">
+              <i className="bi bi-box-seam me-1" /> {nf0.format(totalProducidas)} producidas
+            </span>
+            <span className="stat-range">
+              <i className="bi bi-calendar2-week me-1" />
+              {firstDate && lastDate
+                ? `${formatDateAR(firstDate)} — ${formatDateAR(lastDate)}`
+                : "—"}
+            </span>
+          </div>
+        </div>
         <div className="actions">
           <button className="btn btn-outline-secondary btn-sm" onClick={refresh} disabled={loading}>
             {loading ? "Actualizando…" : "Actualizar"}
@@ -89,60 +119,63 @@ export default function ProductionRunsList({ apiBase }) {
         </div>
       </div>
 
+      {/* Body */}
       {loading ? (
-        <div className="text-muted">Cargando…</div>
+        <div className="d-flex align-items-center text-muted gap-2">
+          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+          Cargando…
+        </div>
       ) : runs.length === 0 ? (
         <div className="text-muted">Sin producciones aún.</div>
       ) : (
         <div className="table-responsive">
-          <table className="table table-sm align-middle custom-table">
-            <thead className="table-dark">
+          <table className="table table-sm align-middle custom-table table-hover">
+            <thead className="table-dark sticky-header">
               <tr>
-                <th>Inicio</th>
-                <th>Receta</th>
-                <th>Preparado por</th>
-                <th>Planif.</th>
-                <th>Producidas</th>
-                <th>Duración</th>
-                <th>Fecha de vencimiento</th>
-                <th>Insumos consumidos</th>
+                <th style={{ minWidth: 160 }}>Inicio</th>
+                <th style={{ minWidth: 160 }}>Receta</th>
+                <th style={{ minWidth: 140 }}>Preparado por</th>
+                <th className="text-center" style={{ width: 100 }}>Planif.</th>
+                <th className="text-center" style={{ width: 110 }}>Producidas</th>
+                <th style={{ width: 120 }}>Duración</th>
+                <th style={{ minWidth: 160 }}>Fecha de vencimiento</th>
+                <th style={{ minWidth: 260 }}>Insumos consumidos</th>
               </tr>
             </thead>
             <tbody>
               {runs.map((r, idx) => {
-                const inicio = r.startedAt ? new Date(r.startedAt).toLocaleString("es-AR") : "—";
-                const dur = r.durationSec
-                  ? `${Math.floor(r.durationSec / 60)}m ${r.durationSec % 60}s`
-                  : "—";
-                const consumidos =
-                  (r.ingredientesConsumidos || [])
-                    .map((c) => `${c.nombreProducto}: ${c.cantidad} ${c.unidad}`)
-                    .join(" · ") || "—";
-
+                const inicio = formatDateTimeAR(r.startedAt);
+                const dur = r.durationSec ? formatDuration(r.durationSec) : "—";
                 const fechaVenc = r.fechaVencimiento || r.fechaVencimientoProductoFinal || null;
-                const fechaVencFormateada = fechaVenc
-                  ? (() => {
-                      const d = new Date(fechaVenc);
-                      const year = d.getUTCFullYear();
-                      const month = d.getUTCMonth() + 1;
-                      const day = d.getUTCDate();
-                      return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`;
-                    })()
-                  : "—";
-
+                const consumidosArr = (r.ingredientesConsumidos || []).map((c, i) => ({
+                  key: `${r._id}-${i}`,
+                  label: c.nombreProducto,
+                  qty: nf2.format(Number(c.cantidad || 0)),
+                  unidad: c.unidad || "",
+                }));
                 return (
-                  <tr
-                    key={r._id}
-                    className={idx % 2 === 0 ? "table-row-even" : "table-row-odd"}
-                  >
-                    <td data-label="Inicio">{inicio}</td>
-                    <td data-label="Receta" className="nowrap">{r.recipeNombre}</td>
-                    <td data-label="Preparado por" className="nowrap">{r.preparadoPor || "—"}</td>
-                    <td data-label="Planif.">{r.unidadesPlanificadas}</td>
-                    <td data-label="Producidas">{r.unidadesProducidas ?? 0}</td>
+                  <tr key={r._id} className={idx % 2 === 0 ? "table-row-even" : "table-row-odd"}>
+                    <td data-label="Inicio" title={inicio}>{inicio}</td>
+                    <td data-label="Receta" className="nowrap" title={r.recipeNombre}>{r.recipeNombre}</td>
+                    <td data-label="Preparado por" className="nowrap" title={r.preparadoPor || "—"}>
+                      {r.preparadoPor || "—"}
+                    </td>
+                    <td data-label="Planif." className="text-center">{nf0.format(r.unidadesPlanificadas || 0)}</td>
+                    <td data-label="Producidas" className="text-center">{nf0.format(r.unidadesProducidas || 0)}</td>
                     <td data-label="Duración">{dur}</td>
-                    <td data-label="Vencimiento">{fechaVencFormateada}</td>
-                    <td data-label="Insumos consumidos">{consumidos}</td>
+                    <td data-label="Vencimiento">{formatDateAR(fechaVenc)}</td>
+                    <td data-label="Insumos consumidos">
+                      {consumidosArr.length === 0 ? "—" : (
+                        <div className="chips-wrap">
+                          {consumidosArr.map((c) => (
+                            <span key={c.key} className="chip" title={`${c.label}: ${c.qty} ${c.unidad}`}>
+                              <span className="chip-label">{c.label}</span>
+                              <span className="chip-qty">{c.qty} {c.unidad}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
