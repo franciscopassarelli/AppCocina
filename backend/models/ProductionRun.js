@@ -61,6 +61,7 @@ const ProductionRunSchema = new Schema(
 
     unidadesPlanificadas: { type: Number, required: true, min: 0 },
     unidadesProducidas: { type: Number, default: 0, min: 0 },
+    unidadesProducidasUnidad: { type: String, enum: ['unidad','kg','l'], default: 'unidad' },
 
     ingredientesRequeridos: { type: [RequeridoSchema], default: [] },  // g|kg|ml|l|unidad
     ingredientesConsumidos: { type: [ConsumidoSchema], default: [] },  // kg|l|unidad

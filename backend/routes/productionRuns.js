@@ -136,6 +136,7 @@ router.post('/:id/consume', async (req, res) => {
   }
 });
 
+
 // POST /production-runs/:id/confirm  → cerrar (si no consumiste antes, descuenta ahora)
 router.post('/:id/confirm', async (req, res) => {
   const session = await mongoose.startSession();
@@ -143,9 +144,10 @@ router.post('/:id/confirm', async (req, res) => {
   try {
     const {
       unidadesProducidas,
+      unidadProducida,                 // 👈 NUEVO: 'unidad' | 'kg' | 'l'
       fechaVencimientoProductoFinal,
       productoFinalId,
-      preparadoPor, 
+      preparadoPor,                    // ya lo estabas guardando
     } = req.body;
 
     const run = await ProductionRun.findById(req.params.id).session(session);
@@ -168,9 +170,7 @@ router.post('/:id/confirm', async (req, res) => {
         const antes = prod.stock || 0;
         const { usados, restante } = consumirFEFO(prod, cantidadEnUnidadProducto);
         if (restante > 0) {
-          throw new Error(
-            `Stock insuficiente para ${reqIng.nombreProducto}. Falta ${restante} ${prod.unidad}`
-          );
+          throw new Error(`Stock insuficiente para ${reqIng.nombreProducto}. Falta ${restante} ${prod.unidad}`);
         }
 
         await prod.save({ session });
@@ -179,23 +179,21 @@ router.post('/:id/confirm', async (req, res) => {
         consumidos.push({
           productoId: prod._id,
           nombreProducto: prod.nombre,
-          unidad: prod.unidad, // unidad real del producto
-          cantidad: delta,      // ya en unidad del producto
+          unidad: prod.unidad,
+          cantidad: delta,
           lotes: usados,
         });
 
         if (MovimientoStock) {
           await MovimientoStock.create(
-            [
-              {
-                tipo: 'PRODUCCION',
-                productoId: prod._id,
-                delta: -Math.abs(delta),
-                unidad: prod.unidad,
-                referencia: { productionRunId: run._id, recipeId: run.recipeId },
-                timestamp: new Date(),
-              },
-            ],
+            [{
+              tipo: 'PRODUCCION',
+              productoId: prod._id,
+              delta: -Math.abs(delta),
+              unidad: prod.unidad,
+              referencia: { productionRunId: run._id, recipeId: run.recipeId },
+              timestamp: new Date(),
+            }],
             { session }
           );
         }
@@ -206,12 +204,13 @@ router.post('/:id/confirm', async (req, res) => {
 
     // cerrar run
     run.unidadesProducidas = Number(unidadesProducidas || 0);
+    run.unidadesProducidasUnidad = unidadProducida || 'unidad';     // 👈 NUEVO
     run.fechaVencimientoProductoFinal = fechaVencimientoProductoFinal
       ? new Date(fechaVencimientoProductoFinal)
       : null;
 
     if (preparadoPor) {
-      run.preparadoPor = String(preparadoPor).trim(); // 👈 guardar nombre
+      run.preparadoPor = String(preparadoPor).trim();
     }
 
     run.endedAt = new Date();
@@ -223,31 +222,42 @@ router.post('/:id/confirm', async (req, res) => {
     if (productoFinalId && run.unidadesProducidas > 0) {
       const pf = await Producto.findById(productoFinalId).session(session);
       if (pf) {
+        // Convertir desde la unidad producida a la unidad del producto final (kg↔g, l↔ml, igual-igual)
+        // NO convertimos entre 'unidad' ↔ 'kg'/'l' sin un peso/volumen promedio.
+        if (
+          (run.unidadesProducidasUnidad === 'unidad' && pf.unidad !== 'unidad') ||
+          (run.unidadesProducidasUnidad !== 'unidad' && pf.unidad === 'unidad')
+        ) {
+          throw new Error('La unidad producida no coincide con la unidad del producto final.');
+        }
+
+        const cantidadParaStockear = toProductUnit(
+          Number(run.unidadesProducidas || 0),
+          run.unidadesProducidasUnidad,  // 'kg'|'l'|'unidad'
+          pf.unidad                      // 'kg'|'l'|'unidad'
+        );
+
         const nuevoLote = {
           numeroFactura: `PROD-${run._id.toString().slice(-6)}`,
           lote: `RUN-${run._id.toString().slice(-6)}`,
-          cantidad: run.unidadesProducidas, // si el producto final no es "unidad", adaptalo a tu caso
-          fechaVencimiento: fechaVencimientoProductoFinal
-            ? new Date(fechaVencimientoProductoFinal)
-            : null,
+          cantidad: cantidadParaStockear,
+          fechaVencimiento: run.fechaVencimientoProductoFinal || null,
           fechaIngreso: new Date(),
         };
         pf.lotes = [...(pf.lotes || []), nuevoLote];
-        pf.stock = (pf.stock || 0) + run.unidadesProducidas;
+        pf.stock = (pf.stock || 0) + cantidadParaStockear;
         await pf.save({ session });
 
         if (MovimientoStock) {
           await MovimientoStock.create(
-            [
-              {
-                tipo: 'PRODUCCION',
-                productoId: pf._id,
-                delta: Math.abs(run.unidadesProducidas),
-                unidad: pf.unidad,
-                referencia: { productionRunId: run._id, recipeId: run.recipeId },
-                timestamp: new Date(),
-              },
-            ],
+            [{
+              tipo: 'PRODUCCION',
+              productoId: pf._id,
+              delta: Math.abs(cantidadParaStockear),
+              unidad: pf.unidad,
+              referencia: { productionRunId: run._id, recipeId: run.recipeId },
+              timestamp: new Date(),
+            }],
             { session }
           );
         }
@@ -263,6 +273,7 @@ router.post('/:id/confirm', async (req, res) => {
     res.status(400).json({ error: e.message });
   }
 });
+
 
 // GET /production-runs/export → CSV para Excel
 router.get('/export', async (_req, res) => {

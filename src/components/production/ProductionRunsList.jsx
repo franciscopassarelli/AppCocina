@@ -71,8 +71,9 @@ export default function ProductionRunsList({ apiBase }) {
         Receta: r.recipeNombre,
         "Preparado por": r.preparadoPor || "",
         Planificadas: r.unidadesPlanificadas,
-        Producidas: r.unidadesProducidas ?? 0,
-        Duración: dur,
+        "Producidas": r.unidadesProducidas ?? 0,
+        "Unidad producida": r.unidadesProducidasUnidad || "",
+         Duración: dur,
         "Fecha de vencimiento": formatDateAR(fechaVenc),
         "Insumos consumidos": consumidos,
       };
@@ -161,7 +162,7 @@ export default function ProductionRunsList({ apiBase }) {
                       {r.preparadoPor || "—"}
                     </td>
                     <td data-label="Planif." className="text-center">{nf0.format(r.unidadesPlanificadas || 0)}</td>
-                    <td data-label="Producidas" className="text-center">{nf0.format(r.unidadesProducidas || 0)}</td>
+                    <td data-label="Producidas" className="text-center">{nf0.format(r.unidadesProducidas || 0)} {r.unidadesProducidasUnidad || ""}</td>
                     <td data-label="Duración">{dur}</td>
                     <td data-label="Vencimiento">{formatDateAR(fechaVenc)}</td>
                     <td data-label="Insumos consumidos">
