@@ -1,5 +1,3 @@
-// components/FormularioProducto.jsx
-
 import React from "react";
 import "../styles/FormularioProducto.css"; // Import your CSS styles
 
@@ -32,7 +30,7 @@ export default function FormularioProducto({
         </h5>
         <div className="row g-2 align-items-end">
           {/* Nombre */}
-          <div className="col-md-2">
+          <div className="col-auto">
             <label htmlFor="nombre" className="form-label fw-semibold small text-dark mb-1">
               Nombre
             </label>
@@ -43,6 +41,7 @@ export default function FormularioProducto({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
+              style={{ maxWidth: "110px" }}
             />
           </div>
 
@@ -128,16 +127,12 @@ export default function FormularioProducto({
               value={departamento}
               onChange={(e) => setDepartamento(e.target.value)}
             >
-              <option value="Carnes">Carnicería</option>
-              <option value="Verduras">Verdulería</option>
-              <option value="Congelados">Congelados</option>
-              <option value="Aderezos">Aderezos</option>
-              <option value="Lácteos">Lácteos</option>
-              <option value="Panadería">Panadería</option>
-              <option value="Insumos">Insumos</option>
-              <option value="Limpieza">Limpieza</option>
-              <option value="Maquinaria">Maquinaria</option>
-              <option value="Otros">Otros</option>
+              <option value="Verduras">VERDURAS</option>
+              <option value="Aderezos">ADEREZOS</option>
+              <option value="Limpieza">LIMPIEZA</option>
+              <option value="Packaging">PACKAGING</option>
+              <option value="Libreria">LIBRERÍA</option>
+              <option value="Cambiodeaceitemaquinaria">CAMB. ACEITE MAQUINARIA</option>
             </select>
           </div>
 

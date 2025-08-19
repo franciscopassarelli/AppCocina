@@ -1,0 +1,42 @@
+/* Panel principal */
+.active-productions-panel {
+  background: #222;
+  color: #fff;
+  max-width: 900px;
+  margin: auto;
+  border: 2px solid #4caf50;
+}
+
+/* Header */
+.active-productions-header h4 {
+  font-weight: 700;
+}
+
+.active-productions-badge {
+  font-size: 0.9rem;
+}
+
+/* Lista de cards */
+.active-productions-list {
+  width: 100%;
+}
+
+/* Card individual */
+.active-production-card {
+  min-width: 280px;
+  max-width: 360px;
+  background-color: #333;
+  color: #eee;
+}
+
+/* Texto de insumos consumidos */
+.consumidos-text {
+  word-break: break-word;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .active-production-card {
+    min-width: 100%;
+  }
+}

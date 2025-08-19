@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
+import "../styles/ActiveProductionsPanel.css"; // Asegúrate de tener este CSS para estilos personalizados
 
 export default function ActiveProductionsPanel({ runs = [], onConfirm, onCancel }) {
   const [, setTick] = useState(0);
 
   // Refresca duración cada 1s
   useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 1000);
+    const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Orden: más recientes primero (fallback si falta startedAt)
+  // Orden: más recientes primero
   const ordered = useMemo(() => {
     return [...runs].sort((a, b) => {
       const ta = a?.startedAt ? new Date(a.startedAt).getTime() : 0;
@@ -32,7 +33,7 @@ export default function ActiveProductionsPanel({ runs = [], onConfirm, onCancel 
   const fmtDateAR = (value) => {
     if (!value) return "—";
     const d = new Date(value);
-    if (isNaN(d.getTime())) return String(value); // si vino texto no-ISO, lo muestro crudo
+    if (isNaN(d.getTime())) return String(value);
     const day = String(d.getUTCDate()).padStart(2, "0");
     const month = String(d.getUTCMonth() + 1).padStart(2, "0");
     const year = d.getUTCFullYear();
@@ -40,29 +41,16 @@ export default function ActiveProductionsPanel({ runs = [], onConfirm, onCancel 
   };
 
   return (
-    <div
-      className="container mb-4 p-4 rounded"
-      style={{
-        background: "#222",
-        color: "#fff",
-        maxWidth: 900,
-        margin: "auto",
-        border: "2px solid #4caf50",
-      }}
-    >
-      <div className="d-flex align-items-center justify-content-between gap-2 mb-3">
-        <h4 className="mb-0" style={{ fontWeight: 700 }}>
-          Producciones activas
-        </h4>
-        <span className="badge bg-success" style={{ fontSize: "0.9rem" }}>
-          {runs.length}
-        </span>
+    <div className="active-productions-panel container mb-4 p-4 rounded">
+      <div className="active-productions-header d-flex align-items-center justify-content-between gap-2 mb-3">
+        <h4 className="mb-0">Producciones activas</h4>
+        <span className="active-productions-badge badge bg-success">{runs.length}</span>
       </div>
 
       {ordered.length === 0 ? (
         <div className="text-muted text-center py-3">Sin producciones activas.</div>
       ) : (
-        <div className="d-flex flex-wrap gap-3 justify-content-center">
+        <div className="active-productions-list d-flex flex-wrap gap-3 justify-content-center">
           {ordered.map((run) => {
             const inicioStr = run?.startedAt
               ? new Date(run.startedAt).toLocaleString("es-AR")
@@ -73,26 +61,20 @@ export default function ActiveProductionsPanel({ runs = [], onConfirm, onCancel 
 
             const consumidos =
               (run?.ingredientesConsumidos || [])
-                .map(i => `${i.nombreProducto}: ${i.cantidad} ${i.unidad}`)
+                .map((i) => `${i.nombreProducto}: ${i.cantidad} ${i.unidad}`)
                 .join(" · ") || "—";
 
             return (
               <div
                 key={run._id || `${run.recipeNombre}-${run.startedAt}`}
-                className="card p-3"
-                style={{
-                  minWidth: 280,
-                  maxWidth: 360,
-                  backgroundColor: "#333",
-                  color: "#eee",
-                }}
+                className="active-production-card card p-3"
               >
                 <div><strong>Receta:</strong> {run.recipeNombre || run.recipeName || "—"}</div>
                 <div><strong>Inicio:</strong> {inicioStr}</div>
                 <div><strong>Planificadas:</strong> {run.unidadesPlanificadas ?? "—"}</div>
                 <div><strong>Duración:</strong> {durStr}</div>
                 <div className="mt-1"><strong>Insumos consumidos:</strong></div>
-                <div style={{ wordBreak: "break-word" }}>{consumidos}</div>
+                <div className="consumidos-text">{consumidos}</div>
                 <div className="mt-1"><strong>Vencimiento:</strong> {vencStr}</div>
 
                 <div className="mt-3 d-flex gap-2 justify-content-end flex-wrap">

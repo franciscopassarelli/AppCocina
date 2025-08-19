@@ -9,7 +9,6 @@ import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
-
 import { getRecipes } from "../../api/recipes.js";
 
 export default function CookPanel() {
@@ -64,12 +63,10 @@ export default function CookPanel() {
   const API_URL = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
 
   // ======= Persistencia y sincronización de activeRuns =======
-  // Guardar cada cambio en storage
   useEffect(() => {
     writeActiveRuns(activeRuns);
   }, [activeRuns]);
 
-  // Sincronizar entre pestañas/ventanas
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === STORAGE_KEY) {
@@ -80,7 +77,6 @@ export default function CookPanel() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Avisar al intentar cerrar si hay runs activos
   useEffect(() => {
     const onBeforeUnload = (e) => {
       if (activeRuns.length > 0) {
@@ -92,30 +88,21 @@ export default function CookPanel() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [activeRuns.length]);
 
+  // Helper para obtener la clave única de una receta
+  const recipeKeyOf = (r) => r?.recipeId || r?.recipe?._id || r?.recipeNombre || r?.recipeName;
+
   function handleStarted(run) {
-    // Se agrega y persiste; no descuenta nada todavía
+    const key = recipeKeyOf(run);
+    const exists = activeRuns.some((r) => recipeKeyOf(r) === key);
+    if (exists) {
+      mostrarMensajeAlerta("⚠️ Ya hay una producción activa para esa receta.");
+      setShowPlan(false);
+      return;
+    }
     setActiveRuns((prev) => [...prev, run]);
     setConfirmingRun(null);
     setShowPlan(false);
   }
-
-
-  // Helper para obtener la clave única de una receta
-const recipeKeyOf = (r) => r?.recipeId || r?.recipe?._id || r?.recipeNombre || r?.recipeName;
-
-function handleStarted(run) {
-  const key = recipeKeyOf(run);
-  const exists = activeRuns.some(r => recipeKeyOf(r) === key);
-  if (exists) {
-    mostrarMensajeAlerta("⚠️ Ya hay una producción activa para esa receta.");
-    setShowPlan(false);
-    return;
-  }
-  setActiveRuns(prev => [...prev, run]);
-  setConfirmingRun(null);
-  setShowPlan(false);
-}
-
 
   // ===== Carga de recetas =====
   useEffect(() => {
@@ -282,69 +269,35 @@ function handleStarted(run) {
     setShowConfirm(false);
     if (ok) {
       setActiveRuns((prev) => prev.filter((r) => r._id !== runId));
-      // avisar a listados
       window.dispatchEvent(new Event("runs:changed"));
     }
     setConfirmingRun(null);
   }
 
   return (
-    <div className="container-fluid py-5" style={{ backgroundColor: "#000", minHeight: "100vh" }}>
+    <div className="container-fluid cookpanel-container">
       <AlertaStockModal
         productos={productos}
         visible={mostrarAlertaStock}
         onClose={() => setMostrarAlertaStock(false)}
       />
+
       <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
         <GiChefToque size={40} />
         <span>Panel de Cocina</span>
       </h2>
 
       {alerta && (
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "12px 20px",
-            backgroundColor: "#28a745",
-            color: "white",
-            borderRadius: "8px",
-            fontWeight: "600",
-            textAlign: "center",
-            maxWidth: "400px",
-            marginLeft: "auto",
-            marginRight: "auto",
-            boxShadow: "0 4px 10px rgba(40, 167, 69, 0.5)",
-            opacity: mostrarAlerta ? 1 : 0,
-            transition: "opacity 0.5s ease",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          }}
-        >
+        <div className={`cookpanel-alert ${!mostrarAlerta ? "is-hidden" : ""}`}>
           <FiCheckCircle size={24} />
           {alerta}
         </div>
       )}
 
       {/* ===== Producción (recetas) ===== */}
-      <div
-        className="container mb-4 p-4 rounded d-flex flex-column align-items-center justify-content-center"
-        style={{
-          background: "#222",
-          color: "#fff",
-          maxWidth: "500px",
-          margin: "0 auto",
-          boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
-          border: "2px solid #4caf50",
-        }}
-      >
-        <h3 className="mb-3" style={{ fontWeight: "700", letterSpacing: "1px" }}>
-          Producción
-        </h3>
-        <p className="mb-4 text-info" style={{ fontSize: "1.1rem", fontWeight: "500" }}>
-          Planificar → iniciar (timer) → confirmar
-        </p>
+      <div className="container production-panel">
+        <h3 className="mb-3">Producción</h3>
+        <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
         <button className="button-green-lg" onClick={() => setShowPlan(true)}>
           Nueva producción
         </button>
@@ -370,31 +323,20 @@ function handleStarted(run) {
       )}
 
       {/* ===== Ingreso rápido de stock ===== */}
-      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+      <div className="container section-card card-dark">
         <h5 className="mb-3 text-center">Ingreso rápido de stock</h5>
 
         {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
           <motion.div
             key={depto}
-            className="text-white my-3 py-2 px-3 rounded border mx-auto"
-            style={{
-              cursor: "pointer",
-              backgroundColor: "#111",
-              borderColor: "#444",
-              width: "95%",
-              maxWidth: "900px",
-            }}
+            className="text-white my-3 py-2 px-3 rounded border mx-auto department-panel"
             onClick={() => {
-              // Abrir departamento en ingreso rápido
               setDepartamentoActivoRapido(depto === departamentoActivoRapido ? null : depto);
-              // Cerrar listado normal
               setDepartamentoActivoListado(null);
             }}
             whileHover={{ scale: 1.015 }}
           >
-            <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
-              {depto}
-            </h5>
+            <h5 className="mb-2 text-center department-title">{depto}</h5>
 
             <AnimatePresence>
               {departamentoActivoRapido === depto && (
@@ -403,20 +345,12 @@ function handleStarted(run) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
+                  className="mt-3 products-grid"
                 >
                   {productosDepto.map((p) => (
                     <motion.button
                       key={p._id}
-                      className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
-                      style={{
-                        backgroundColor: "#222",
-                        color: "white",
-                        border: "1px solid white",
-                        borderRadius: "10px",
-                        minWidth: "170px",
-                        minHeight: "120px",
-                      }}
+                      className="btn shadow d-flex flex-column justify-content-center align-items-center text-center product-btn"
                       onClick={() => {
                         setProductoParaStock(p);
                         setShowQuickStock(true);
@@ -427,7 +361,7 @@ function handleStarted(run) {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <strong style={{ fontSize: "1.1rem" }}>{p.nombre}</strong>
+                      <strong>{p.nombre}</strong>
                       <div className="small mt-2 text-secondary">
                         Stock: {Number(p.stock).toFixed(2)} {p.unidad}
                       </div>
@@ -441,26 +375,21 @@ function handleStarted(run) {
       </div>
 
       {/* ===== Listado por departamento (flujo existente) ===== */}
-      <div className="container mb-4 p-3 border rounded" style={{ background: "#111", color: "#fff" }}>
+      <div className="container section-card card-dark">
         <h5 className="mb-3 text-center">Uso Manual del stock</h5>
         {!productoSeleccionado && (
           <div>
             {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
               <motion.div
                 key={depto}
-                className="text-white my-3 py-2 px-3 rounded border mx-auto"
-                style={{ cursor: "pointer", backgroundColor: "#111", borderColor: "#444", width: "95%", maxWidth: "900px" }}
+                className="text-white my-3 py-2 px-3 rounded border mx-auto department-panel"
                 onClick={() => {
-                  // Abrir departamento en listado normal
                   setDepartamentoActivoListado(depto === departamentoActivoListado ? null : depto);
-                  // Cerrar ingreso rápido
                   setDepartamentoActivoRapido(null);
                 }}
                 whileHover={{ scale: 1.015 }}
               >
-                <h5 className="mb-2 text-center text-uppercase" style={{ letterSpacing: "1px" }}>
-                  {depto}
-                </h5>
+                <h5 className="mb-2 text-center department-title">{depto}</h5>
 
                 <AnimatePresence>
                   {departamentoActivoListado === depto && (
@@ -469,13 +398,12 @@ function handleStarted(run) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.3 }}
-                      className="mt-3 d-flex flex-wrap gap-3 justify-content-center"
+                      className="mt-3 products-grid"
                     >
                       {productosDepto.map((prod) => (
                         <motion.button
                           key={prod._id}
-                          className="btn shadow d-flex flex-column justify-content-center align-items-center text-center"
-                          style={{ backgroundColor: "#222", color: "white", border: "1px solid white", borderRadius: "10px", minWidth: "170px", minHeight: "120px" }}
+                          className="btn shadow d-flex flex-column justify-content-center align-items-center text-center product-btn"
                           onClick={() => setProductoIdSeleccionado(prod._id)}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
@@ -483,7 +411,7 @@ function handleStarted(run) {
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
-                          <strong style={{ fontSize: "1.1rem" }}>{prod.nombre}</strong>
+                          <strong>{prod.nombre}</strong>
                           <div className="small mt-2 text-secondary">
                             Stock: {Number(prod.stock).toFixed(2)} {prod.unidad}
                           </div>
@@ -501,10 +429,9 @@ function handleStarted(run) {
       <AnimatePresence>
         {productoSeleccionado && (
           <motion.div
-            className="modal d-block"
+            className="modal d-block modal-backdrop-dark"
             tabIndex={-1}
             role="dialog"
-            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
             onClick={() => setProductoIdSeleccionado(null)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -541,7 +468,9 @@ function handleStarted(run) {
                     </div>
                   )}
                   <div className={esInsumoUnidad ? "col-md-12" : "col-md-6"}>
-                    <label className="form-label form-label-sm">Unidades {esInsumoUnidad ? "a descontar" : "producidas"}:</label>
+                    <label className="form-label form-label-sm">
+                      Unidades {esInsumoUnidad ? "a descontar" : "producidas"}:
+                    </label>
                     <input
                       type="number"
                       className="form-control form-control-sm"
@@ -595,7 +524,11 @@ function handleStarted(run) {
                   )}
                 </button>
 
-                <button className="btn btn-secondary btn-sm w-100 mt-2" onClick={() => setProductoIdSeleccionado(null)} disabled={cargando}>
+                <button
+                  className="btn btn-secondary btn-sm w-100 mt-2"
+                  onClick={() => setProductoIdSeleccionado(null)}
+                  disabled={cargando}
+                >
                   Cerrar
                 </button>
               </div>
@@ -619,7 +552,7 @@ function handleStarted(run) {
         show={showPlan}
         onClose={() => setShowPlan(false)}
         onStarted={handleStarted}
-        blockedRecipes={activeRuns.map(recipeKeyOf)}  // 👈 acá
+        blockedRecipes={activeRuns.map(recipeKeyOf)}
       />
 
       {confirmingRun && (

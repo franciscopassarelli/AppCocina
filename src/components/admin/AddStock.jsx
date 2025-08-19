@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import "../styles/AddStock.css"; // Import your CSS styles
-
+import "../styles/AddStock.css"; // estilos
 
 export default function AddStock({ producto, onAgregarStock, onClose }) {
   const [numeroFactura, setNumeroFactura] = useState("");
@@ -8,10 +7,8 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
   const [lote, setLote] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
 
-
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!numeroFactura || !cantidad || !lote || !fechaVencimiento) return;
 
     const nuevoLote = {
@@ -27,21 +24,11 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
   };
 
   return (
-    <div
-      className="p-4 border border-light rounded shadow"
-      style={{
-        backgroundColor: "#1c1c1c",
-        color: "#fff",
-        maxWidth: "600px",
-        margin: "0 auto",
-        fontSize: "0.95rem",
-      }}
-    >
+    <div className="addstock-card border border-light rounded shadow">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="fw-bold text-success m-0">
+        <h6 className="addstock-title m-0">
           Agregar stock: {producto.nombre}
         </h6>
-  
       </div>
 
       <form onSubmit={handleSubmit} className="row g-3">
@@ -89,16 +76,14 @@ export default function AddStock({ producto, onAgregarStock, onClose }) {
           />
         </div>
 
-        <div className="col-12 d-flex gap-2 justify-content-end mt-2">
-<button type="button" className="button-cancel" onClick={onClose}>
-  <i className="bi bi-x-circle-fill me-1"></i> Cancelar
-</button>
- <button type="submit" className="button-save">
-  <i className="bi bi-check-circle-fill me-1"></i> Guardar
-</button>
-
-</div>
-
+        <div className="col-12 d-flex gap-2 justify-content-end mt-2 addstock-actions">
+          <button type="button" className="button-cancel" onClick={onClose}>
+            <i className="bi bi-x-circle-fill me-1"></i> Cancelar
+          </button>
+          <button type="submit" className="button-save">
+            <i className="bi bi-check-circle-fill me-1"></i> Guardar
+          </button>
+        </div>
       </form>
     </div>
   );
