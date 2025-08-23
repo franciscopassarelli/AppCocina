@@ -206,7 +206,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
   return (
     <div className="card shadow-sm p-3" style={{ maxWidth: 1100, margin: "0 auto" }}>
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
-        <h5 className="mb-0">Planner de Carne (Limpieza & Blend)</h5>
+        <h5 className="mb-0">Producción de Carne (Medallones)</h5>
         <div className="d-flex gap-2">
           <button className="btn btn-outline-secondary btn-sm" onClick={resetAll}>Limpiar</button>
         </div>
@@ -441,7 +441,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
               <div className="row small gy-2">
                 <div className="col-6 d-flex justify-content-between">
                   <span>Desperdicio</span>
-                  <strong className={alertaDesperdicio}>{fromGramsPretty(desperdicioG)}</strong>
+                  <strong className="{alertaDesperdicio} text-white">{fromGramsPretty(desperdicioG)}</strong>
                 </div>
                 <div className="col-6 d-flex justify-content-between">
                   <span>Grasa objetivo (32% de carne limpia)</span>
@@ -480,14 +480,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 <div className="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
                   <strong>Consumo sugerido por producto</strong>
                   <div className="d-flex gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={confirmarConsumos}
-                      disabled={consumoSugerido.length === 0}
-                    >
-                      Sólo confirmar consumos (callback)
-                    </button>
+                   
                     <button
                       type="button"
                       className="btn btn-success btn-sm"
