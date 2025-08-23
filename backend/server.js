@@ -5,44 +5,46 @@ require("dotenv").config();
 
 const app = express();
 
-// 🔁 Middleware ANTES de las rutas
-const allowedOrigins = [
-  "http://localhost:5173", // frontend local
-  "https://app-cocina.vercel.app", // frontend en producción
-];
-
-app.use(cors({ 
-  origin: allowedOrigins
+// CORS
+app.use(cors({
+  origin: ["http://localhost:5173", "https://app-cocina.vercel.app"],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
 }));
 
 app.use(express.json());
 
-
-// ✅ Conexión a MongoDB
+// Mongo
 const uri = process.env.MONGO_URI;
 mongoose.connect(uri)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// 👉 Ruta de test para verificar funcionamiento
-app.get("/api", (req, res) => {
-  res.send("✅ API funcionando correctamente");
+// Health
+app.get("/api", (_req, res) => res.send("✅ API funcionando correctamente"));
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/meat-blend')) {
+    console.log('→ meat-blend hit:', req.method, req.path);
+  }
+  next();
 });
+app.get('/api/meat-blend/health', (_req, res) => res.json({ ok: true }));
 
-// 🛣️ Rutas
+// Routers
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
 const recipesRouter = require('./routes/recipes');
 const productionRunsRouter = require('./routes/productionRuns');
+const meatBlendRouter = require('./routes/meatBlend'); // 👈 AÑADIDO
 
-
+// Montaje
+app.use('/api/meat-blend', meatBlendRouter);      // 👈 AÑADIDO
 app.use('/api/recipes', recipesRouter);
 app.use('/api/production-runs', productionRunsRouter);
-
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);
 
-// 🚀 Server
+// Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

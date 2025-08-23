@@ -9,6 +9,7 @@ import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
+import MeatBlendPlanner from "../production/MeatBlendPlanner";
 import { getRecipes } from "../../api/recipes.js";
 
 export default function CookPanel() {
@@ -16,7 +17,7 @@ export default function CookPanel() {
     productos,
     actualizarStock,
     agregarRegistroHistorial,
-    actualizarProducto, // 👈 necesario para ingreso rápido de stock
+    actualizarProducto,
   } = useProductos();
 
   // ===== Helpers de persistencia local =====
@@ -42,9 +43,9 @@ export default function CookPanel() {
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
 
   // Persistimos runs activos localmente
-  const [activeRuns, setActiveRuns] = useState(() => readActiveRuns()); // 👈 inicializa desde storage
+  const [activeRuns, setActiveRuns] = useState(() => readActiveRuns());
 
-  const [confirmingRun, setConfirmingRun] = useState(null); // run que se confirma (modal)
+  const [confirmingRun, setConfirmingRun] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
   const [departamentoActivoListado, setDepartamentoActivoListado] = useState(null);
@@ -54,6 +55,9 @@ export default function CookPanel() {
   const [recipes, setRecipes] = useState([]);
   const [showPlan, setShowPlan] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // ===== Carne (planner) =====
+  const [showMeatPlanner, setShowMeatPlanner] = useState(true);
 
   // ===== Ingreso rápido de stock =====
   const [showQuickStock, setShowQuickStock] = useState(false);
@@ -312,15 +316,30 @@ export default function CookPanel() {
         }}
       />
 
-      {confirmingRun && (
-        <ProductionConfirmModal
-          apiBase={API_URL}
-          show={showConfirm}
-          run={confirmingRun}
-          productosFinales={productos}
-          onClose={(ok) => handleConfirmClose(ok, confirmingRun?._id)}
-        />
-      )}
+      {/* ===== Carne (Limpieza & Blend) ===== */}
+      <div className="container section-card card-dark">
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <h5 className="mb-0">Carne (Limpieza & Blend)</h5>
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={() => setShowMeatPlanner((v) => !v)}
+          >
+            {showMeatPlanner ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
+        <AnimatePresence>
+          {showMeatPlanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+            >
+              <MeatBlendPlanner />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* ===== Ingreso rápido de stock ===== */}
       <div className="container section-card card-dark">
@@ -548,7 +567,7 @@ export default function CookPanel() {
       <ProductionPlanModal
         apiBase={API_URL}
         recipes={recipes}
-        productos={productos} // 👈 para mostrar disponible/faltante y checklist
+        productos={productos}
         show={showPlan}
         onClose={() => setShowPlan(false)}
         onStarted={handleStarted}

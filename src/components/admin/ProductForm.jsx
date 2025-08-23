@@ -71,7 +71,7 @@ useEffect(() => {
     setPesoPromedio("");
     setStockCritico("");
     setProductoEditando(null);
-    setDepartamento("Insumos");
+    setDepartamento("Insumoscomida");
     setFechaVencimiento("");
     setFacturaRemito("");
   };

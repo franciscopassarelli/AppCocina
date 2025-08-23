@@ -127,6 +127,7 @@ export default function FormularioProducto({
               value={departamento}
               onChange={(e) => setDepartamento(e.target.value)}
             >
+              <option value="Insumoscomida">INSUMOS COMIDA</option>
               <option value="Verduras">VERDURAS</option>
               <option value="Aderezos">ADEREZOS</option>
               <option value="Limpieza">LIMPIEZA</option>

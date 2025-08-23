@@ -55,8 +55,8 @@ const RequeridoSchema = new Schema(
  */
 const ProductionRunSchema = new Schema(
   {
-    recipeId: { type: Schema.Types.ObjectId, ref: 'Recipe', required: true },
-    recipeNombre: { type: String, required: true },
+    recipeId: { type: Schema.Types.ObjectId, ref: 'Recipe' }, // ← ya NO required
+  recipeNombre: { type: String, required: true },
     fechaVencimientoProductoFinal: { type: Date },
 
     unidadesPlanificadas: { type: Number, required: true, min: 0 },

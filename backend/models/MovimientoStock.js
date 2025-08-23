@@ -2,14 +2,11 @@
 const { Schema, model } = require('mongoose');
 
 const MovimientoSchema = new Schema({
-  tipo: { type: String, enum: ['INGRESO', 'PRODUCCION', 'AJUSTE'], required: true },
+  tipo: { type: String, enum: ['INGRESO', 'PRODUCCION', 'AJUSTE', 'MEAT_BLEND'], required: true },
   productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
   delta: { type: Number, required: true }, // negativo para consumo
   unidad: { type: String, enum: ['kg', 'l', 'unidad'], required: true },
-  referencia: {
-    productionRunId: { type: Schema.Types.ObjectId, ref: 'ProductionRun' },
-    recipeId: { type: Schema.Types.ObjectId, ref: 'Recipe' },
-  },
+  referencia: { type: Schema.Types.Mixed, default: {} },
   timestamp: { type: Date, default: Date.now },
 });
 
