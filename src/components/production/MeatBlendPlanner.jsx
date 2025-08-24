@@ -441,7 +441,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
               <div className="row small gy-2">
                 <div className="col-6 d-flex justify-content-between">
                   <span>Desperdicio</span>
-                  <strong className="{alertaDesperdicio} text-white">{fromGramsPretty(desperdicioG)}</strong>
+                  <strong className={alertaDesperdicio}>{fromGramsPretty(desperdicioG)}</strong>
                 </div>
                 <div className="col-6 d-flex justify-content-between">
                   <span>Grasa objetivo (32% de carne limpia)</span>
