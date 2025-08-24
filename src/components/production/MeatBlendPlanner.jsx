@@ -189,7 +189,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
         ...(noAplicaVenc ? {} : { fechaVencimientoProductoFinal: fechaVenc }),
       };
 
-      await produceMeatBlend(apiBase, body);
+      await produceMeatBlend(body);
 
       setMsg({ type: "success", text: "✅ Blend producido y corrida registrada." });
       window.dispatchEvent(new CustomEvent("runs:changed"));

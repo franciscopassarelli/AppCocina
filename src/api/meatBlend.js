@@ -1,7 +1,8 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// src/api/meatBlend.js
+const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
-export async function produceMeatBlend(apiBase, body) {
-  const res = await fetch(`${apiBase}/meat-blend/produce`, {
+export async function produceMeatBlend(body) {
+  const res = await fetch(`${API_BASE}/meat-blend/produce`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
