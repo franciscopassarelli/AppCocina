@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export async function produceMeatBlend(apiBase, body) {
   const res = await fetch(`${apiBase}/meat-blend/produce`, {
     method: "POST",

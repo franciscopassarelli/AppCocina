@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 export async function startRun(API_BASE, body) {
   const res = await fetch(`${API_BASE}/production-runs/start`, {
     method: 'POST',
