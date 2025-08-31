@@ -36,8 +36,11 @@ const historialRoutes = require("./routes/historial");
 const recipesRouter = require('./routes/recipes');
 const productionRunsRouter = require('./routes/productionRuns');
 const meatBlendRouter = require('./routes/meatBlend'); // 👈 AÑADIDO
+const proveedoresRouter = require('./routes/proveedores');
+
 
 // Montaje
+app.use('/api/proveedores', proveedoresRouter);
 app.use('/api/meat-blend', meatBlendRouter);      // 👈 AÑADIDO
 app.use('/api/recipes', recipesRouter);
 app.use('/api/production-runs', productionRunsRouter);

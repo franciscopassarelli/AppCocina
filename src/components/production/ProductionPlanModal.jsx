@@ -88,7 +88,7 @@ export default function ProductionPlanModal({
 
     try {
       // 1) Crear run
-      const run = await startRun(apiBase, {
+      const run = await startRun({
         recipeId,
         unidadesPlanificadas: Number(cantidad),
       });

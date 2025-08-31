@@ -33,7 +33,7 @@ export default function ProductionRunsList({ apiBase }) {
   async function refresh() {
     setLoading(true);
     try {
-      const data = await getRuns(apiBase);
+     const data = await getRuns();
       setRuns(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);

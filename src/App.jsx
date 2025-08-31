@@ -8,7 +8,7 @@ import {
 import AdminDashboard from "./pages/AdminDashboard";
 import CookDashboard from "./pages/CookDashboard";
 import RecipeAdmin from "./pages/RecipeAdmin";
-import ProveedorDashboard from "./pages/ProveedorDashboard"; // 👈 Nuevo
+import ProveedoresPage from './pages/Proveedores';
 import Navbar from "./components/common/Navbar";
 
 export default function App() {
@@ -23,8 +23,8 @@ export default function App() {
   <Route path="/" element={<Navigate to="/cook" replace />} />
   <Route path="/admin" element={<AdminDashboard />} />
   <Route path="/cook" element={<CookDashboard />} />
-  <Route path="/proveedor" element={<ProveedorDashboard />} />
   <Route path="/recipeadmin" element={<RecipeAdmin />} />
+  <Route path="/proveedores" element={<ProveedoresPage />} />
   <Route path="*" element={<Navigate to="/cook" replace />} />
      </Routes>
     </Router>

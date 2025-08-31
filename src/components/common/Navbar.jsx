@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaBell, FaUserCog, FaTruck, FaBookOpen } from "react-icons/fa";
 import { GiCook } from "react-icons/gi";
@@ -10,19 +10,23 @@ export default function Navbar() {
   const { productos } = useProductos();
   const [mostrarAlertas, setMostrarAlertas] = useState(false);
 
+  useEffect(() => {
+    // al cambiar de ruta, cerrar alertas
+    setMostrarAlertas(false);
+  }, [pathname]);
+
   const productosAlertaRoja = productos.filter((p) => p.stock <= p.stockCritico);
   const productosAlertaAmarilla = productos.filter(
     (p) => p.stock > p.stockCritico && p.stock <= p.stockCritico * 2
   );
+  const hayAlertas = productosAlertaRoja.length > 0 || productosAlertaAmarilla.length > 0;
 
-  const hayAlertas =
-    productosAlertaRoja.length > 0 || productosAlertaAmarilla.length > 0;
+  const isActive = (route) =>
+    pathname === route || pathname.startsWith(`${route}/`);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 position-relative">
-      <Link className="navbar-brand" to="/">
-        EatCPanel
-      </Link>
+      <Link className="navbar-brand" to="/">EatCPanel</Link>
 
       <button
         className="navbar-toggler"
@@ -38,12 +42,12 @@ export default function Navbar() {
 
       <div className="collapse navbar-collapse" id="navbarNav">
         <ul className="navbar-nav ms-auto align-items-center">
-          {/* Botón de alertas */}
+          {/* Alertas */}
           <li className="nav-item me-3 position-relative">
             <button
               className="btn btn-link text-white position-relative"
               style={{ fontSize: "1.2rem" }}
-              onClick={() => setMostrarAlertas(!mostrarAlertas)}
+              onClick={() => setMostrarAlertas((v) => !v)}
               aria-label="Mostrar alertas de stock"
               title="Alertas de stock"
             >
@@ -67,43 +71,31 @@ export default function Navbar() {
                 {hayAlertas ? (
                   <>
                     {productosAlertaRoja.map((p) => (
-                      <div
-                        key={p._id}
-                        className="dropdown-item text-danger fw-bold text-wrap"
-                      >
+                      <div key={p._id} className="dropdown-item text-danger fw-bold text-wrap">
                         🔴 {p.nombre}
                         <br />
-                        <small>
-                          Stock crítico: {p.stock.toFixed(2)} {p.unidad}
-                        </small>
+                        <small>Stock crítico: {Number(p.stock).toFixed(2)} {p.unidad}</small>
                       </div>
                     ))}
                     {productosAlertaAmarilla.map((p) => (
-                      <div
-                        key={p._id}
-                        className="dropdown-item text-warning text-wrap"
-                      >
+                      <div key={p._id} className="dropdown-item text-warning text-wrap">
                         🟠 {p.nombre}
                         <br />
-                        <small>
-                          Stock bajo: {p.stock.toFixed(2)} {p.unidad}
-                        </small>
+                        <small>Stock bajo: {Number(p.stock).toFixed(2)} {p.unidad}</small>
                       </div>
                     ))}
                   </>
                 ) : (
-                  <span className="dropdown-item-text text-success">
-                    ✅ No hay alertas
-                  </span>
+                  <span className="dropdown-item-text text-success">✅ No hay alertas</span>
                 )}
               </div>
             )}
           </li>
 
-          {/* Menú de navegación */}
+          {/* Admin */}
           <li className="nav-item w-100">
             <Link
-              className={`nav-link nav-btn ${pathname === "/admin" ? "active" : ""}`}
+              className={`nav-link nav-btn ${isActive("/admin") ? "active" : ""}`}
               to="/admin"
               title="Admin"
             >
@@ -112,9 +104,10 @@ export default function Navbar() {
             </Link>
           </li>
 
+          {/* Cocina */}
           <li className="nav-item w-100">
             <Link
-              className={`nav-link nav-btn ${pathname === "/cook" ? "active" : ""}`}
+              className={`nav-link nav-btn ${isActive("/cook") ? "active" : ""}`}
               to="/cook"
               title="Cocina"
             >
@@ -122,24 +115,23 @@ export default function Navbar() {
               <span className="nav-label">Cocina</span>
             </Link>
           </li>
- {/* Nuevo: enlace a RecipeAdmin 
- 
- <li className="nav-item w-100">
+
+          {/* Proveedores */}
+          <li className="nav-item w-100">
             <Link
-              className={`nav-link nav-btn ${pathname === "/proveedor" ? "active" : ""}`}
-              to="/proveedor"
+              className={`nav-link nav-btn ${isActive("/proveedores") ? "active" : ""}`}
+              to="/proveedores"
               title="Proveedores"
             >
               <FaTruck className="nav-icon" />
               <span className="nav-label">Proveedores</span>
             </Link>
-          </li>*/}
-          
+          </li>
 
-          {/* Nuevo: enlace a RecipeAdmin */}
+          {/* Recetas */}
           <li className="nav-item w-100">
             <Link
-              className={`nav-link nav-btn ${pathname === "/recipeadmin" ? "active" : ""}`}
+              className={`nav-link nav-btn ${isActive("/recipeadmin") ? "active" : ""}`}
               to="/recipeadmin"
               title="Recetas"
             >

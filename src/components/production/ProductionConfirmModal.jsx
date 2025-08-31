@@ -43,7 +43,7 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
         preparadoPor: nombre,
         ...(noAplicaVenc ? {} : { fechaVencimientoProductoFinal: fechaVenc }),
       };
-      await confirmRun(apiBase, run._id, payload);
+      await confirmRun(run._id, payload);
       window.dispatchEvent(new CustomEvent("runs:changed"));
       onClose(true);
     } catch (e) {
