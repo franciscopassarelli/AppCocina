@@ -21,8 +21,11 @@ export default function ProveedoresPage() {
   const [lotes, setLotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [estadoFiltro, setEstadoFiltro] = useState("open"); // 'open' | 'all'
-  const [asignando, setAsignando] = useState(null); // { lote, cantidad, productoDestinoId? }
+  const [asignando, setAsignando] = useState(null); // { lote, cantidad, productoDestinoId, lockDestino }
   const [msg, setMsg] = useState(null);
+
+  // 🔎 filtro por proveedor
+  const [busqProv, setBusqProv] = useState("");
 
   const prodMap = useMemo(() => {
     const m = new Map();
@@ -43,6 +46,13 @@ export default function ProveedoresPage() {
   }
 
   useEffect(() => { refresh(); }, [estadoFiltro]);
+
+  // 👉 cuando seleccionás un producto al crear el lote, autocompleta la unidad correcta
+  useEffect(() => {
+    if (!productoId) return;
+    const p = prodMap.get(productoId);
+    if (p?.unidad) setUnidad(p.unidad);
+  }, [productoId, prodMap]);
 
   async function handleCrear(e) {
     e.preventDefault();
@@ -79,26 +89,43 @@ export default function ProveedoresPage() {
   }
 
   async function confirmarAsignacion() {
-    if (!asignando) return;
-    const cant = Number(asignando.cantidad || 0);
-    if (!Number.isFinite(cant) || cant <= 0) {
-      setMsg({type:'danger', text:'Cantidad inválida'});
-      return;
-    }
-    const destinoId = asignando.productoDestinoId || asignando.lote.productoId;
-    try {
-      await asignarDesdeProveedor(asignando.lote._id, {
-        productoId: destinoId,
-        cantidad: cant, // misma unidad del lote de proveedor
-      });
-      setAsignando(null);
-      setMsg({ type: 'success', text: 'Asignado al producto y lote creado' });
-      refresh();
-      // si querés: window.dispatchEvent(new Event('stock:changed'));
-    } catch (e) {
-      setMsg({ type: 'danger', text: e.message || 'Error al asignar' });
-    }
+  if (!asignando) return;
+  const cant = Number(asignando.cantidad || 0);
+  if (!Number.isFinite(cant) || cant <= 0) {
+    setMsg({ type: "danger", text: "Cantidad inválida" });
+    return;
   }
+  if (cant > asignando.lote.cantidadDisponible) {
+    setMsg({
+      type: "danger",
+      text: `La cantidad supera el disponible (${nf2.format(
+        asignando.lote.cantidadDisponible
+      )} ${asignando.lote.unidad}).`,
+    });
+    return;
+  }
+
+  const destinoId = asignando.lote.productoId; // 👈 fijo al del lote
+  try {
+    await asignarDesdeProveedor(asignando.lote._id, {
+      productoId: destinoId,
+      cantidad: cant,
+    });
+    setAsignando(null);
+    setMsg({ type: "success", text: "Asignado al producto y lote creado" });
+    refresh();
+  } catch (e) {
+    setMsg({ type: "danger", text: e.message || "Error al asignar" });
+  }
+}
+
+
+  // 🔎 aplica el filtro por proveedor en frontend
+  const lotesFiltrados = useMemo(() => {
+    const q = busqProv.trim().toLowerCase();
+    if (!q) return lotes;
+    return lotes.filter(l => (l.proveedor || "").toLowerCase().includes(q));
+  }, [lotes, busqProv]);
 
   return (
     <div className="container py-3">
@@ -112,7 +139,7 @@ export default function ProveedoresPage() {
 
       {/* CREAR LOTE DE PROVEEDOR */}
       <div className="card p-3 mb-3">
-        <h6 className="mb-2">Nuevo lote de proveedor (buffer)</h6>
+        <h6 className="mb-2">Nuevo lote de proveedor</h6>
         <form onSubmit={handleCrear} className="row g-2 align-items-end">
           <div className="col-md-2">
             <label className="form-label small">Proveedor</label>
@@ -161,17 +188,30 @@ export default function ProveedoresPage() {
       </div>
 
       {/* LISTA DE LOTES EN BUFFER */}
-      <div className="d-flex justify-content-between align-items-center mb-2">
-        <h6 className="mb-0">Lotes en proveedor</h6>
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
         <div className="btn-group btn-group-sm">
           <button className={`btn ${estadoFiltro==='open'?'btn-dark':'btn-outline-dark'}`} onClick={()=>setEstadoFiltro('open')}>Abiertos</button>
           <button className={`btn ${estadoFiltro==='all'?'btn-dark':'btn-outline-dark'}`} onClick={()=>setEstadoFiltro('all')}>Todos</button>
+        </div>
+
+        {/* 🔎 Buscador por proveedor */}
+        <div className="input-group input-group-sm" style={{ maxWidth: 260 }}>
+          <span className="input-group-text">Proveedor</span>
+          <input
+            className="form-control"
+            placeholder="Buscar…"
+            value={busqProv}
+            onChange={(e)=>setBusqProv(e.target.value)}
+          />
+          {busqProv && (
+            <button className="btn btn-outline-secondary" type="button" onClick={()=>setBusqProv("")}>×</button>
+          )}
         </div>
       </div>
 
       {loading ? (
         <div className="text-muted">Cargando…</div>
-      ) : lotes.length === 0 ? (
+      ) : lotesFiltrados.length === 0 ? (
         <div className="text-muted">Sin lotes.</div>
       ) : (
         <div className="table-responsive">
@@ -190,7 +230,7 @@ export default function ProveedoresPage() {
               </tr>
             </thead>
             <tbody>
-              {lotes.map(l => (
+              {lotesFiltrados.map(l => (
                 <tr key={l._id}>
                   <td>{l.proveedor || '—'}</td>
                   <td>{l.nombreProducto}</td>
@@ -204,7 +244,7 @@ export default function ProveedoresPage() {
                     <button
                       className="btn btn-primary btn-sm"
                       disabled={l.cantidadDisponible <= 0}
-                      onClick={() => setAsignando({ lote: l, cantidad: '', productoDestinoId: l.productoId })}
+                      onClick={() => setAsignando({ lote: l, cantidad: '', productoDestinoId: l.productoId, lockDestino: true })}
                     >
                       Asignar →
                     </button>
@@ -217,40 +257,57 @@ export default function ProveedoresPage() {
       )}
 
       {/* MODAL ASIGNAR */}
-      {asignando && (
-        <div className="alerta-overlay" onClick={() => setAsignando(null)}>
-          <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
-            <h6 className="mb-2">Asignar a producto</h6>
-            <div className="mb-2"><strong>{asignando.lote.nombreProducto}</strong> • Disponible: {nf2.format(asignando.lote.cantidadDisponible)} {asignando.lote.unidad}</div>
-            <div className="mb-2">
-              <label className="form-label small">Producto destino</label>
-              <select
-                className="form-select form-select-sm"
-                value={asignando.productoDestinoId}
-                onChange={e => setAsignando(prev => ({ ...prev, productoDestinoId: e.target.value }))}
-              >
-                {productos.map(p => <option key={p._id} value={p._id}>{p.nombre} ({p.unidad})</option>)}
-              </select>
-            </div>
-            <div className="mb-3">
-              <label className="form-label small">Cantidad a asignar ({asignando.lote.unidad})</label>
-              <input
-                type="number"
-                min={0}
-                step="any"
-                className="form-control form-control-sm"
-                value={asignando.cantidad}
-                onChange={e => setAsignando(prev => ({ ...prev, cantidad: e.target.value }))}
-                placeholder={`<= ${asignando.lote.cantidadDisponible}`}
-              />
-            </div>
-            <div className="d-flex justify-content-end gap-2">
-              <button className="btn btn-secondary btn-sm" onClick={() => setAsignando(null)}>Cancelar</button>
-              <button className="btn btn-success btn-sm" onClick={confirmarAsignacion}>Asignar</button>
-            </div>
-          </div>
+  {/* MODAL ASIGNAR */}
+{asignando && (
+  <div className="alerta-overlay" onClick={() => setAsignando(null)}>
+    <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
+      <h6 className="mb-2">Asignar a producto</h6>
+
+      <div className="mb-2">
+        <strong>{asignando.lote.nombreProducto}</strong> • Disponible:{" "}
+        {nf2.format(asignando.lote.cantidadDisponible)} {asignando.lote.unidad}
+      </div>
+
+      {/* Producto destino (solo lectura) */}
+      <div className="mb-2">
+        <label className="form-label small">Producto destino</label>
+        <div className="form-control form-control-sm bg-light">
+          {prodMap.get(asignando.lote.productoId)?.nombre} (
+          {prodMap.get(asignando.lote.productoId)?.unidad})
         </div>
-      )}
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label small">
+          Cantidad a asignar ({asignando.lote.unidad})
+        </label>
+        <input
+          type="number"
+          min={0}
+          step="any"
+          className="form-control form-control-sm"
+          value={asignando.cantidad}
+          onChange={(e) =>
+            setAsignando((prev) => ({ ...prev, cantidad: e.target.value }))
+          }
+          placeholder={`<= ${asignando.lote.cantidadDisponible}`}
+        />
+      </div>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setAsignando(null)}
+        >
+          Cancelar
+        </button>
+        <button className="btn btn-success btn-sm" onClick={confirmarAsignacion}>
+          Asignar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

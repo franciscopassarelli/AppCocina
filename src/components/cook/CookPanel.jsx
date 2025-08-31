@@ -57,7 +57,7 @@ export default function CookPanel() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   // ===== Carne (planner) =====
-  const [showMeatPlanner, setShowMeatPlanner] = useState(true);
+  const [showMeatPlanner, setShowMeatPlanner] = useState(false);
 
   // ===== Ingreso rápido de stock =====
   const [showQuickStock, setShowQuickStock] = useState(false);
@@ -307,6 +307,8 @@ export default function CookPanel() {
         </button>
       </div>
 
+    
+
       {/* Panel de producciones activas (persiste en storage) */}
       <ActiveProductionsPanel
         runs={activeRuns}
@@ -316,6 +318,7 @@ export default function CookPanel() {
         }}
       />
 
+  
       {/* ===== Carne (Limpieza & Blend) ===== */}
       <div className="container section-card card-dark">
         <div className="d-flex justify-content-between align-items-center mb-2">
