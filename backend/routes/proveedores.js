@@ -1,39 +1,25 @@
-// routes/proveedores.js
+// backend/routes/proveedores.js
 const express = require('express');
 const mongoose = require('mongoose');
 const ProveedorLote = require('../models/ProveedorLote');
 const Producto = require('../models/Producto');
 const MovimientoStock = require('../models/MovimientoStock');
-const { toProductUnit } = require('../utils/units.cjs');
 
 const router = express.Router();
 
-/**
- * GET /api/proveedores/lotes?estado=open|all
- * - open (default): sólo lotes con disponibilidad > 0
- * - all: todos
- */
+// GET /api/proveedores/lotes?estado=open|all
 router.get('/lotes', async (req, res) => {
   try {
-    const estado = String(req.query.estado || 'open');
-    const filter = estado === 'all'
-      ? {}
-      : { cantidadDisponible: { $gt: 0 } };
-
-    const lotes = await ProveedorLote.find(filter)
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json(lotes);
+    const estado = (req.query.estado || 'open').toLowerCase();
+    const filter = estado === 'open' ? { status: 'open' } : {};
+    const list = await ProveedorLote.find(filter).sort({ fechaIngreso: -1 }).lean();
+    res.json(list);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-/**
- * POST /api/proveedores/lotes
- * body: { proveedor?, productoId, nombreProducto, unidad, cantidadTotal, numeroFactura, loteProveedor?, fechaVencimiento, notas? }
- */
+// POST /api/proveedores/lotes  (crear buffer)
 router.post('/lotes', async (req, res) => {
   try {
     const {
@@ -44,111 +30,121 @@ router.post('/lotes', async (req, res) => {
       cantidadTotal,
       numeroFactura,
       loteProveedor,
-      fechaVencimiento,
+      fechaVencimiento, // opcional
       notas,
     } = req.body || {};
 
-    if (!productoId || !nombreProducto || !unidad || !cantidadTotal || !numeroFactura || !fechaVencimiento) {
-      return res.status(400).json({ error: 'Datos incompletos' });
+    if (!productoId || !unidad || !Number.isFinite(Number(cantidadTotal)) || !numeroFactura) {
+      return res.status(400).json({ error: 'Datos inválidos' });
     }
 
-    const cant = Number(cantidadTotal || 0);
-    if (!Number.isFinite(cant) || cant <= 0) {
-      return res.status(400).json({ error: 'Cantidad inválida' });
-    }
+    // Validación ligera del producto
+    const prod = await Producto.findById(productoId);
+    if (!prod) return res.status(404).json({ error: 'Producto no encontrado' });
 
-    const lote = await ProveedorLote.create({
-      proveedor: (proveedor || '').trim() || undefined,
+    const doc = await ProveedorLote.create({
+      proveedor: proveedor || undefined,
       productoId,
-      nombreProducto,
+      nombreProducto: nombreProducto || prod.nombre,
       unidad,
-      cantidadTotal: cant,
-      cantidadDisponible: cant,
+      cantidadTotal: Number(cantidadTotal),
+      cantidadDisponible: Number(cantidadTotal),
       numeroFactura,
-      loteProveedor: (loteProveedor || '').trim() || undefined,
-      fechaVencimiento: new Date(fechaVencimiento),
-      notas: (notas || '').trim() || undefined,
+      loteProveedor: loteProveedor || undefined,
+      fechaVencimiento: fechaVencimiento ? new Date(`${fechaVencimiento}T00:00:00`) : undefined,
+      notas: notas || undefined,
+      status: 'open',
     });
 
-    res.status(201).json(lote);
+    res.status(201).json(doc);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
 
-/**
- * POST /api/proveedores/lotes/:id/asignar
- * body: { productoId?, cantidad }  // cantidad en la unidad del lote de proveedor
- * - Si viene productoId lo usa; si no, usa el productoId del lote.
- * - Crea un lote en Producto y suma stock.
- * - Descuenta del lote del proveedor (cantidadDisponible).
- */
+// POST /api/proveedores/lotes/:id/asignar
+// body: { productoId (igual al del lote), cantidad, fechaVencimiento?, sinVencimiento? }
 router.post('/lotes/:id/asignar', async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { id } = req.params;
-    const { productoId, cantidad } = req.body || {};
+    const { productoId, cantidad, fechaVencimiento, sinVencimiento } = req.body || {};
 
-    const lotProv = await ProveedorLote.findById(id).session(session);
-    if (!lotProv) return res.status(404).json({ error: 'Lote de proveedor no encontrado' });
+    const lote = await ProveedorLote.findById(id).session(session);
+    if (!lote) return res.status(404).json({ error: 'Lote de proveedor no encontrado' });
+    if (lote.status !== 'open') throw new Error('Este lote ya está cerrado.');
 
-    const asignar = Number(cantidad || 0);
-    if (!Number.isFinite(asignar) || asignar <= 0) {
-      throw new Error('Cantidad a asignar inválida');
+    const cant = Number(cantidad || 0);
+    if (!Number.isFinite(cant) || cant <= 0) throw new Error('Cantidad inválida.');
+    if (cant > (lote.cantidadDisponible || 0)) {
+      throw new Error(`La cantidad supera lo disponible (${lote.cantidadDisponible} ${lote.unidad}).`);
     }
-    if (asignar > (lotProv.cantidadDisponible || 0)) {
-      throw new Error(`No hay suficiente disponible. Disponible: ${lotProv.cantidadDisponible} ${lotProv.unidad}`);
+
+    // Forzar que el destino sea el MISMO producto del lote
+    if (String(productoId) !== String(lote.productoId)) {
+      throw new Error('El producto destino debe coincidir con el del lote.');
     }
 
-    const prodId = productoId || lotProv.productoId;
-    const prod = await Producto.findById(prodId).session(session);
-    if (!prod) throw new Error('Producto destino no encontrado');
+    // Producto real
+    const prod = await Producto.findById(lote.productoId).session(session);
+    if (!prod) throw new Error('Producto no encontrado.');
+    if (prod.unidad !== lote.unidad) {
+      throw new Error(`La unidad del lote (${lote.unidad}) difiere del producto (${prod.unidad}).`);
+    }
 
-    // convertir a unidad del producto
-    const cantidadEnUnidadProducto = toProductUnit(asignar, lotProv.unidad, prod.unidad);
+    // Fecha del NUEVO lote (si no marcó sin vencimiento, debe venir)
+    let fv = null;
+    if (sinVencimiento !== true) {
+      if (!fechaVencimiento) throw new Error('Debés indicar la fecha de vencimiento.');
+      fv = new Date(`${fechaVencimiento}T00:00:00`);
+    }
 
-    // crear lote en producto
+    // Crear lote real en el producto
     const nuevoLote = {
-      numeroFactura: lotProv.numeroFactura,
-      lote: lotProv.loteProveedor || `PROV-${lotProv._id.toString().slice(-6)}`,
-      cantidad: cantidadEnUnidadProducto,
-      fechaVencimiento: lotProv.fechaVencimiento,
+      numeroFactura: lote.numeroFactura,
+      lote: lote.loteProveedor || `PROV-${lote._id.toString().slice(-6)}`,
+      cantidad: cant,
+      fechaVencimiento: fv,
       fechaIngreso: new Date(),
     };
 
     prod.lotes = [...(prod.lotes || []), nuevoLote];
-    prod.stock = +(Number(prod.stock || 0) + Number(cantidadEnUnidadProducto)).toFixed(6);
+    prod.stock = Number((prod.stock || 0) + cant);
     await prod.save({ session });
 
-    // movimiento de stock
+    // Registrar movimiento
     if (MovimientoStock) {
       await MovimientoStock.create(
-        [{
-          tipo: 'INGRESO',
-          productoId: prod._id,
-          delta: Math.abs(cantidadEnUnidadProducto),
-          unidad: prod.unidad,
-          referencia: { /* campos definidos en tu esquema */ },
-          timestamp: new Date(),
-        }],
+        [
+          {
+            tipo: 'INGRESO',
+            productoId: prod._id,
+            delta: Math.abs(cant),
+            unidad: prod.unidad,
+            referencia: { productionRunId: null, recipeId: null },
+            timestamp: new Date(),
+          },
+        ],
         { session }
       );
     }
 
-    // descontar del lote de proveedor
-    lotProv.cantidadDisponible = +(Number(lotProv.cantidadDisponible) - asignar).toFixed(6);
-    if (lotProv.cantidadDisponible <= 0) lotProv.cerrado = true;
-    await lotProv.save({ session });
+    // Descontar del buffer
+    lote.cantidadDisponible = Number((lote.cantidadDisponible || 0) - cant);
+    if (lote.cantidadDisponible <= 0) {
+      lote.cantidadDisponible = 0;
+      lote.status = 'closed';
+    }
+    await lote.save({ session });
 
     await session.commitTransaction();
-    session.endSession();
-
-    res.json({ ok: true, proveedorLote: lotProv, producto: prod, agregadoLoteProducto: nuevoLote });
+    res.json({ ok: true });
   } catch (e) {
     await session.abortTransaction();
-    session.endSession();
     res.status(400).json({ error: e.message });
+  } finally {
+    session.endSession();
   }
 });
 

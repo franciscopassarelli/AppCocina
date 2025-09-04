@@ -1,30 +1,30 @@
-// models/ProveedorLote.js
+// backend/models/ProveedorLote.js
 const { Schema, model } = require('mongoose');
 
 const ProveedorLoteSchema = new Schema(
   {
-    proveedor: { type: String, trim: true }, // opcional: nombre del proveedor
+    proveedor: String,
     productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
-    nombreProducto: { type: String, required: true }, // snapshot para comodidad de UI
-    unidad: { type: String, enum: ['kg','l','unidad'], required: true },
+    nombreProducto: String,
 
-    // cantidades en la unidad indicada arriba
+    unidad: { type: String, enum: ['kg', 'l', 'unidad'], required: true },
     cantidadTotal: { type: Number, required: true, min: 0 },
     cantidadDisponible: { type: Number, required: true, min: 0 },
 
-    numeroFactura: { type: String, trim: true, required: true },
-    loteProveedor: { type: String, trim: true }, // opcional: código/lote del proveedor
-    fechaVencimiento: { type: Date, required: true },
+    numeroFactura: { type: String, required: true },
+    loteProveedor: String,
+
+    // ⚠️ Opcional en el buffer (la real se decide al asignar)
+    fechaVencimiento: { type: Date },
 
     fechaIngreso: { type: Date, default: Date.now },
+    notas: String,
 
-    notas: { type: String, trim: true },
-    cerrado: { type: Boolean, default: false }, // cuando cant. disp. = 0
+    status: { type: String, enum: ['open', 'closed'], default: 'open', index: true },
   },
   { timestamps: true }
 );
 
-ProveedorLoteSchema.index({ creadoAt: -1 });
-ProveedorLoteSchema.index({ productoId: 1, cerrado: 1 });
+ProveedorLoteSchema.index({ fechaIngreso: -1 });
 
 module.exports = model('ProveedorLote', ProveedorLoteSchema);

@@ -1,59 +1,698 @@
-/* Estilos generales */
-.table td, 
-.table th {
-  vertical-align: middle;
+/* ===========================
+   THEME OSCURO (scope: RecipeAdmin)
+   =========================== */
+
+
+
+/* Fondo negro a pantalla completa solo para RecipeAdmin */
+.recipe-admin-page {
+  background: #000;
+  min-height: 100vh;
 }
 
-/* 📱 Ajustes para móviles */
+/* Asegura que el contenedor no ponga fondo propio */
+.recipe-admin {
+  background: transparent;
+}
+
+/* Fondo negro global mientras estés en RecipeAdmin */
+body.page-dark-bg {
+  background: #000;
+}
+
+.recipe-admin .alert-danger { background: #2a1111; color: #ff9c9c; border: 1px solid #4c1f1f; }
+.recipe-admin .alert-success { background: #0f2a18; color: #a9f5c6; border: 1px solid #1f4c32; }
+
+/* Cards */
+.recipe-admin .card {
+  background: #101010;
+  color: #eee;
+  border: 1px solid #242424;
+  border-radius: 12px;
+}
+.recipe-admin .card h4,
+.recipe-admin .card h5,
+.recipe-admin .card h6 { color: #f2f2f2; }
+
+/* Inputs / selects */
+.recipe-admin .form-control,
+.recipe-admin .form-select {
+  background: #0f0f0f;
+  color: #e6e6e6;
+  border: 1px solid #2b2b2b;
+}
+.recipe-admin .form-control::placeholder { color: #9a9a9a; }
+.recipe-admin .form-control:focus,
+.recipe-admin .form-select:focus {
+  background: #111;
+  color: #fff;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 .2rem rgba(46,125,50,.15);
+}
+
+/* Botones */
+.recipe-admin .btn-success {
+  background-image: linear-gradient(-180deg, #00c851, #007e33);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+}
+.recipe-admin .btn-success:hover { filter: brightness(1.05); }
+.recipe-admin .btn-success:active { transform: scale(0.98); }
+
+.recipe-admin .btn-outline-secondary {
+  color: #cfcfcf;
+  border-color: #3a3a3a;
+  background: transparent;
+}
+.recipe-admin .btn-outline-secondary:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #4a4a4a;
+}
+
+.recipe-admin .btn-outline-primary {
+  color: #9ecbff;
+  border-color: #27496d;
+}
+.recipe-admin .btn-outline-primary:hover {
+  background: #10243a;
+  color: #cbe3ff;
+  border-color: #2f5c8c;
+}
+
+.recipe-admin .btn-outline-danger {
+  color: #ff8585;
+  border-color: #7a3a3a;
+}
+.recipe-admin .btn-outline-danger:hover {
+  background: #2a1212;
+  color: #ffc1c1;
+  border-color: #9a4c4c;
+}
+
+.recipe-admin .btn-link {
+  color: #7ecb7a;
+  text-decoration: none;
+}
+.recipe-admin .btn-link:hover { text-decoration: underline; }
+
+/* Tablas (form de creación + modal edición) */
+.recipe-admin .table {
+  color: #ddd;
+  border-color: #2a2a2a;
+}
+.recipe-admin .table thead {
+  background: #151515;
+  color: #f0f0f0;
+}
+.recipe-admin .table thead th { border-color: #2a2a2a; }
+.recipe-admin .table tbody tr { background: #0d0d0d; }
+.recipe-admin .table tbody tr + tr td { border-top: 1px solid #1f1f1f; }
+
+/* Responsive table hint */
+.responsive-table th,
+.responsive-table td { vertical-align: middle; }
+
+/* Modal edición */
+.recipe-admin .modal-content {
+  background: #111;
+  color: #eee;
+  border: 1px solid #2b2b2b;
+}
+.recipe-admin .modal-header {
+  border-bottom: 1px solid #262626;
+  background: #131313;
+}
+.recipe-admin .modal-footer {
+  border-top: 1px solid #262626;
+  background: #101010;
+}
+.recipe-admin .btn-close {
+  filter: invert(1) grayscale(1);
+  opacity: .7;
+}
+.recipe-admin .btn-close:hover { opacity: 1; }
+
+/* ======= Cards de recetas (incluye lo de antes para que esté completo) ======= */
+
+/* Grid de cards */
+.recipe-admin .recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Card base */
+.recipe-admin .recipe-card {
+  background: #111;
+  color: #eee;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.recipe-admin .recipe-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+  border-color: #3a3a3a;
+}
+
+/* Header */
+.recipe-admin .recipe-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.recipe-admin .recipe-card__title {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: .2px;
+  font-size: 0.95rem;
+  max-width: 80%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Acciones (iconitos) */
+.recipe-admin .icon-btn {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #ddd;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  transition: background .12s ease, color .12s ease, border-color .12s ease, transform .06s ease-in;
+  margin-left: 6px;
+}
+.recipe-admin .icon-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #4a4a4a;
+}
+.recipe-admin .icon-btn:active { transform: scale(0.96); }
+
+.recipe-admin .icon-btn--danger {
+  border-color: #5a2a2a;
+  color: #ff6b6b;
+}
+.recipe-admin .icon-btn--danger:hover {
+  background: #2a1212;
+  color: #ff8585;
+  border-color: #7a3a3a;
+}
+
+/* Chips / badges */
+.recipe-admin .recipe-card__meta { margin-bottom: 6px; }
+.recipe-admin .chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #1a1a1a;
+  border: 1px solid #2e2e2e;
+  color: #cfcfcf;
+}
+
+/* Lista de ingredientes */
+
+/* ===== Tabla de ingredientes en modo oscuro (scope) ===== */
+.recipe-admin .recipe-table-dark .table {
+  --bs-table-bg: #0d0d0d;
+  --bs-table-color: #e9ecef;
+  --bs-table-border-color: #262626;
+  --bs-table-striped-bg: #121214;
+  --bs-table-striped-color: #e9ecef;
+  --bs-table-hover-bg: #14161a;
+  --bs-table-hover-color: #ffffff;
+  color: var(--bs-table-color);
+  border-color: var(--bs-table-border-color);
+  background-color: var(--bs-table-bg);
+}
+
+/* Encabezado oscuro azulado solo para esta tabla */
+.recipe-admin .recipe-table-dark .table thead.table-blue {
+  background: #0b1f2e;
+  color: #eaf4ff;
+}
+.recipe-admin .recipe-table-dark .table thead.table-blue th {
+  border-color: #22313f !important;
+}
+
+/* Filas y bordes del cuerpo */
+.recipe-admin .recipe-table-dark .table tbody tr {
+  background: var(--bs-table-bg) !important;
+}
+.recipe-admin .recipe-table-dark .table tbody tr + tr td {
+  border-top: 1px solid var(--bs-table-border-color) !important;
+}
+
+/* Separadores verticales (opcional) */
+.recipe-admin .recipe-table-dark .table thead th + th,
+.recipe-admin .recipe-table-dark .table tbody td + td {
+  border-left: 1px solid #1f2330;
+}
+
+/* Inputs / selects dentro de la tabla */
+.recipe-admin .recipe-table-dark .form-control,
+.recipe-admin .recipe-table-dark .form-select {
+  background: #0f0f10;
+  color: #e6e6e6;
+  border: 1px solid #2a2a2a;
+}
+.recipe-admin .recipe-table-dark .form-control::placeholder { color: #9aa0a6; }
+.recipe-admin .recipe-table-dark .form-control:focus,
+.recipe-admin .recipe-table-dark .form-select:focus {
+  background: #111214;
+  color: #fff;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 .2rem rgba(46,125,50,.15);
+}
+.recipe-admin .recipe-table-dark select option {
+  background: #0f0f10;
+  color: #e6e6e6;
+}
+
+/* Botón eliminar coherente en dark */
+.recipe-admin .recipe-table-dark .icon-btn {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #ddd;
+}
+.recipe-admin .recipe-table-dark .icon-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #4a4a4a;
+}
+.recipe-admin .recipe-table-dark .icon-btn--danger {
+  border-color: #5a2a2a;
+  color: #ff6b6b;
+}
+.recipe-admin .recipe-table-dark .icon-btn--danger:hover {
+  background: #2a1212;
+  color: #ff8585;
+  border-color: #7a3a3a;
+}
+
+/* ===== Modal de edición en modo oscuro (scope) ===== */
+.recipe-admin .recipe-modal-dark {
+  background: #111 !important;
+  color: #eee;
+  border: 1px solid #2b2b2b;
+  border-radius: 12px;
+}
+
+/* Header / Footer */
+.recipe-admin .recipe-modal-dark .modal-header {
+  background: #131313;
+  border-bottom: 1px solid #262626;
+}
+.recipe-admin .recipe-modal-dark .modal-title { color: #f2f2f2; }
+.recipe-admin .recipe-modal-dark .modal-footer {
+  background: #101010;
+  border-top: 1px solid #262626;
+}
+
+/* Botón cerrar visible en dark */
+.recipe-admin .recipe-modal-dark .btn-close {
+  filter: invert(1) grayscale(1);
+  opacity: .75;
+}
+.recipe-admin .recipe-modal-dark .btn-close:hover { opacity: 1; }
+
+/* Inputs/selects del modal */
+.recipe-admin .recipe-modal-dark .form-control,
+.recipe-admin .recipe-modal-dark .form-select {
+  background: #0f0f10;
+  color: #e6e6e6;
+  border: 1px solid #2a2a2a;
+}
+.recipe-admin .recipe-modal-dark .form-control::placeholder { color: #9aa0a6; }
+.recipe-admin .recipe-modal-dark .form-control:focus,
+.recipe-admin .recipe-modal-dark .form-select:focus {
+  background: #111214;
+  color: #fff;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 .2rem rgba(46,125,50,.15);
+}
+.recipe-admin .recipe-modal-dark select option {
+  background: #0f0f10;
+  color: #e6e6e6;
+}
+
+/* Botones coherentes en dark */
+.recipe-admin .recipe-modal-dark .btn-secondary {
+  background: #22252b;
+  border-color: #343942;
+  color: #e6e6e6;
+}
+.recipe-admin .recipe-modal-dark .btn-secondary:hover {
+  background: #2a2f38;
+  border-color: #3a404b;
+  color: #fff;
+}
+.recipe-admin .recipe-modal-dark .btn-primary {
+  background: #1f3b64;
+  border-color: #294b7f;
+}
+.recipe-admin .recipe-modal-dark .btn-primary:hover {
+  background: #244472;
+  border-color: #315a98;
+}
+
+/* ===== Tabla dentro del modal en dark (reusa scope recipe-table-dark) ===== */
+.recipe-admin .recipe-modal-dark .recipe-table-dark .table {
+  --bs-table-bg: #0d0d0d;
+  --bs-table-color: #e9ecef;
+  --bs-table-border-color: #262626;
+  --bs-table-hover-bg: #14161a;
+  --bs-table-hover-color: #ffffff;
+  color: var(--bs-table-color);
+  border-color: var(--bs-table-border-color);
+  background-color: var(--bs-table-bg);
+}
+.recipe-admin .recipe-modal-dark .recipe-table-dark thead {
+  background: #0b1f2e;
+  color: #eaf4ff;
+}
+.recipe-admin .recipe-modal-dark .recipe-table-dark thead th {
+  border-color: #22313f !important;
+}
+.recipe-admin .recipe-modal-dark .recipe-table-dark tbody tr {
+  background: var(--bs-table-bg) !important;
+}
+.recipe-admin .recipe-modal-dark .recipe-table-dark tbody tr + tr td {
+  border-top: 1px solid var(--bs-table-border-color) !important;
+}
+
+/* Botones de fila (eliminar/agregar) */
+.recipe-admin .recipe-modal-dark .btn.btn-outline-danger.btn-sm {
+  color: #ff8585;
+  border-color: #7a3a3a;
+  background: transparent;
+}
+.recipe-admin .recipe-modal-dark .btn.btn-outline-danger.btn-sm:hover {
+  background: #2a1212;
+  color: #ffc1c1;
+  border-color: #9a4c4c;
+}
+.recipe-admin .recipe-modal-dark .btn.btn-outline-secondary.btn-sm {
+  color: #cfcfcf;
+  border-color: #3a3a3a;
+  background: transparent;
+}
+.recipe-admin .recipe-modal-dark .btn.btn-outline-secondary.btn-sm:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #4a4a4a;
+}
+
+/* Responsive table -> tarjetas en dark (opcional) */
 @media (max-width: 768px) {
-  /* Hace que la tabla se vea tipo tarjetas/lista */
-  .responsive-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  .recipe-admin .recipe-modal-dark .recipe-table-dark thead { display: none; }
+  .recipe-admin .recipe-modal-dark .recipe-table-dark tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .25rem .75rem;
+    border: 1px solid #1f2330 !important;
+    border-radius: .75rem;
+    padding: .5rem .6rem;
+    margin-bottom: .75rem;
+    background: #101216 !important;
   }
-
-  .responsive-table table {
-    border: 0;
-  }
-
-  .responsive-table thead {
-    display: none;
-  }
-
-  .responsive-table tr {
-    margin-bottom: 1rem;
-    display: block;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 0.5rem;
-  }
-
-  .responsive-table td {
+  .recipe-admin .recipe-modal-dark .recipe-table-dark tbody td {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem;
-    font-size: 0.9rem;
-    border: none;
-    border-bottom: 1px solid #eee;
+    align-items: center;
+    border: 0 !important;
+    padding: .25rem .15rem;
+    text-align: right;
+    color: #e6e6e6;
   }
-
-  .responsive-table td:last-child {
-    border-bottom: none;
-  }
-
-  .responsive-table td::before {
+  .recipe-admin .recipe-modal-dark .recipe-table-dark tbody td::before {
     content: attr(data-label);
-    font-weight: bold;
-    margin-right: 0.5rem;
-    color: #555;
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-right: .75rem;
+    text-align: left;
   }
+}
 
-  /* Inputs y selects a pantalla completa */
-  .form-control,
-  .form-select {
-    width: 100% !important;
-    font-size: 0.9rem;
+
+/* ===== Mobile (≤768px): tarjetas también oscuras ===== */
+@media (max-width: 768px) {
+  .recipe-admin .recipe-table-dark .table thead { display: none; }
+
+  .recipe-admin .recipe-table-dark .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .25rem .75rem;
+    border: 1px solid #1f2330 !important;
+    border-radius: .75rem;
+    padding: .5rem .6rem;
+    margin-bottom: .75rem;
+    background: #101216 !important;
   }
+  .recipe-admin .recipe-table-dark .table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 0 !important;
+    padding: .25rem .15rem;
+    text-align: right;
+    white-space: normal;
+    word-break: break-word;
+    color: #e6e6e6;
+  }
+  .recipe-admin .recipe-table-dark .table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #c9d1d9;
+    margin-right: .75rem;
+    text-wrap: nowrap;
+    text-align: left;
+  }
+}
+
+.recipe-admin .recipe-card__list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.recipe-admin .recipe-card__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #0f0f0f;
+  border: 1px solid #242424;
+  border-radius: 8px;
+}
+.recipe-admin .recipe-card__item-name {
+  font-size: 0.86rem;
+  color: #e6e6e6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recipe-admin .recipe-card__item-qty {
+  font-size: 0.8rem;
+  color: #a8e6a1;
+  white-space: nowrap;
+}
+
+/* Toggle ver más/menos */
+.recipe-admin .recipe-card__toggle {
+  margin-top: 8px;
+  color: #7ecb7a !important;
+}
+
+/* Card contenedora de listado */
+.recipe-admin .recipe-list-card {
+  background: #0c0c0c;
+  border: 1px solid #222;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .recipe-admin .recipe-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+/* ---------- FORM como card ---------- */
+.recipe-admin .recipe-form-card {
+  padding: 14px;
+}
+
+/* Header del form */
+.recipe-admin .recipe-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #1c1c1c;
+  padding-bottom: 8px;
+}
+
+/* Input con ícono */
+.recipe-admin .input-with-icon {
+  position: relative;
+}
+.recipe-admin .input-with-icon > i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .8;
+  pointer-events: none;
+}
+.recipe-admin .input-with-icon > .form-control {
+  padding-left: 34px;
+}
+
+/* Botón fantasma a tono oscuro (agregar ingrediente) */
+.recipe-admin .btn-ghost {
+  background: transparent;
+  color: #cfe8cf;
+  border: 1px dashed #2f5f2f;
+}
+.recipe-admin .btn-ghost:hover {
+  background: #0e1a0e;
+  border-color: #3a7a3a;
+  color: #e8ffe8;
+}
+
+/* Reutilizamos tus icon-btn para acciones por fila */
+.recipe-admin .icon-btn {
+  background: transparent;
+  border: 1px solid #3a3a3a;
+  color: #ddd;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  transition: background .12s ease, color .12s ease, border-color .12s ease, transform .06s ease-in;
+}
+.recipe-admin .icon-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #4a4a4a;
+}
+.recipe-admin .icon-btn:active { transform: scale(0.96); }
+
+.recipe-admin .icon-btn--danger {
+  border-color: #5a2a2a;
+  color: #ff6b6b;
+}
+.recipe-admin .icon-btn--danger:hover {
+  background: #2a1212;
+  color: #ff8585;
+  border-color: #7a3a3a;
+}
+
+.recipe-admin .recipe-form-card .btn.btn-success,
+.recipe-admin .recipe-form-card .btn.btn-success:hover,
+.recipe-admin .recipe-form-card .btn.btn-success:focus,
+.recipe-admin .recipe-form-card .btn.btn-success:active {
+  background-image: linear-gradient(-180deg, #00c851, #007e33);
+  border: none;
+  color: #fff;
+}
+.recipe-admin .recipe-form-card .btn.btn-success:hover,
+.recipe-admin .recipe-form-card .btn.btn-success:focus {
+  filter: none;
+  box-shadow: 0 0 0 .2rem rgba(0, 200, 81, 0.18);
+  transform: translateY(-1px);
+}
+.recipe-admin .recipe-form-card .btn.btn-success:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+
+/* === ProductPicker dentro de tablas oscuras === */
+.recipe-admin .pp-cell {
+  position: relative;            /* contexto para el dropdown absoluto */
+  min-width: 240px;              /* mismo ancho que el th */
+}
+
+/* el contenedor responsive de la tabla suele cortar el dropdown */
+.recipe-admin .recipe-form-card .table-responsive,
+.recipe-admin .recipe-modal-dark .table-responsive {
+  overflow: visible !important;  /* deja salir el dropdown */
+}
+
+/* ancho/altura como form-control-sm */
+.recipe-admin .pp-wrap,                 /* contenedor base del picker (asumido) */
+.recipe-admin .pp-control,              /* input/botón del picker */
+.recipe-admin .pp-input {
+  width: 100%;
+  min-height: 31px;                     /* similar a .form-control-sm */
+  font-size: .875rem;
+}
+
+/* dark theme coherente */
+.recipe-admin .pp-control,
+.recipe-admin .pp-input {
+  background: #0f0f10;
+  color: #e6e6e6;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.recipe-admin .pp-input::placeholder { color: #9aa0a6; }
+.recipe-admin .pp-control:focus,
+.recipe-admin .pp-input:focus {
+  background: #111214;
+  color: #fff;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 .2rem rgba(46,125,50,.15);
+}
+
+/* menú del picker */
+.recipe-admin .pp-menu {
+  position: absolute;            /* la mayoría de pickers lo usan así */
+  inset-inline: 0;
+  z-index: 40;
+  margin-top: 4px;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #2a2e36;
+  border-radius: 10px;
+  background: #0f1115;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* ítems del menú */
+.recipe-admin .pp-item {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .5rem .65rem;
+  color: #e6e6e6;
+  cursor: pointer;
+}
+.recipe-admin .pp-item + .pp-item { border-top: 1px solid #1c2028; }
+.recipe-admin .pp-item.is-active { background: #151923; }
+.recipe-admin .pp-item.is-selected { box-shadow: inset 2px 0 0 #2e7d32; }
+.recipe-admin .pp-item small { color: #9aa3ad; }
+
+/* por si la tabla está muy apretada: no permitir wrap raro en la celda */
+.recipe-admin td[data-label="Producto"] {
+  vertical-align: middle;
 }

@@ -1,6 +1,10 @@
+// src/pages/ProveedoresPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
 import { listarLotesProveedor, crearLoteProveedor, asignarDesdeProveedor } from "../api/proveedores";
+import ProductPicker from "../components/provedores/ProductPicker";
+import "../components/styles/proveedores.css";
+
 
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
@@ -14,17 +18,17 @@ export default function ProveedoresPage() {
   const [cantidadTotal, setCantidadTotal] = useState("");
   const [numeroFactura, setNumeroFactura] = useState("");
   const [loteProveedor, setLoteProveedor] = useState("");
-  const [fechaVenc, setFechaVenc] = useState("");
+  const [fechaVenc, setFechaVenc] = useState(""); // opcional en buffer
   const [notas, setNotas] = useState("");
 
   // list & asignación
   const [lotes, setLotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [estadoFiltro, setEstadoFiltro] = useState("open"); // 'open' | 'all'
-  const [asignando, setAsignando] = useState(null); // { lote, cantidad, productoDestinoId, lockDestino }
+  const [asignando, setAsignando] = useState(null); // { lote, cantidad, fechaVencDestino, sinVenc }
   const [msg, setMsg] = useState(null);
 
-  // 🔎 filtro por proveedor
+  // filtro por proveedor
   const [busqProv, setBusqProv] = useState("");
 
   const prodMap = useMemo(() => {
@@ -47,7 +51,7 @@ export default function ProveedoresPage() {
 
   useEffect(() => { refresh(); }, [estadoFiltro]);
 
-  // 👉 cuando seleccionás un producto al crear el lote, autocompleta la unidad correcta
+  // autocompletar unidad según producto elegido
   useEffect(() => {
     if (!productoId) return;
     const p = prodMap.get(productoId);
@@ -69,7 +73,7 @@ export default function ProveedoresPage() {
         cantidadTotal: Number(cantidadTotal),
         numeroFactura,
         loteProveedor: loteProveedor || undefined,
-        fechaVencimiento: fechaVenc,
+        ...(fechaVenc ? { fechaVencimiento: fechaVenc } : {}), // opcional
         notas: notas || undefined,
       });
 
@@ -89,38 +93,53 @@ export default function ProveedoresPage() {
   }
 
   async function confirmarAsignacion() {
-  if (!asignando) return;
-  const cant = Number(asignando.cantidad || 0);
-  if (!Number.isFinite(cant) || cant <= 0) {
-    setMsg({ type: "danger", text: "Cantidad inválida" });
-    return;
-  }
-  if (cant > asignando.lote.cantidadDisponible) {
-    setMsg({
-      type: "danger",
-      text: `La cantidad supera el disponible (${nf2.format(
-        asignando.lote.cantidadDisponible
-      )} ${asignando.lote.unidad}).`,
-    });
-    return;
+    if (!asignando) return;
+    const cant = Number(asignando.cantidad || 0);
+    if (!Number.isFinite(cant) || cant <= 0) {
+      setMsg({ type: "danger", text: "Cantidad inválida" });
+      return;
+    }
+    if (cant > asignando.lote.cantidadDisponible) {
+      setMsg({
+        type: "danger",
+        text: `La cantidad supera el disponible (${nf2.format(
+          asignando.lote.cantidadDisponible
+        )} ${asignando.lote.unidad}).`,
+      });
+      return;
+    }
+
+    // Si no tildó "sin vencimiento", debe indicar fecha
+    if (!asignando.sinVenc && !asignando.fechaVencDestino) {
+      setMsg({ type: "danger", text: "Indicá la fecha de vencimiento o marcá 'Sin vencimiento'." });
+      return;
+    }
+
+    try {
+      await asignarDesdeProveedor(asignando.lote._id, {
+        productoId: asignando.lote.productoId,           // fijo al del lote
+        cantidad: cant,
+        ...(asignando.sinVenc ? { sinVencimiento: true } : { fechaVencimiento: asignando.fechaVencDestino }),
+      });
+      setAsignando(null);
+      setMsg({ type: "success", text: "Asignado al producto y lote creado" });
+      refresh();
+      // opcional: window.dispatchEvent(new Event('stock:changed'));
+    } catch (e) {
+      setMsg({ type: "danger", text: e.message || "Error al asignar" });
+    }
   }
 
-  const destinoId = asignando.lote.productoId; // 👈 fijo al del lote
-  try {
-    await asignarDesdeProveedor(asignando.lote._id, {
-      productoId: destinoId,
-      cantidad: cant,
-    });
-    setAsignando(null);
-    setMsg({ type: "success", text: "Asignado al producto y lote creado" });
-    refresh();
-  } catch (e) {
-    setMsg({ type: "danger", text: e.message || "Error al asignar" });
-  }
-}
+  const crearDisabled = useMemo(() => {
+  const cant = Number(cantidadTotal);
+  return (
+    !productoId ||                       // producto obligatorio
+    !numeroFactura.trim() ||             // factura/remito obligatorio
+    !Number.isFinite(cant) || cant <= 0  // cantidad válida > 0
+  );
+}, [productoId, numeroFactura, cantidadTotal]);
 
-
-  // 🔎 aplica el filtro por proveedor en frontend
+  // filtro por proveedor (frontend)
   const lotesFiltrados = useMemo(() => {
     const q = busqProv.trim().toLowerCase();
     if (!q) return lotes;
@@ -139,19 +158,21 @@ export default function ProveedoresPage() {
 
       {/* CREAR LOTE DE PROVEEDOR */}
       <div className="card p-3 mb-3">
-        <h6 className="mb-2">Nuevo lote de proveedor</h6>
+        <h6 className="mb-2">Nuevo lote de proveedor (buffer)</h6>
         <form onSubmit={handleCrear} className="row g-2 align-items-end">
           <div className="col-md-2">
             <label className="form-label small">Proveedor</label>
             <input className="form-control form-control-sm" value={proveedor} onChange={e=>setProveedor(e.target.value)} />
           </div>
-          <div className="col-md-3">
-            <label className="form-label small">Producto</label>
-            <select className="form-select form-select-sm" value={productoId} onChange={e=>setProductoId(e.target.value)} required>
-              <option value="">— Elegí —</option>
-              {productos.map(p => <option key={p._id} value={p._id}>{p.nombre} ({p.unidad})</option>)}
-            </select>
-          </div>
+          <div className="col-md-5">
+  <label className="form-label small">Producto</label>
+  <ProductPicker
+    productos={productos}
+    value={productoId}
+    onChange={(id) => setProductoId(id)}
+    showUnit
+  />
+</div>
           <div className="col-md-1">
             <label className="form-label small">Unidad</label>
             <select className="form-select form-select-sm" value={unidad} onChange={e=>setUnidad(e.target.value)}>
@@ -174,27 +195,38 @@ export default function ProveedoresPage() {
             <input className="form-control form-control-sm" value={loteProveedor} onChange={e=>setLoteProveedor(e.target.value)} />
           </div>
           <div className="col-md-2">
-            <label className="form-label small">Vencimiento</label>
-            <input type="date" className="form-control form-control-sm" value={fechaVenc} onChange={e=>setFechaVenc(e.target.value)} required />
+            <label className="form-label small">Vencimiento (opcional)</label>
+            <input type="date" className="form-control form-control-sm" value={fechaVenc} onChange={e=>setFechaVenc(e.target.value)} />
           </div>
           <div className="col-md-3">
             <label className="form-label small">Notas</label>
             <input className="form-control form-control-sm" value={notas} onChange={e=>setNotas(e.target.value)} />
           </div>
           <div className="col-md-2">
-            <button className="btn btn-success btn-sm w-100" type="submit">Crear lote</button>
+          <button className="button-green-sm w-100" type="submit" disabled={crearDisabled}>Crear lote</button>
+
           </div>
         </form>
       </div>
 
-      {/* LISTA DE LOTES EN BUFFER */}
+      {/* LISTA + FILTROS */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-        <div className="btn-group btn-group-sm">
-          <button className={`btn ${estadoFiltro==='open'?'btn-dark':'btn-outline-dark'}`} onClick={()=>setEstadoFiltro('open')}>Abiertos</button>
-          <button className={`btn ${estadoFiltro==='all'?'btn-dark':'btn-outline-dark'}`} onClick={()=>setEstadoFiltro('all')}>Todos</button>
-        </div>
+        <div className="btn-tabs">
+  <button
+    className={`button-dark-pill ${estadoFiltro==='open' ? 'active' : ''}`}
+    onClick={()=>setEstadoFiltro('open')}
+  >
+    Abiertos
+  </button>
+  <button
+    className={`button-dark-pill ${estadoFiltro==='all' ? 'active' : ''}`}
+    onClick={()=>setEstadoFiltro('all')}
+  >
+    Todos
+  </button>
+</div>
 
-        {/* 🔎 Buscador por proveedor */}
+
         <div className="input-group input-group-sm" style={{ maxWidth: 260 }}>
           <span className="input-group-text">Proveedor</span>
           <input
@@ -203,9 +235,12 @@ export default function ProveedoresPage() {
             value={busqProv}
             onChange={(e)=>setBusqProv(e.target.value)}
           />
-          {busqProv && (
-            <button className="btn btn-outline-secondary" type="button" onClick={()=>setBusqProv("")}>×</button>
-          )}
+         {busqProv && (
+  <button className="button-ghost-sm" type="button" onClick={()=>setBusqProv("")}>
+    ×
+  </button>
+)}
+
         </div>
       </div>
 
@@ -238,16 +273,24 @@ export default function ProveedoresPage() {
                   <td>{l.unidad}</td>
                   <td>{l.numeroFactura}</td>
                   <td>{l.loteProveedor || '—'}</td>
-                  <td>{new Date(l.fechaVencimiento).toLocaleDateString('es-AR')}</td>
+                  <td>{l.fechaVencimiento ? new Date(l.fechaVencimiento).toLocaleDateString('es-AR') : '—'}</td>
                   <td>{new Date(l.fechaIngreso).toLocaleDateString('es-AR')}</td>
                   <td className="text-end">
-                    <button
-                      className="btn btn-primary btn-sm"
-                      disabled={l.cantidadDisponible <= 0}
-                      onClick={() => setAsignando({ lote: l, cantidad: '', productoDestinoId: l.productoId, lockDestino: true })}
-                    >
-                      Asignar →
-                    </button>
+                   <button
+  className="button-green-sm"
+  disabled={l.cantidadDisponible <= 0}
+  onClick={() =>
+    setAsignando({
+      lote: l,
+      cantidad: '',
+      fechaVencDestino: '',
+      sinVenc: false,
+    })
+  }
+>
+  Asignar →
+</button>
+
                   </td>
                 </tr>
               ))}
@@ -257,57 +300,91 @@ export default function ProveedoresPage() {
       )}
 
       {/* MODAL ASIGNAR */}
-  {/* MODAL ASIGNAR */}
-{asignando && (
-  <div className="alerta-overlay" onClick={() => setAsignando(null)}>
-    <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
-      <h6 className="mb-2">Asignar a producto</h6>
+      {asignando && (
+        <div className="alerta-overlay" onClick={() => setAsignando(null)}>
+          <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
+            <h6 className="mb-2">Asignar a producto</h6>
 
-      <div className="mb-2">
-        <strong>{asignando.lote.nombreProducto}</strong> • Disponible:{" "}
-        {nf2.format(asignando.lote.cantidadDisponible)} {asignando.lote.unidad}
-      </div>
+            <div className="mb-2">
+              <strong>{asignando.lote.nombreProducto}</strong> • Disponible:{" "}
+              {nf2.format(asignando.lote.cantidadDisponible)} {asignando.lote.unidad}
+            </div>
 
-      {/* Producto destino (solo lectura) */}
-      <div className="mb-2">
-        <label className="form-label small">Producto destino</label>
-        <div className="form-control form-control-sm bg-light">
-          {prodMap.get(asignando.lote.productoId)?.nombre} (
-          {prodMap.get(asignando.lote.productoId)?.unidad})
+            {/* Producto destino (solo lectura) */}
+            <div className="mb-2">
+              <label className="form-label small">Producto destino</label>
+              <div className="form-control form-control-sm bg-light">
+                {prodMap.get(asignando.lote.productoId)?.nombre} (
+                {prodMap.get(asignando.lote.productoId)?.unidad})
+              </div>
+            </div>
+
+            {/* Cantidad */}
+            <div className="mb-2">
+              <label className="form-label small">
+                Cantidad a asignar ({asignando.lote.unidad})
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="any"
+                className="form-control form-control-sm"
+                value={asignando.cantidad}
+                onChange={(e) =>
+                  setAsignando((prev) => ({ ...prev, cantidad: e.target.value }))
+                }
+                placeholder={`<= ${asignando.lote.cantidadDisponible}`}
+              />
+            </div>
+
+            {/* Fecha vencimiento + checkbox sin vencimiento */}
+            <div className="mb-3">
+              <div className="d-flex align-items-center justify-content-between">
+                <label className="form-label small mb-0">Fecha de vencimiento del lote asignado</label>
+                <div className="form-check">
+                  <input
+                    id="sin-vencimiento"
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={asignando.sinVenc}
+                    onChange={(e) => {
+                      const v = e.target.checked;
+                      setAsignando(prev => ({
+                        ...prev,
+                        sinVenc: v,
+                        ...(v ? { fechaVencDestino: '' } : {})
+                      }));
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor="sin-vencimiento">
+                    Sin vencimiento
+                  </label>
+                </div>
+              </div>
+              <input
+                type="date"
+                className="form-control form-control-sm mt-2"
+                value={asignando.fechaVencDestino}
+                onChange={(e) =>
+                  setAsignando((prev) => ({ ...prev, fechaVencDestino: e.target.value }))
+                }
+                disabled={asignando.sinVenc}
+                required={!asignando.sinVenc}
+              />
+            </div>
+
+            <div className="d-flex justify-content-end gap-2">
+  <button className="button-ghost-sm" onClick={() => setAsignando(null)}>
+    Cancelar
+  </button>
+  <button className="button-green-sm" onClick={confirmarAsignacion}>
+    Asignar
+  </button>
+</div>
+
+          </div>
         </div>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label small">
-          Cantidad a asignar ({asignando.lote.unidad})
-        </label>
-        <input
-          type="number"
-          min={0}
-          step="any"
-          className="form-control form-control-sm"
-          value={asignando.cantidad}
-          onChange={(e) =>
-            setAsignando((prev) => ({ ...prev, cantidad: e.target.value }))
-          }
-          placeholder={`<= ${asignando.lote.cantidadDisponible}`}
-        />
-      </div>
-
-      <div className="d-flex justify-content-end gap-2">
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={() => setAsignando(null)}
-        >
-          Cancelar
-        </button>
-        <button className="btn btn-success btn-sm" onClick={confirmarAsignacion}>
-          Asignar
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

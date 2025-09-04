@@ -86,7 +86,7 @@ export default function ProductionRunsList({ apiBase }) {
   }
 
   return (
-    <div className="card p-3 shadow-sm mt-4">
+     <div className="card p-3 shadow-sm mt-4 runs-dark">
       {/* Header */}
       <div className="list-header">
         <div className="title-side">
@@ -130,7 +130,7 @@ export default function ProductionRunsList({ apiBase }) {
         <div className="text-muted">Sin producciones aún.</div>
       ) : (
         <div className="table-responsive">
-          <table className="table table-sm align-middle custom-table table-hover">
+      <table className="table table-sm align-middle custom-table table-hover runs-table">
             <thead className="table-dark sticky-header">
               <tr>
                 <th style={{ minWidth: 160 }}>Inicio</th>

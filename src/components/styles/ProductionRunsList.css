@@ -1,5 +1,5 @@
-/* ===== Header con píldoras ===== */
-.list-header {
+/* ===== Header con píldoras (dark) ===== */
+.runs-dark .list-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -7,145 +7,150 @@
   flex-wrap: wrap;
   margin-bottom: .5rem;
 }
-.title-side { min-width: 220px; }
-.stat-group {
+.runs-dark .title-side { min-width: 220px; }
+.runs-dark .stat-group {
   display: flex;
   flex-wrap: wrap;
   gap: .4rem .5rem;
   margin-top: .25rem;
 }
-.stat-pill {
+.runs-dark .stat-pill {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
   padding: .2rem .6rem;
   border-radius: 999px;
-  background: #f1f3f5;
-  border: 1px solid #e9ecef;
+  background: #15171b;
+  border: 1px solid #24262b;
   font-size: .85rem;
-  color: #212529;
+  color: #e5e7eb;
 }
-.stat-range {
+.runs-dark .stat-range {
   display: inline-flex;
   align-items: center;
   gap: .35rem;
   font-size: .9rem;
-  color: #6c757d;
+  color: #aab1b8;
 }
-.actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.runs-dark .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 
-/* ===== Tabla bien centrada/encasillada (desktop) ===== */
-.runs-table {
-  table-layout: fixed;            /* respeta colgroup si existe */
+/* ===== Tabla centrada (desktop) ===== */
+.runs-dark .runs-table {
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
+  color: #e9ecef;
 }
-.runs-table th,
-.runs-table td {
+.runs-dark .runs-table th,
+.runs-dark .runs-table td {
   vertical-align: middle;
-  text-align: center;             /* centrado por default */
+  text-align: center;
   padding: .6rem .5rem;
+  border-color: #20232a;
 }
 
-/* Receta e Insumos mejor a la izquierda para lectura */
-.runs-table th:nth-child(2),
-.runs-table td:nth-child(2),
-.runs-table th:nth-child(8),
-.runs-table td:nth-child(8) {
+/* Receta e Insumos a la izquierda para lectura */
+.runs-dark .runs-table th:nth-child(2),
+.runs-dark .runs-table td:nth-child(2),
+.runs-dark .runs-table th:nth-child(8),
+.runs-dark .runs-table td:nth-child(8) {
   text-align: left;
 }
 
-/* Números a la derecha si preferís (descomentar si te gusta más)
-.runs-table th:nth-child(4),
-.runs-table td:nth-child(4),
-.runs-table th:nth-child(5),
-.runs-table td:nth-child(5) {
-  text-align: right;
-}
-*/
-
-/* Separadores verticales suaves (celdas encasilladas) */
-.runs-table thead th + th,
-.runs-table tbody td + td {
-  border-left: 1px solid #edf0f2;
+/* Separadores verticales suaves */
+.runs-dark .runs-table thead th + th,
+.runs-dark .runs-table tbody td + td {
+  border-left: 1px solid #1f2330;
 }
 
 /* Líneas horizontales sutiles */
-.runs-table tbody tr + tr td {
-  border-top: 1px solid #f3f4f6;
+.runs-dark .runs-table tbody tr + tr td {
+  border-top: 1px solid #1d2028;
 }
 
-/* Cabecera sticky con leve shadow al scrollear */
-.sticky-header th {
+/* Cabecera sticky con leve shadow */
+.runs-dark .sticky-header th {
   position: sticky;
   top: 0;
   z-index: 2;
-  box-shadow: 0 1px 0 rgba(0,0,0,.05);
+  background: #0b1f2e;   /* encabezado oscuro */
+  color: #eaf4ff;
+  box-shadow: 0 1px 0 rgba(0,0,0,.35);
+  border-bottom: 1px solid #22313f;
 }
 
-/* Alternado suave */
-.table-row-even { background-color: #ffffff; }
-.table-row-odd  { background-color: #fbfcfd; }
+/* Alternado suave (filas) */
+.runs-dark .table-row-even { background-color: #111215; }
+.runs-dark .table-row-odd  { background-color: #0f1013; }
 
-/* ===== Chips de insumos ===== */
-.chips-wrap {
+/* ===== Chips de insumos (dark) ===== */
+.runs-dark .chips-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: .35rem .35rem;
 }
-.chip {
+.runs-dark .chip {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
   padding: .15rem .5rem;
   border-radius: 999px;
   font-size: .8rem;
-  background: #f8f9fa;
-  color: #212529;
-  border: 1px solid #e9ecef;
+  background: #15171b;
+  color: #e5e7eb;
+  border: 1px solid #2a2e36;
 }
-.chip .chip-label { font-weight: 600; }
-.chip .chip-qty   { opacity: .85; }
+.runs-dark .chip .chip-label { font-weight: 600; color: #f2f4f6; }
+.runs-dark .chip .chip-qty   { opacity: .9; color: #9ee6a9; }
 
-/* ===== Responsive (≤768px): tabla -> tarjetas ===== */
+/* ===== Responsive (≤768px): tabla -> tarjetas (dark) ===== */
 @media (max-width: 768px) {
-  .actions { width: 100%; }
+  .runs-dark .actions { width: 100%; }
 
-  .runs-table thead { display: none; }
+  .runs-dark .runs-table thead { display: none; }
 
-  .runs-table tbody tr {
+  .runs-dark .runs-table tbody tr {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: .25rem .75rem;
-    border: 1px solid #e9ecef !important;
+    border: 1px solid #1f2330 !important;
     border-radius: .75rem;
     padding: .5rem .6rem;
     margin-bottom: .75rem;
-    background: #fff;
+    background: #101216;
   }
-  .runs-table tbody td {
+  .runs-dark .runs-table tbody td {
     display: flex;
     justify-content: space-between;
     align-items: center;
     border: 0 !important;
     padding: .25rem .15rem;
-    text-align: right; /* label left / value right */
+    text-align: right;
     white-space: normal;
     word-break: break-word;
+    color: #e6e6e6;
   }
-  .runs-table tbody td::before {
+  .runs-dark .runs-table tbody td::before {
     content: attr(data-label);
     font-weight: 600;
-    color: #6c757d;
+    color: #c9d1d9;
     margin-right: .75rem;
     text-wrap: nowrap;
     text-align: left;
   }
   /* Insumos a toda la fila y texto a la izquierda */
-  .runs-table tbody td[data-label="Insumos consumidos"] {
+  .runs-dark .runs-table tbody td[data-label="Insumos consumidos"] {
     grid-column: 1 / -1;
     align-items: flex-start;
     text-align: left;
   }
-  .chips-wrap { margin-top: .25rem; }
+  .runs-dark .chips-wrap { margin-top: .25rem; }
+}
+
+/* ===== Contenedor card oscuro (por si no lo tenías) ===== */
+.runs-dark {
+  background: #0e0e10;
+  color: #e9ecef;
+  border: 1px solid #1f1f22;
+  border-radius: 12px;
 }
