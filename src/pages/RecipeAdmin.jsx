@@ -4,12 +4,11 @@ import { getRecipes, createRecipe, updateRecipe, deleteRecipe } from "../api/rec
 import ProductionRunsList from "../components/production/ProductionRunsList";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../components/styles/RecipeAdmin.css";
-import "../components/styles/proveedores.css"; // para estilos del ProductPicker (mismo que Proveedores)
-import ProductPicker from "../components/provedores/ProductPicker";
+import "../components/styles/proveedores.css"; // puedes quitarla si ya no la usas
 
 const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
 
-// ID estable para filas (evita usar índices como key)
+// ===== Helpers =====
 const uid = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID)
     ? crypto.randomUUID()
@@ -22,6 +21,13 @@ const makeRow = () => ({
   unidadBase: "g",
   cantidadPorUnidad: ""
 });
+
+const unidadBaseDesdeProducto = (prod) => {
+  if (!prod) return "unidad";
+  if (prod.unidad === "kg" || prod.unidad === "g") return "g";
+  if (prod.unidad === "l" || prod.unidad === "ml") return "ml";
+  return "unidad";
+};
 
 export default function RecipeAdmin() {
   const { productos } = useProductos();
@@ -36,15 +42,15 @@ export default function RecipeAdmin() {
   // Listado y edición
   const [recipes, setRecipes] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
-  const [edit, setEdit] = useState(null); // receta en edición (normalizada con _rid)
+  const [edit, setEdit] = useState(null); // receta en edición (con _rid)
   const [savingEdit, setSavingEdit] = useState(false);
   const [expandedIds, setExpandedIds] = useState({}); // id -> bool
   const toggleExpand = (id) => setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // index de productos
+  // Índices de productos por id
   const productosIndex = useMemo(() => {
     const map = new Map();
-    productos.forEach((p) => map.set(p._id, p));
+    (productos || []).forEach((p) => map.set(p._id, p));
     return map;
   }, [productos]);
 
@@ -70,7 +76,7 @@ export default function RecipeAdmin() {
     return () => document.body.classList.remove("page-dark-bg");
   }, []);
 
-  // ====== Helpers form crear (por _rid) ======
+  // ====== Form crear (operando por _rid) ======
   const addFila = () => setIngredientes((prev) => [...prev, makeRow()]);
 
   const delFila = (_rid) =>
@@ -90,12 +96,7 @@ export default function RecipeAdmin() {
               ...ing,
               productoId,
               nombreProducto: prod ? prod.nombre : "",
-              unidadBase:
-                prod?.unidad === "kg" || prod?.unidad === "g"
-                  ? "g"
-                  : prod?.unidad === "l" || prod?.unidad === "ml"
-                  ? "ml"
-                  : "unidad"
+              unidadBase: unidadBaseDesdeProducto(prod)
             }
           : ing
       )
@@ -128,7 +129,7 @@ export default function RecipeAdmin() {
       ingredientes: ingredientes.map((ing) => ({
         productoId: ing.productoId,
         nombreProducto: ing.nombreProducto,
-        unidadBase: ing.unidadBase, // g | kg | ml | l | unidad
+        unidadBase: ing.unidadBase,
         cantidadPorUnidad: Number(ing.cantidadPorUnidad)
       }))
     };
@@ -149,7 +150,7 @@ export default function RecipeAdmin() {
     }
   };
 
-  // ====== Edición (normalizo con _rid) ======
+  // ====== Edición ======
   const normalizeEdit = (r) => ({
     ...r,
     ingredientes: (r.ingredientes || []).map((ing) => ({
@@ -187,12 +188,7 @@ export default function RecipeAdmin() {
                 ...ing,
                 productoId,
                 nombreProducto: prod ? prod.nombre : "",
-                unidadBase:
-                  prod?.unidad === "kg" || prod?.unidad === "g"
-                    ? "g"
-                    : prod?.unidad === "l" || prod?.unidad === "ml"
-                    ? "ml"
-                    : "unidad"
+                unidadBase: unidadBaseDesdeProducto(prod)
               }
             : ing
         )
@@ -297,61 +293,75 @@ export default function RecipeAdmin() {
             <table className="table table-sm align-middle">
               <thead>
                 <tr className="table-blue">
-                  <th style={{ minWidth: 240 }}>Producto</th>
+                  <th style={{ minWidth: 260 }}>Producto</th>
                   <th style={{ width: 120 }}>Unidad base</th>
                   <th style={{ width: 160 }}>Cant. por unidad</th>
                   <th style={{ width: 60 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {ingredientes.map((ing) => (
-                  <tr key={ing._rid}>
-                    <td data-label="Producto" style={{ minWidth: 240 }}>
-                      <div className="pp-cell">
-                        <ProductPicker
-                          productos={productos}
-                          value={ing.productoId}
-                          onChange={(id) => onChangeProducto(ing._rid, id)}
-                          showUnit
+                {ingredientes.map((ing) => {
+                  const prodSel = productosIndex.get(ing.productoId);
+                  return (
+                    <tr key={ing._rid}>
+                      <td data-label="Producto" style={{ minWidth: 260 }}>
+                        <div className="d-flex gap-2 align-items-center">
+                          <select
+                            className="form-select form-select-sm"
+                            value={ing.productoId}
+                            onChange={(e) => onChangeProducto(ing._rid, e.target.value)}
+                          >
+                            <option value="">— Elegí un producto —</option>
+                            {(productos || []).map((p) => (
+                              <option key={p._id} value={p._id}>
+                                {p.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          {prodSel && (
+                            <span className="text-muted small nowrap">
+                              ({prodSel.unidad})
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td data-label="Unidad base">
+                        <select
+                          className="form-select form-select-sm"
+                          value={ing.unidadBase}
+                          onChange={(e) => setCampo(ing._rid, "unidadBase", e.target.value)}
+                        >
+                          {UNIDADES.map((u) => (
+                            <option key={u} value={u}>
+                              {u}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td data-label="Cantidad">
+                        <input
+                          className="form-control form-control-sm"
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={ing.cantidadPorUnidad}
+                          onChange={(e) => setCampo(ing._rid, "cantidadPorUnidad", e.target.value)}
+                          placeholder="ej: 1000 (g), 0.5 (l)"
                         />
-                      </div>
-                    </td>
-                    <td data-label="Unidad base">
-                      <select
-                        className="form-select form-select-sm"
-                        value={ing.unidadBase}
-                        onChange={(e) => setCampo(ing._rid, "unidadBase", e.target.value)}
-                      >
-                        {UNIDADES.map((u) => (
-                          <option key={u} value={u}>
-                            {u}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td data-label="Cantidad">
-                      <input
-                        className="form-control form-control-sm"
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={ing.cantidadPorUnidad}
-                        onChange={(e) => setCampo(ing._rid, "cantidadPorUnidad", e.target.value)}
-                        placeholder="ej: 1000 (g), 0.5 (l)"
-                      />
-                    </td>
-                    <td data-label="Acciones" className="text-end">
-                      <button
-                        type="button"
-                        className="icon-btn icon-btn--danger"
-                        onClick={() => delFila(ing._rid)}
-                        title="Eliminar fila"
-                      >
-                        <i className="bi bi-trash" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td data-label="Acciones" className="text-end">
+                        <button
+                          type="button"
+                          className="icon-btn icon-btn--danger"
+                          onClick={() => delFila(ing._rid)}
+                          title="Eliminar fila"
+                        >
+                          <i className="bi bi-trash" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -440,7 +450,7 @@ export default function RecipeAdmin() {
           )}
         </div>
 
-        {/* ===== Modal edición simple ===== */}
+        {/* ===== Modal edición (sin ProductPicker) ===== */}
         {Boolean(edit) && (
           <div
             className="modal d-block"
@@ -473,54 +483,68 @@ export default function RecipeAdmin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(edit?.ingredientes ?? []).map((ing) => (
-                          <tr key={ing._rid}>
-                            <td style={{ minWidth: 240 }}>
-                              <div className="pp-cell">
-                                <ProductPicker
-                                  productos={productos}
-                                  value={ing.productoId}
-                                  onChange={(id) => onChangeEditProducto(ing._rid, id)}
-                                  showUnit
+                        {(edit?.ingredientes ?? []).map((ing) => {
+                          const prodSel = productosIndex.get(ing.productoId);
+                          return (
+                            <tr key={ing._rid}>
+                              <td style={{ minWidth: 260 }}>
+                                <div className="d-flex gap-2 align-items-center">
+                                  <select
+                                    className="form-select form-select-sm"
+                                    value={ing.productoId}
+                                    onChange={(e) => onChangeEditProducto(ing._rid, e.target.value)}
+                                  >
+                                    <option value="">— Elegí un producto —</option>
+                                    {(productos || []).map((p) => (
+                                      <option key={p._id} value={p._id}>
+                                        {p.nombre}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {prodSel && (
+                                    <span className="text-muted small nowrap">
+                                      ({prodSel.unidad})
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <select
+                                  className="form-select form-select-sm"
+                                  value={ing.unidadBase}
+                                  onChange={(e) => setEditIng(ing._rid, "unidadBase", e.target.value)}
+                                >
+                                  {UNIDADES.map((u) => (
+                                    <option key={u} value={u}>
+                                      {u}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td>
+                                <input
+                                  className="form-control form-control-sm"
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  value={ing.cantidadPorUnidad}
+                                  onChange={(e) =>
+                                    setEditIng(ing._rid, "cantidadPorUnidad", e.target.value)
+                                  }
                                 />
-                              </div>
-                            </td>
-                            <td>
-                              <select
-                                className="form-select form-select-sm"
-                                value={ing.unidadBase}
-                                onChange={(e) => setEditIng(ing._rid, "unidadBase", e.target.value)}
-                              >
-                                {UNIDADES.map((u) => (
-                                  <option key={u} value={u}>
-                                    {u}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                            <td>
-                              <input
-                                className="form-control form-control-sm"
-                                type="number"
-                                min="0"
-                                step="any"
-                                value={ing.cantidadPorUnidad}
-                                onChange={(e) =>
-                                  setEditIng(ing._rid, "cantidadPorUnidad", e.target.value)
-                                }
-                              />
-                            </td>
-                            <td className="text-end">
-                              <button
-                                type="button"
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={() => delEditFila(ing._rid)}
-                              >
-                                <i className="bi bi-trash" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="text-end">
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-danger btn-sm"
+                                  onClick={() => delEditFila(ing._rid)}
+                                >
+                                  <i className="bi bi-trash" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                         <tr>
                           <td colSpan={4}>
                             <button
