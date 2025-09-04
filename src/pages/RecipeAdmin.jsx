@@ -9,22 +9,34 @@ import ProductPicker from "../components/provedores/ProductPicker";
 
 const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
 
+// ID estable para filas (evita usar índices como key)
+const uid = () =>
+  (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `rid_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+const makeRow = () => ({
+  _rid: uid(),
+  productoId: "",
+  nombreProducto: "",
+  unidadBase: "g",
+  cantidadPorUnidad: ""
+});
+
 export default function RecipeAdmin() {
   const { productos } = useProductos();
   const API_BASE = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
 
   // Form de creación
   const [nombre, setNombre] = useState("");
-  const [ingredientes, setIngredientes] = useState([
-    { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
-  ]);
+  const [ingredientes, setIngredientes] = useState([makeRow()]);
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState(null);
 
   // Listado y edición
   const [recipes, setRecipes] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
-  const [edit, setEdit] = useState(null); // receta en edición
+  const [edit, setEdit] = useState(null); // receta en edición (normalizada con _rid)
   const [savingEdit, setSavingEdit] = useState(false);
   const [expandedIds, setExpandedIds] = useState({}); // id -> bool
   const toggleExpand = (id) => setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -58,23 +70,22 @@ export default function RecipeAdmin() {
     return () => document.body.classList.remove("page-dark-bg");
   }, []);
 
-  // helpers form crear
-  const addFila = () =>
-    setIngredientes((prev) => [
-      ...prev,
-      { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
-    ]);
+  // ====== Helpers form crear (por _rid) ======
+  const addFila = () => setIngredientes((prev) => [...prev, makeRow()]);
 
-  const delFila = (idx) => setIngredientes((prev) => prev.filter((_, i) => i !== idx));
+  const delFila = (_rid) =>
+    setIngredientes((prev) => prev.filter((ing) => ing._rid !== _rid));
 
-  const setCampo = (idx, campo, valor) =>
-    setIngredientes((prev) => prev.map((ing, i) => (i === idx ? { ...ing, [campo]: valor } : ing)));
+  const setCampo = (_rid, campo, valor) =>
+    setIngredientes((prev) =>
+      prev.map((ing) => (ing._rid === _rid ? { ...ing, [campo]: valor } : ing))
+    );
 
-  const onChangeProducto = (idx, productoId) => {
+  const onChangeProducto = (_rid, productoId) => {
     const prod = productosIndex.get(productoId);
     setIngredientes((prev) =>
-      prev.map((ing, i) =>
-        i === idx
+      prev.map((ing) =>
+        ing._rid === _rid
           ? {
               ...ing,
               productoId,
@@ -84,7 +95,7 @@ export default function RecipeAdmin() {
                   ? "g"
                   : prod?.unidad === "l" || prod?.unidad === "ml"
                   ? "ml"
-                  : "unidad",
+                  : "unidad"
             }
           : ing
       )
@@ -118,23 +129,18 @@ export default function RecipeAdmin() {
         productoId: ing.productoId,
         nombreProducto: ing.nombreProducto,
         unidadBase: ing.unidadBase, // g | kg | ml | l | unidad
-        cantidadPorUnidad: Number(ing.cantidadPorUnidad),
-      })),
+        cantidadPorUnidad: Number(ing.cantidadPorUnidad)
+      }))
     };
 
     try {
       setGuardando(true);
       const created = await createRecipe(API_BASE, body);
       setMsg({ type: "success", text: "Receta creada correctamente." });
-      // agregar al listado local
       setRecipes((prev) => [created, ...prev]);
-      // notificar a otros tabs/páginas
       window.dispatchEvent(new CustomEvent("recipes:changed"));
-      // limpiar form
       setNombre("");
-      setIngredientes([
-        { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
-      ]);
+      setIngredientes([makeRow()]);
     } catch (e) {
       setMsg({ type: "danger", text: "Error al crear la receta." });
       console.error(e);
@@ -143,29 +149,40 @@ export default function RecipeAdmin() {
     }
   };
 
-  // === Edición ===
-  const openEdit = (r) => setEdit(JSON.parse(JSON.stringify(r)));
+  // ====== Edición (normalizo con _rid) ======
+  const normalizeEdit = (r) => ({
+    ...r,
+    ingredientes: (r.ingredientes || []).map((ing) => ({
+      _rid: uid(),
+      productoId: ing.productoId ?? "",
+      nombreProducto: ing.nombreProducto ?? "",
+      unidadBase: ing.unidadBase ?? "g",
+      cantidadPorUnidad: ing.cantidadPorUnidad ?? ""
+    }))
+  });
+
+  const openEdit = (r) => setEdit(normalizeEdit(JSON.parse(JSON.stringify(r))));
   const cancelEdit = () => setEdit(null);
 
-  const setEditIng = (idx, campo, valor) =>
+  const setEditIng = (_rid, campo, valor) =>
     setEdit((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        ingredientes: prev.ingredientes.map((ing, i) =>
-          i === idx ? { ...ing, [campo]: valor } : ing
-        ),
+        ingredientes: prev.ingredientes.map((ing) =>
+          ing._rid === _rid ? { ...ing, [campo]: valor } : ing
+        )
       };
     });
 
-  const onChangeEditProducto = (idx, productoId) => {
+  const onChangeEditProducto = (_rid, productoId) => {
     const prod = productosIndex.get(productoId);
     setEdit((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        ingredientes: prev.ingredientes.map((ing, i) =>
-          i === idx
+        ingredientes: prev.ingredientes.map((ing) =>
+          ing._rid === _rid
             ? {
                 ...ing,
                 productoId,
@@ -175,10 +192,10 @@ export default function RecipeAdmin() {
                     ? "g"
                     : prod?.unidad === "l" || prod?.unidad === "ml"
                     ? "ml"
-                    : "unidad",
+                    : "unidad"
               }
             : ing
-        ),
+        )
       };
     });
   };
@@ -186,22 +203,13 @@ export default function RecipeAdmin() {
   const addEditFila = () =>
     setEdit((prev) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        ingredientes: [
-          ...prev.ingredientes,
-          { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
-        ],
-      };
+      return { ...prev, ingredientes: [...prev.ingredientes, makeRow()] };
     });
 
-  const delEditFila = (idx) =>
+  const delEditFila = (_rid) =>
     setEdit((prev) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        ingredientes: prev.ingredientes.filter((_, i) => i !== idx),
-      };
+      return { ...prev, ingredientes: prev.ingredientes.filter((ing) => ing._rid !== _rid) };
     });
 
   const saveEdit = async () => {
@@ -214,11 +222,10 @@ export default function RecipeAdmin() {
           productoId: ing.productoId,
           nombreProducto: ing.nombreProducto,
           unidadBase: ing.unidadBase,
-          cantidadPorUnidad: Number(ing.cantidadPorUnidad),
-        })),
+          cantidadPorUnidad: Number(ing.cantidadPorUnidad)
+        }))
       };
       const updated = await updateRecipe(API_BASE, edit._id, body);
-      // reemplazar en el listado
       setRecipes((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
       window.dispatchEvent(new CustomEvent("recipes:changed"));
       setEdit(null);
@@ -297,14 +304,14 @@ export default function RecipeAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {ingredientes.map((ing, idx) => (
-                  <tr key={idx}>
+                {ingredientes.map((ing) => (
+                  <tr key={ing._rid}>
                     <td data-label="Producto" style={{ minWidth: 240 }}>
                       <div className="pp-cell">
                         <ProductPicker
                           productos={productos}
                           value={ing.productoId}
-                          onChange={(id) => onChangeProducto(idx, id)}
+                          onChange={(id) => onChangeProducto(ing._rid, id)}
                           showUnit
                         />
                       </div>
@@ -313,7 +320,7 @@ export default function RecipeAdmin() {
                       <select
                         className="form-select form-select-sm"
                         value={ing.unidadBase}
-                        onChange={(e) => setCampo(idx, "unidadBase", e.target.value)}
+                        onChange={(e) => setCampo(ing._rid, "unidadBase", e.target.value)}
                       >
                         {UNIDADES.map((u) => (
                           <option key={u} value={u}>
@@ -329,7 +336,7 @@ export default function RecipeAdmin() {
                         min="0"
                         step="any"
                         value={ing.cantidadPorUnidad}
-                        onChange={(e) => setCampo(idx, "cantidadPorUnidad", e.target.value)}
+                        onChange={(e) => setCampo(ing._rid, "cantidadPorUnidad", e.target.value)}
                         placeholder="ej: 1000 (g), 0.5 (l)"
                       />
                     </td>
@@ -337,7 +344,7 @@ export default function RecipeAdmin() {
                       <button
                         type="button"
                         className="icon-btn icon-btn--danger"
-                        onClick={() => delFila(idx)}
+                        onClick={() => delFila(ing._rid)}
                         title="Eliminar fila"
                       >
                         <i className="bi bi-trash" />
@@ -407,7 +414,7 @@ export default function RecipeAdmin() {
 
                     <ul className="recipe-card__list">
                       {ings.map((ing, i) => (
-                        <li key={i} className="recipe-card__item">
+                        <li key={`${r._id}-${ing.productoId || "x"}-${i}`} className="recipe-card__item">
                           <span className="recipe-card__item-name" title={ing.nombreProducto}>
                             {ing.nombreProducto}
                           </span>
@@ -466,14 +473,14 @@ export default function RecipeAdmin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(edit?.ingredientes ?? []).map((ing, idx) => (
-                          <tr key={idx}>
+                        {(edit?.ingredientes ?? []).map((ing) => (
+                          <tr key={ing._rid}>
                             <td style={{ minWidth: 240 }}>
                               <div className="pp-cell">
                                 <ProductPicker
                                   productos={productos}
                                   value={ing.productoId}
-                                  onChange={(id) => onChangeEditProducto(idx, id)}
+                                  onChange={(id) => onChangeEditProducto(ing._rid, id)}
                                   showUnit
                                 />
                               </div>
@@ -482,7 +489,7 @@ export default function RecipeAdmin() {
                               <select
                                 className="form-select form-select-sm"
                                 value={ing.unidadBase}
-                                onChange={(e) => setEditIng(idx, "unidadBase", e.target.value)}
+                                onChange={(e) => setEditIng(ing._rid, "unidadBase", e.target.value)}
                               >
                                 {UNIDADES.map((u) => (
                                   <option key={u} value={u}>
@@ -499,7 +506,7 @@ export default function RecipeAdmin() {
                                 step="any"
                                 value={ing.cantidadPorUnidad}
                                 onChange={(e) =>
-                                  setEditIng(idx, "cantidadPorUnidad", e.target.value)
+                                  setEditIng(ing._rid, "cantidadPorUnidad", e.target.value)
                                 }
                               />
                             </td>
@@ -507,7 +514,7 @@ export default function RecipeAdmin() {
                               <button
                                 type="button"
                                 className="btn btn-outline-danger btn-sm"
-                                onClick={() => delEditFila(idx)}
+                                onClick={() => delEditFila(ing._rid)}
                               >
                                 <i className="bi bi-trash" />
                               </button>
