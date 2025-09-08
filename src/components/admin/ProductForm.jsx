@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import FormularioProducto from "./FormularioProducto";
 import ModalAddStock from "../admin/ModalAddStock";
-import "../styles/ProductForm.css"; 
+import "../styles/ProductForm.css";
 import AlertaStockModal from "../admin/AlertaStockModal";
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import "bootstrap-icons/font/bootstrap-icons.css";
+import { useDepartamentos } from "../../context/DepartamentosContext";
+import DepartmentsManagerModal from "./DepartmentsManagerModal";
+
 
 export default function ProductForm() {
   const {
@@ -14,56 +17,59 @@ export default function ProductForm() {
     eliminarProducto,
   } = useProductos();
 
+  const { departamentos } = useDepartamentos();
+
   const [nombre, setNombre] = useState("");
   const [stock, setStock] = useState("");
   const [unidad, setUnidad] = useState("kg");
   const [pesoPromedio, setPesoPromedio] = useState("");
   const [stockCritico, setStockCritico] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
-  const [departamento, setDepartamento] = useState("Otros");
+  const [departamento, setDepartamento] = useState(""); // string (displayName)
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
   const [productoParaStock, setProductoParaStock] = useState(null);
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
-  const departamentosUnicos = [...new Set(productos.map((p) => p.departamento))];
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(false);
 
-useEffect(() => {
-  if (productos.length === 0) {
-    setMostrarAlertaStock(false);
-    return;
-  }
-  const hayAlerta = productos.some(
-    p => p.stock <= p.stockCritico || new Date(p.fechaVencimiento) < new Date()
-  );
-  setMostrarAlertaStock(hayAlerta);
-}, [productos]);
+  // Modal de gestión de departamentos
+  const [showDepModal, setShowDepModal] = useState(false);
 
-
-
-
+  // Alerta stock / vencimiento
   useEffect(() => {
-  if (productoEditando) {
-    setNombre(productoEditando.nombre);
-    setStock(productoEditando.stock.toString());
-    setUnidad(productoEditando.unidad);
-    setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
-    setDepartamento(productoEditando.departamento || "Carnes");
-    setStockCritico(productoEditando.stockCritico?.toString() || "");
-    setFacturaRemito(productoEditando.facturaRemito || "");
+    if (productos.length === 0) {
+      setMostrarAlertaStock(false);
+      return;
+    }
+    const hayAlerta = productos.some(
+      (p) => p.stock <= p.stockCritico || new Date(p.fechaVencimiento) < new Date()
+    );
+    setMostrarAlertaStock(hayAlerta);
+  }, [productos]);
 
-    const vencimiento = new Date(productoEditando.fechaVencimiento);
-    const fechaLocal = new Date(
-      vencimiento.getTime() + Math.abs(vencimiento.getTimezoneOffset() * 60000)
-    )
-      .toISOString()
-      .split("T")[0];
-    setFechaVencimiento(fechaLocal);
-  }
-}, [productoEditando]);
+  // Cargar datos al editar
+  useEffect(() => {
+    if (productoEditando) {
+      setNombre(productoEditando.nombre);
+      setStock(productoEditando.stock?.toString() || "");
+      setUnidad(productoEditando.unidad || "kg");
+      setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
+      setDepartamento(productoEditando.departamento || "");
+      setStockCritico(productoEditando.stockCritico?.toString() || "");
+      setFacturaRemito(productoEditando.facturaRemito || "");
 
+      const vencimiento = new Date(productoEditando.fechaVencimiento);
+      const fechaLocal = new Date(
+        vencimiento.getTime() + Math.abs(vencimiento.getTimezoneOffset() * 60000)
+      )
+        .toISOString()
+        .split("T")[0];
+      setFechaVencimiento(fechaLocal);
+    }
+  }, [productoEditando]);
 
+  // Limpiar form
   const limpiarFormulario = () => {
     setNombre("");
     setStock("");
@@ -71,11 +77,12 @@ useEffect(() => {
     setPesoPromedio("");
     setStockCritico("");
     setProductoEditando(null);
-    setDepartamento("Insumoscomida");
+    setDepartamento(departamentos[0]?.displayName || ""); // default al primero si existe
     setFechaVencimiento("");
     setFacturaRemito("");
   };
 
+  // Guardar producto
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -83,27 +90,26 @@ useEffect(() => {
       return;
     if (unidad !== "unidad" && !pesoPromedio) return;
 
-   const loteInicial = {
-  lote: "Lote inicial",
-  cantidad: parseFloat(stock),
-  cantidadDisponible: parseFloat(stock),
-  fechaVencimiento: new Date(fechaVencimiento + "T00:00:00").toISOString(), // ⬅️ asegurás horario local a medianoche
-  numeroFactura: facturaRemito,
-  fechaIngreso: new Date().toISOString(),
-};
+    const loteInicial = {
+      lote: "Lote inicial",
+      cantidad: parseFloat(stock),
+      cantidadDisponible: parseFloat(stock),
+      fechaVencimiento: new Date(fechaVencimiento + "T00:00:00").toISOString(),
+      numeroFactura: facturaRemito,
+      fechaIngreso: new Date().toISOString(),
+    };
 
-const productoData = {
-  nombre,
-  stock: parseFloat(stock),
-  unidad,
-  pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
-  departamento,
-  stockCritico: parseFloat(stockCritico),
-  fechaVencimiento,
-  facturaRemito,
-  lotes: [loteInicial], 
-};
-
+    const productoData = {
+      nombre,
+      stock: parseFloat(stock),
+      unidad,
+      pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
+      departamento, // string (displayName)
+      stockCritico: parseFloat(stockCritico),
+      fechaVencimiento,
+      facturaRemito,
+      lotes: [loteInicial],
+    };
 
     try {
       if (productoEditando) {
@@ -117,12 +123,13 @@ const productoData = {
     }
   };
 
+  // Agregar stock (lote)
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
       if (!producto) return;
 
-      const nuevoStock = producto.stock + nuevoLote.cantidad;
+      const nuevoStock = (producto.stock || 0) + (nuevoLote.cantidad || 0);
       const lotesActualizados = [...(producto.lotes || []), nuevoLote];
 
       const productoActualizado = {
@@ -132,7 +139,6 @@ const productoData = {
       };
 
       await actualizarProducto(productoId, productoActualizado);
-      // asegurate de tener la función obtenerYActualizarProductos si querés refrescar los datos
       setProductoParaStock(null);
     } catch (err) {
       console.error("Error al agregar stock:", err);
@@ -156,40 +162,32 @@ const productoData = {
     }));
   };
 
+  // Filtro por departamento (usa la lista del contexto)
+  const productosFiltrados = useMemo(() => {
+    return productos.filter(
+      (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
+    );
+  }, [productos, departamentoSeleccionado]);
 
-  
-const productosFiltrados = productos.filter(
-  (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
-);
-
-
-
-  // Agrupamos los productos filtrados por departamento
-const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
-  if (!acc[prod.departamento]) {
-    acc[prod.departamento] = [];
-  }
-  acc[prod.departamento].push(prod);
-  return acc;
-}, {});
-
-
-
+  // Agrupar por departamento
+  const productosPorDepartamento = useMemo(() => {
+    return productosFiltrados.reduce((acc, prod) => {
+      const key = prod.departamento || "(sin departamento)";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(prod);
+      return acc;
+    }, {});
+  }, [productosFiltrados]);
 
   return (
-
-
     <>
+      <AlertaStockModal
+        productos={productos}
+        visible={mostrarAlertaStock}
+        onClose={() => setMostrarAlertaStock(false)}
+      />
 
- <AlertaStockModal
-      productos={productos}
-      visible={mostrarAlertaStock}
-      onClose={() => setMostrarAlertaStock(false)}
-    />
-
-
-
-      {/* 🔁 Formulario separado */}
+      {/* Formulario */}
       <FormularioProducto
         onSubmit={handleSubmit}
         nombre={nombre}
@@ -212,167 +210,184 @@ const productosPorDepartamento = productosFiltrados.reduce((acc, prod) => {
         limpiarFormulario={limpiarFormulario}
       />
 
-    
-
       <div className="container py-4">
-    <div className="row justify-content-center">
-      <div className="col-12 col-md-10 col-lg-8">
+        <div className="row justify-content-center">
+          <div className="col-12 col-md-10 col-lg-8">
+            <ModalAddStock
+              show={!!productoParaStock}
+              producto={productoParaStock}
+              onAgregarStock={handleAgregarStock}
+              onClose={() => setProductoParaStock(null)}
+            />
+          </div>
+        </div>
+      </div>
 
-      <ModalAddStock
-  show={!!productoParaStock}
-  producto={productoParaStock}
-  onAgregarStock={handleAgregarStock}
-  onClose={() => setProductoParaStock(null)}
-/>
+      {/* Encabezado + botón para gestionar departamentos */}
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <h5 className="m-0">Productos agregados</h5>
+        <button
+          className="btn btn-sm btn-outline-secondary"
+          onClick={() => setShowDepModal(true)}
+        >
+          <i className="bi bi-gear-wide-connected me-1" />
+          Gestionar departamentos
+        </button>
+      </div>
 
-       </div>
-    </div>
-  </div>
-<div className="mb-3">
-  <button
-    className={`btn btn-sm me-2 ${departamentoSeleccionado === "Todos" ? "btn-dark" : "btn-outline-dark"}`}
-    onClick={() => setDepartamentoSeleccionado("Todos")}
-  >
-    Todos
-  </button>
-  {departamentosUnicos.map((depto) => (
-    <button
-      key={depto}
-      className={`btn btn-sm me-2 ${departamentoSeleccionado === depto ? "btn-dark" : "btn-outline-dark"}`}
-      onClick={() => setDepartamentoSeleccionado(depto)}
-    >
-      {depto}
-    </button>
-  ))}
-</div>
+      {/* Filtros por departamento */}
+      <div className="mb-3">
+        <button
+          className={`btn btn-sm me-2 ${departamentoSeleccionado === "Todos" ? "btn-dark" : "btn-outline-dark"}`}
+          onClick={() => setDepartamentoSeleccionado("Todos")}
+        >
+          Todos
+        </button>
+        {departamentos.map((d) => (
+          <button
+            key={d._id}
+            className={`btn btn-sm me-2 ${departamentoSeleccionado === d.displayName ? "btn-dark" : "btn-outline-dark"}`}
+            onClick={() => setDepartamentoSeleccionado(d.displayName)}
+          >
+            {d.displayName}
+          </button>
+        ))}
+      </div>
 
-
-
-      <h5>Productos agregados</h5>
+      {/* Listado de productos agrupados por departamento */}
       {productos.length === 0 ? (
         <p>No hay productos aún.</p>
       ) : (
         <ul className="list-group">
           {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
-  <div key={depto} className="mb-4">
-    <h5 className="bg-light p-2 border rounded">{depto}</h5>
-    <ul className="list-group">
-      {productosDepto.map((prod) => (
-        <li key={prod._id} className="list-group-item d-flex flex-column">
-          
-          <div className="d-flex justify-content-between align-items-center">
-           <div className="producto-info p-2 rounded bg-light-subtle">
-  <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
-    <span className="badge badge-nombre">{prod.nombre}</span>
-    <span className="badge badge-stock">{prod.stock} {prod.unidad}</span>
-    {prod.unidad !== "unidad" && (
-      <span className="badge badge-peso">
-        {prod.pesoPromedio} {prod.unidad === "l" ? "ml" : "g"} (unidad)
-      </span>
-    )}
-    {prod.stockCritico !== undefined && (
-      <span className="badge badge-critico">Crítico: {prod.stockCritico}</span>
-    )}
-  </div>
+            <div key={depto} className="mb-4">
+              <h5 className="bg-light p-2 border rounded">{depto}</h5>
+              <ul className="list-group">
+                {productosDepto.map((prod) => (
+                  <li key={prod._id} className="list-group-item d-flex flex-column">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="producto-info p-2 rounded bg-light-subtle">
+                        <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+                          <span className="badge badge-nombre">{prod.nombre}</span>
+                          <span className="badge badge-stock">
+                            {prod.stock} {prod.unidad}
+                          </span>
+                          {prod.unidad !== "unidad" && (
+                            <span className="badge badge-peso">
+                              {prod.pesoPromedio} {prod.unidad === "l" ? "ml" : "g"} (unidad)
+                            </span>
+                          )}
+                          {typeof prod.stockCritico !== "undefined" && (
+                            <span className="badge badge-critico">Crítico: {prod.stockCritico}</span>
+                          )}
+                        </div>
 
-  <div className="text-muted small mb-1">
-    <strong>Venc.:</strong>{" "}
-    {prod.fechaVencimiento
-      ? (() => {
-          const [año, mes, día] = prod.fechaVencimiento.split("T")[0].split("-");
-          return `${día}/${mes}/${año}`;
-        })()
-      : "Sin fecha"}
-  </div>
+                        <div className="text-muted small mb-1">
+                          <strong>Venc.:</strong>{" "}
+                          {prod.fechaVencimiento
+                            ? (() => {
+                                const [año, mes, día] = new Date(prod.fechaVencimiento)
+                                  .toISOString()
+                                  .split("T")[0]
+                                  .split("-");
+                                return `${día}/${mes}/${año}`;
+                              })()
+                            : "Sin fecha"}
+                        </div>
 
-  <div className="text-muted small mb-1">
-    <strong>Creado:</strong> {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} —{" "}
-    <strong>Actualizado:</strong> {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
-  </div>
+                        <div className="text-muted small mb-1">
+                          <strong>Creado:</strong>{" "}
+                          {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} —{" "}
+                          <strong>Actualizado:</strong>{" "}
+                          {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
+                        </div>
 
-  <div className="text-muted small">
-    <strong>Factura/Remito:</strong> {prod.facturaRemito || "N/A"}
-  </div>
-</div>
+                        <div className="text-muted small">
+                          <strong>Factura/Remito:</strong> {prod.facturaRemito || "N/A"}
+                        </div>
+                      </div>
 
+                      <div className="d-flex gap-2">
+                        <button className="button-red-sm" onClick={() => handleEliminar(prod._id)}>
+                          <i className="bi bi-trash3 me-1"></i> Borrar
+                        </button>
 
-            <div className="d-flex gap-2">
-<button className="button-red-sm" onClick={() => handleEliminar(prod._id)}>
-  <i className="bi bi-trash3 me-1"></i> Borrar
-</button>
+                        <button className="button-green-sm" onClick={() => setProductoParaStock(prod)}>
+                          <i className="bi bi-plus-circle me-1"></i> Agregar Lote
+                        </button>
+                      </div>
+                    </div>
 
-<button className="button-green-sm" onClick={() => setProductoParaStock(prod)}>
-  <i className="bi bi-plus-circle me-1"></i> Agregar Lote
-</button>
+                    {/* ▼▼▼ Lotes ▼▼▼ */}
+                    {prod.lotes && prod.lotes.length > 0 && (
+                      <>
+                        <button
+                          className="btn btn-link btn-sm mt-2"
+                          onClick={() => toggleLotes(prod._id)}
+                          type="button"
+                        >
+                          {lotesVisibles[prod._id] ? "Ocultar lotes ▲" : "Ver lotes ▼"}
+                        </button>
 
-</div>
+                        {lotesVisibles[prod._id] && (
+                          <div className="mt-2">
+                            <h6 className="text-muted mb-1">Lotes registrados:</h6>
+                            <table className="table table-sm table-bordered">
+                              <thead>
+                                <tr>
+                                  <th>Factura/Remito</th>
+                                  <th>CANTIDAD DE FACTURA/REMITO</th>
+                                  <th>CANTIDAD QUE SE CONTO</th>
+                                  <th>Vencimiento</th>
+                                  <th>Fecha ingreso</th>
+                                  <th>Estado</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {prod.lotes.map((lote, idx) => {
+                                  const cantidadTotal = lote.cantidad;
+                                  const cantidadDisponible = lote.cantidadDisponible ?? lote.cantidad;
+                                  let estado = "Disponible";
+                                  let estadoClase = "text-success";
 
-          </div>
+                                  if (cantidadDisponible === 0) {
+                                    estado = "Usado";
+                                    estadoClase = "text-danger";
+                                  } else if (cantidadDisponible < cantidadTotal) {
+                                    estado = "Parcial";
+                                    estadoClase = "text-warning";
+                                  }
 
-          {/* ▼▼▼ Lotes ▼▼▼ */}
-          {prod.lotes && prod.lotes.length > 0 && (
-            <>
-              <button
-                className="btn btn-link btn-sm mt-2"
-                onClick={() => toggleLotes(prod._id)}
-                type="button"
-              >
-                {lotesVisibles[prod._id] ? "Ocultar lotes ▲" : "Ver lotes ▼"}
-              </button>
-
-              {lotesVisibles[prod._id] && (
-                <div className="mt-2">
-                  <h6 className="text-muted mb-1">Lotes registrados:</h6>
-                  <table className="table table-sm table-bordered">
-                    <thead>
-                      <tr>
-                        <th>Factura/Remito</th>
-                        <th>CANTIDAD DE FACTURA/REMITO</th>
-                        <th>CANTIDAD QUE SE CONTO</th>
-                        <th>Vencimiento</th>
-                        <th>Fecha ingreso</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {prod.lotes.map((lote, idx) => {
-                        const cantidadTotal = lote.cantidad;
-                        const cantidadDisponible = lote.cantidadDisponible ?? lote.cantidad;
-                        let estado = "Disponible";
-                        let estadoClase = "text-success";
-
-                        if (cantidadDisponible === 0) {
-                          estado = "Usado";
-                          estadoClase = "text-danger";
-                        } else if (cantidadDisponible < cantidadTotal) {
-                          estado = "Parcial";
-                          estadoClase = "text-warning";
-                        }
-
-                        return (
-                          <tr key={idx}>
-                            <td>{lote.numeroFactura}</td>
-                            <td>{cantidadTotal}</td>
-                            <td>{lote.lote}</td>
-                            <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
-                            <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
-                            <td className={estadoClase}>{estado}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-        </li>
-      ))}
-    </ul>
-  </div>
-))}
+                                  return (
+                                    <tr key={idx}>
+                                      <td>{lote.numeroFactura}</td>
+                                      <td>{cantidadTotal}</td>
+                                      <td>{lote.lote}</td>
+                                      <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
+                                      <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
+                                      <td className={estadoClase}>{estado}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </ul>
       )}
+
+      {/* Modal de gestión de departamentos */}
+      <DepartmentsManagerModal
+        show={showDepModal}
+        onClose={() => setShowDepModal(false)}
+      />
     </>
   );
 }

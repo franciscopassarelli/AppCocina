@@ -1,0 +1,41 @@
+.dep-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1060; /* > navbar */
+}
+
+.dep-modal {
+  width: min(680px, 92vw);
+  background: #fff;
+  border-radius: .75rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.dep-modal-header,
+.dep-modal-footer {
+  padding: .75rem 1rem;
+  border-bottom: 1px solid #eee;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dep-modal-footer { border-top: 1px solid #eee; border-bottom: none; }
+
+.dep-modal-body { padding: 1rem; max-height: 70vh; overflow: auto; }
+
+.dep-list .list-group-item { border-left: 0; border-right: 0; }
+
+.dep-dialog-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1070;
+}
+
+.dep-dialog {
+  width: min(520px, 92vw);
+  background: #fff;
+  border-radius: .75rem;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}

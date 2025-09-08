@@ -1,46 +1,52 @@
-/* ✅ Solo para tablets: optimizar distribución sin apilar todo */
+/* ==== Base de formulario ==== */
+.formulario-producto .form-label {
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+.formulario-producto .form-control-sm,
+.formulario-producto .form-select-sm {
+  font-size: 0.9rem;
+  padding: 0.35rem 0.5rem;
+}
+.formulario-producto .row + .row {
+  margin-top: 0.25rem;
+}
+
+/* ====== Tablet (≥768 y ≤991) ====== */
 @media (min-width: 768px) and (max-width: 991px) {
   .formulario-producto .row {
+    --gap: 0.5rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--gap);
   }
-
-  .formulario-producto .col-md-1,
-  .formulario-producto .col-md-2,
-  .formulario-producto .col-auto {
-    flex: 1 1 calc(33.333% - 0.5rem);
-    min-width: 160px;
+  .formulario-producto .col-auto,
+  .formulario-producto .col-6,
+  .formulario-producto .col-12,
+  .formulario-producto .col-sm-3,
+  .formulario-producto .col-sm-6,
+  .formulario-producto .col-lg-2,
+  .formulario-producto .col-lg-3,
+  .formulario-producto .col-lg-4,
+  .formulario-producto .col-md-7,
+  .formulario-producto .col-lg-6 {
+    min-width: 180px;
   }
-
-  .formulario-producto input,
-  .formulario-producto select {
-    font-size: 0.9rem;
-    padding: 0.25rem 0.5rem;
-  }
-
-  .formulario-producto label {
-    font-size: 0.75rem;
-    margin-bottom: 0.2rem;
-  }
-
   .formulario-producto .btn {
-    font-size: 0.8rem;
-    padding: 0.3rem 0.6rem;
-  }
-
-  .formulario-producto .d-flex.flex-column.gap-1 {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 0.5rem;
-  }
-
-  .formulario-producto .d-flex.flex-column.gap-1 button {
-    width: auto;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.6rem;
   }
 }
 
+/* ====== Desktop (≥992) ====== */
+@media (min-width: 992px) {
+  .formulario-producto .form-control-sm,
+  .formulario-producto .form-select-sm {
+    font-size: 0.92rem;
+  }
+}
 
+/* ====== Botón principal (tu estilo) ====== */
 .button-green-sm {
   background-image: linear-gradient(-180deg, #00c851, #007e33);
   border-radius: 6px;
@@ -56,15 +62,10 @@
   border: 0;
   transition: box-shadow 0.2s, transform 0.1s ease-in-out;
 }
-
 .button-green-sm:hover {
   box-shadow: rgba(0, 200, 81, 0.4) 0 3px 8px;
 }
-
 .button-green-sm:active {
   transform: scale(0.96);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-
-
-

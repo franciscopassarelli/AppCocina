@@ -33,7 +33,7 @@ export default function ProductionRunsList({ apiBase }) {
   async function refresh() {
     setLoading(true);
     try {
-     const data = await getRuns();
+      const data = await getRuns();
       setRuns(Array.isArray(data) ? data : []);
     } finally {
       setLoading(false);
@@ -57,6 +57,17 @@ export default function ProductionRunsList({ apiBase }) {
     return { totalProducidas: total, firstDate: min, lastDate: max };
   }, [runs]);
 
+  // Derivados (por si el backend aún no guarda desperdicio/eficiencia)
+  function deriveWaste(r) {
+    const plan = Number(r.unidadesPlanificadas || 0);
+    const prod = Number(r.unidadesProducidas || 0);
+    const unidad = r.unidadesProducidasUnidad || "";
+    const diff = plan - prod;
+    const desperdicioCantidad = Math.max(diff, 0);
+    const eficienciaPorc = plan > 0 ? (prod / plan) * 100 : null;
+    return { desperdicioCantidad, desperdicioUnidad: unidad, eficienciaPorc };
+  }
+
   function exportToExcel() {
     const data = runs.map((r) => {
       const inicio = formatDateTimeAR(r.startedAt);
@@ -66,6 +77,12 @@ export default function ProductionRunsList({ apiBase }) {
           .map((c) => `${c.nombreProducto}: ${nf2.format(c.cantidad || 0)} ${c.unidad || ""}`)
           .join(" · ") || "—";
       const fechaVenc = r.fechaVencimiento || r.fechaVencimientoProductoFinal || null;
+
+      const derived = deriveWaste(r);
+      const desperdicioCant = r.desperdicioCantidad ?? derived.desperdicioCantidad;
+      const desperdicioUni = r.desperdicioUnidad ?? derived.desperdicioUnidad;
+      const eficiencia = r.eficienciaPorc ?? derived.eficienciaPorc;
+
       return {
         Inicio: inicio,
         Receta: r.recipeNombre,
@@ -73,7 +90,10 @@ export default function ProductionRunsList({ apiBase }) {
         Planificadas: r.unidadesPlanificadas,
         "Producidas": r.unidadesProducidas ?? 0,
         "Unidad producida": r.unidadesProducidasUnidad || "",
-         Duración: dur,
+        Desperdicio: desperdicioCant,
+        "Unidad desperdicio": desperdicioUni,
+        Eficiencia: eficiencia == null ? "" : `${nf2.format(eficiencia)}%`,
+        Duración: dur,
         "Fecha de vencimiento": formatDateAR(fechaVenc),
         "Insumos consumidos": consumidos,
       };
@@ -86,7 +106,7 @@ export default function ProductionRunsList({ apiBase }) {
   }
 
   return (
-     <div className="card p-3 shadow-sm mt-4 runs-dark">
+    <div className="card p-3 shadow-sm mt-4 runs-dark">
       {/* Header */}
       <div className="list-header">
         <div className="title-side">
@@ -130,14 +150,16 @@ export default function ProductionRunsList({ apiBase }) {
         <div className="text-muted">Sin producciones aún.</div>
       ) : (
         <div className="table-responsive">
-      <table className="table table-sm align-middle custom-table table-hover runs-table">
+          <table className="table table-sm align-middle custom-table table-hover runs-table">
             <thead className="table-dark sticky-header">
               <tr>
                 <th style={{ minWidth: 160 }}>Inicio</th>
                 <th style={{ minWidth: 160 }}>Receta</th>
                 <th style={{ minWidth: 140 }}>Preparado por</th>
                 <th className="text-center" style={{ width: 100 }}>Planif.</th>
-                <th className="text-center" style={{ width: 110 }}>Producidas</th>
+                <th className="text-center" style={{ width: 130 }}>Producidas</th>
+                <th className="text-center" style={{ width: 130 }}>Desperdicio</th>
+                <th className="text-center" style={{ width: 110 }}>Eficiencia</th>
                 <th style={{ width: 120 }}>Duración</th>
                 <th style={{ minWidth: 160 }}>Fecha de vencimiento</th>
                 <th style={{ minWidth: 260 }}>Insumos consumidos</th>
@@ -154,6 +176,13 @@ export default function ProductionRunsList({ apiBase }) {
                   qty: nf2.format(Number(c.cantidad || 0)),
                   unidad: c.unidad || "",
                 }));
+
+                // Derivados/servidor
+                const derived = deriveWaste(r);
+                const desperdicioCant = r.desperdicioCantidad ?? derived.desperdicioCantidad;
+                const desperdicioUni = r.desperdicioUnidad ?? derived.desperdicioUnidad;
+                const eficiencia = r.eficienciaPorc ?? derived.eficienciaPorc;
+
                 return (
                   <tr key={r._id} className={idx % 2 === 0 ? "table-row-even" : "table-row-odd"}>
                     <td data-label="Inicio" title={inicio}>{inicio}</td>
@@ -161,8 +190,18 @@ export default function ProductionRunsList({ apiBase }) {
                     <td data-label="Preparado por" className="nowrap" title={r.preparadoPor || "—"}>
                       {r.preparadoPor || "—"}
                     </td>
-                    <td data-label="Planif." className="text-center">{nf0.format(r.unidadesPlanificadas || 0)}</td>
-                    <td data-label="Producidas" className="text-center">{nf0.format(r.unidadesProducidas || 0)} {r.unidadesProducidasUnidad || ""}</td>
+                    <td data-label="Planif." className="text-center">
+                      {nf0.format(r.unidadesPlanificadas || 0)}
+                    </td>
+                    <td data-label="Producidas" className="text-center">
+                      {nf0.format(r.unidadesProducidas || 0)} {r.unidadesProducidasUnidad || ""}
+                    </td>
+                    <td data-label="Desperdicio" className="text-center">
+                      {nf2.format(desperdicioCant)} {desperdicioUni}
+                    </td>
+                    <td data-label="Eficiencia" className="text-center">
+                      {eficiencia == null ? "—" : `${nf2.format(eficiencia)}%`}
+                    </td>
                     <td data-label="Duración">{dur}</td>
                     <td data-label="Vencimiento">{formatDateAR(fechaVenc)}</td>
                     <td data-label="Insumos consumidos">
