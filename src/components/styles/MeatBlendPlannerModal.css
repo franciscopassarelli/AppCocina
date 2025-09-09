@@ -1,0 +1,60 @@
+/* src/components/styles/MeatBlendPlannerModal.css */
+
+/* evita que cualquier heredado del panel afecte al modal */
+.meat-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2050;               /* por encima de otros overlays */
+  isolation: isolate;          /* corta stacking contexts debajo */
+  display: grid;
+  place-items: center;
+  background: rgba(10, 10, 10, 0.78);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+
+.meat-modal {
+  width: min(1100px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #151515;
+  color: #f5f5f5;
+  border: 1px solid #2e2e2e;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6);
+}
+
+/* Header */
+.meat-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  background: linear-gradient(180deg, #1a1a1a, #141414);
+}
+.meat-modal-header h5 {
+  color: #fff;
+  font-weight: 600;
+}
+.meat-close {
+  background: transparent;
+  border: 0;
+  color: #bbb;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.meat-close:hover { color: #fff; background: rgba(255,255,255,.08); }
+
+/* Body */
+.meat-modal-content {
+  padding: 16px;
+}
+
+/* Bloquea scroll del body como Bootstrap */
+body.modal-open {
+  overflow: hidden;
+}

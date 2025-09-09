@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../styles/FormularioProducto.css";
-import "../styles/proveedores.css"; // para usar alerta-overlay/alerta-modal
 import { useDepartamentos } from "../../context/DepartamentosContext";
 import { useProductos } from "../../context/ProductoContext";
 
@@ -120,161 +119,152 @@ export default function FormularioProducto({
 
   return (
     <div className="card card-body mb-4 shadow-sm formulario-producto">
-      <form onSubmit={onSubmit} className="mb-2">
-        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-          <h5 className="mb-0 fw-bold text-success">
-            {productoEditando ? "Editar producto" : "Nuevo producto"}
-          </h5>
-        </div>
+      <form onSubmit={onSubmit} className="row g-2 align-items-end form-like-proveedores">
 
-        {/* Fila 1: Nombre / Unidad / (PesoPromedio condicionado) */}
-        <div className="row g-2 align-items-end">
-          <div className="col-12 col-sm-6 col-lg-4">
-            <label htmlFor="nombre" className="form-label small fw-semibold text-dark mb-1">Nombre</label>
-            <input
-              id="nombre"
-              type="text"
-              className="form-control form-control-sm"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
-          </div>
+       {/* Nombre (más angosto) */}
+<div className="col-md-5 fp-col-auto">
+  <label className="form-label fp-label">Nombre</label>
+  <input
+    id="nombre"
+    type="text"
+    className="form-control form-control-sm fp-compact fp-narrow fp-w-sm"
+    value={nombre}
+    onChange={(e) => setNombre(e.target.value)}
+    required
+  />
+</div>
 
-          <div className="col-6 col-sm-3 col-lg-2">
-            <label htmlFor="unidad" className="form-label small fw-semibold text-dark mb-1">Unidad</label>
+        {/* Departamento + acciones */}
+        <div className="col-md-4">
+          <label className="form-label fp-label">Departamento</label>
+          <div className="d-flex align-items-center gap-2">
             <select
-              id="unidad"
+              id="departamento"
               className="form-select form-select-sm"
-              value={unidad}
-              onChange={(e) => setUnidad(e.target.value)}
+              value={departamento || ""}
+              onChange={(e) => setDepartamento(e.target.value)}
             >
-              <option value="kg">kg</option>
-              <option value="l">litros</option>
-              <option value="unidad">unidad</option>
+              {departamentos.length === 0 && <option value="">(sin departamentos)</option>}
+              {departamentos.map((d) => (
+                <option key={d._id} value={d.displayName}>{d.displayName}</option>
+              ))}
             </select>
-          </div>
 
-          {unidad !== "unidad" && (
-            <div className="col-6 col-sm-3 col-lg-2">
-              <label htmlFor="pesoPromedio" className="form-label small fw-semibold text-dark mb-1">
-                {unidad === "l" ? "Volumen (ml)" : "Peso (g)"}
-              </label>
-              <input
-                id="pesoPromedio"
-                type="number"
-                className="form-control form-control-sm"
-                value={pesoPromedio}
-                onChange={(e) => setPesoPromedio(e.target.value)}
-                min="0"
-                step="any"
-                required
-              />
+            <div className="d-flex align-items-center gap-1">
+              <button type="button" className="btn btn-sm btn-outline-success" onClick={openNew} title="Nuevo">
+                <i className="bi bi-plus-lg"></i>
+              </button>
+              <button type="button" className="btn btn-sm btn-outline-primary" onClick={openEdit} title="Editar" disabled={!selectedDept}>
+                <i className="bi bi-pencil-square"></i>
+              </button>
+              <button type="button" className="btn btn-sm btn-outline-danger" onClick={openDelete} title="Borrar" disabled={!selectedDept}>
+                <i className="bi bi-trash"></i>
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Fila 2: Stock / Stock crítico */}
-        <div className="row g-2 align-items-end mt-1">
-          <div className="col-6 col-sm-3 col-lg-2">
-            <label htmlFor="stock" className="form-label small fw-semibold text-dark mb-1">Stock</label>
+        {/* Unidad */}
+        <div className="col-md-1">
+          <label className="form-label fp-label">Unidad</label>
+          <select
+            id="unidad"
+            className="form-select form-select-sm"
+            value={unidad}
+            onChange={(e) => setUnidad(e.target.value)}
+          >
+            <option value="kg">kg</option>
+            <option value="l">l</option>
+            <option value="unidad">unidad</option>
+          </select>
+        </div>
+
+        {/* Peso / Volumen (compacto) */}
+        {unidad !== "unidad" && (
+          <div className="col-md-2">
+            <label className="form-label fp-label">{unidad === "l" ? "Volumen (ml)" : "Peso (g)"}</label>
             <input
-              id="stock"
+              id="pesoPromedio"
               type="number"
-              className="form-control form-control-sm"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
+              className="form-control form-control-sm fp-compact"
+              value={pesoPromedio}
+              onChange={(e) => setPesoPromedio(e.target.value)}
               min="0"
               step="any"
               required
             />
           </div>
+        )}
 
-          <div className="col-6 col-sm-3 col-lg-2">
-            <label htmlFor="stockCritico" className="form-label small fw-semibold text-dark mb-1">Crítico</label>
-            <input
-              id="stockCritico"
-              type="number"
-              className="form-control form-control-sm"
-              value={stockCritico}
-              onChange={(e) => setStockCritico(e.target.value)}
-              min="0"
-              step="any"
-              required
-            />
-          </div>
+        {/* Stock (compacto) */}
+        <div className="col-md-2 fp-col-auto">
+  <label className="form-label fp-label">Stock</label>
+  <input
+    id="stock"
+    type="number"
+    className="form-control form-control-sm fp-compact fp-narrow fp-w-xxs"
+    value={stock}
+    onChange={(e) => setStock(e.target.value)}
+    min="0"
+    step="any"
+    required
+  />
+</div>
+
+        {/* Crítico (compacto) */}
+       <div className="col-md-2 fp-col-auto">
+  <label className="form-label fp-label">Crítico</label>
+  <input
+    id="stockCritico"
+    type="number"
+    className="form-control form-control-sm fp-compact fp-narrow fp-w-xxs"
+    value={stockCritico}
+    onChange={(e) => setStockCritico(e.target.value)}
+    min="0"
+    step="any"
+    required
+  />
+</div>
+
+        {/* Factura/Remito */}
+        <div className="col-md-3">
+          <label className="form-label fp-label">Factura/Remito</label>
+          <input
+            id="facturaRemito"
+            type="text"
+            className="form-control form-control-sm"
+            value={facturaRemito}
+            onChange={(e) => setFacturaRemito(e.target.value)}
+            required
+          />
         </div>
 
-        {/* Fila 3: Depto + acciones */}
-        <div className="row g-2 align-items-end mt-1">
-          <div className="col-12 col-md-7 col-lg-6">
-            <label htmlFor="departamento" className="form-label small fw-semibold text-dark mb-1">Departamento</label>
-            <div className="d-flex align-items-center gap-2">
-              <select
-                id="departamento"
-                className="form-select form-select-sm"
-                value={departamento || ""}
-                onChange={(e) => setDepartamento(e.target.value)}
-              >
-                {departamentos.length === 0 && <option value="">(sin departamentos)</option>}
-                {departamentos.map((d) => (
-                  <option key={d._id} value={d.displayName}>{d.displayName}</option>
-                ))}
-              </select>
-
-              <div className="d-flex align-items-center gap-1">
-                <button type="button" className="btn btn-sm btn-outline-success" onClick={openNew} title="Nuevo">
-                  <i className="bi bi-plus-lg"></i>
-                </button>
-                <button type="button" className="btn btn-sm btn-outline-primary" onClick={openEdit} title="Editar" disabled={!selectedDept}>
-                  <i className="bi bi-pencil-square"></i>
-                </button>
-                <button type="button" className="btn btn-sm btn-outline-danger" onClick={openDelete} title="Borrar" disabled={!selectedDept}>
-                  <i className="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Fecha venc. */}
+        <div className="col-md-2">
+          <label htmlFor="fecha-vencimiento" className="form-label fp-label">Vencimiento</label>
+          <input
+            id="fecha-vencimiento"
+            type="date"
+            className="form-control form-control-sm"
+            value={fechaVencimiento}
+            onChange={(e) => setFechaVencimiento(e.target.value)}
+            required
+          />
         </div>
 
-        {/* Fila 4: Factura/Remito / Fecha vencimiento */}
-        <div className="row g-2 align-items-end mt-1">
-          <div className="col-12 col-sm-6 col-lg-4">
-            <label htmlFor="facturaRemito" className="form-label small fw-semibold text-dark mb-1">Factura/Remito</label>
-            <input
-              id="facturaRemito"
-              type="text"
-              className="form-control form-control-sm"
-              value={facturaRemito}
-              onChange={(e) => setFacturaRemito(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="col-12 col-sm-6 col-lg-3">
-            <label htmlFor="fecha-vencimiento" className="form-label small fw-semibold text-dark mb-1">Fecha venc.</label>
-            <input
-              id="fecha-vencimiento"
-              type="date"
-              className="form-control form-control-sm"
-              value={fechaVencimiento}
-              onChange={(e) => setFechaVencimiento(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-
-        {/* Fila 5: Botones */}
-        <div className="mt-3 d-flex flex-wrap gap-2">
-          <button className="button-green-sm" type="submit">
+        {/* Botones */}
+        <div className="col-md-2">
+          <button className="button-green-sm w-100" type="submit">
             {productoEditando ? "Actualizar" : "Agregar"}
           </button>
-          {productoEditando && (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={limpiarFormulario}>
+        </div>
+        {productoEditando && (
+          <div className="col-md-2">
+            <button type="button" className="button-ghost-sm w-100" onClick={limpiarFormulario}>
               Cancelar
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </form>
 
       {/* ===== Modales ===== */}

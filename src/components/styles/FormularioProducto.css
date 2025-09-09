@@ -1,71 +1,65 @@
-/* ==== Base de formulario ==== */
-.formulario-producto .form-label {
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
-}
-.formulario-producto .form-control-sm,
-.formulario-producto .form-select-sm {
-  font-size: 0.9rem;
-  padding: 0.35rem 0.5rem;
-}
-.formulario-producto .row + .row {
-  margin-top: 0.25rem;
+/* ====== Scope exclusivo del componente ====== */
+.formulario-producto {
+  --fp-compact-height: 28px;      /* alto compacto */
+  --fp-compact-font: 0.82rem;     /* tipografía compacta */
 }
 
-/* ====== Tablet (≥768 y ≤991) ====== */
+/* Labels un toque más chicas y juntas */
+.formulario-producto .fp-label {
+  font-size: 0.78rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Inputs/Selects compactos (aplicás la clase fp-compact donde quieras) */
+.formulario-producto .fp-compact.form-control,
+.formulario-producto .fp-compact.form-select {
+  height: var(--fp-compact-height);
+  font-size: var(--fp-compact-font);
+  line-height: 1.2;
+  padding: 0.22rem 0.45rem;
+}
+
+/* Ajuste visual de selects compactos (flecha) */
+.formulario-producto .fp-compact.form-select {
+  padding-right: 1.8rem;
+}
+
+/* Spinners de number más discretos (Chrome) */
+.formulario-producto input[type="number"].fp-compact::-webkit-outer-spin-button,
+.formulario-producto input[type="number"].fp-compact::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* (Firefox) */
+.formulario-producto input[type="number"].fp-compact {
+  -moz-appearance: textfield;
+}
+
+/* Separación vertical más corta entre filas del form */
+.formulario-producto .row + .row { margin-top: 0.3rem; }
+
+/* Responsive suave para que no se desarme en tablet */
 @media (min-width: 768px) and (max-width: 991px) {
-  .formulario-producto .row {
-    --gap: 0.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--gap);
-  }
-  .formulario-producto .col-auto,
-  .formulario-producto .col-6,
-  .formulario-producto .col-12,
-  .formulario-producto .col-sm-3,
-  .formulario-producto .col-sm-6,
-  .formulario-producto .col-lg-2,
-  .formulario-producto .col-lg-3,
-  .formulario-producto .col-lg-4,
-  .formulario-producto .col-md-7,
-  .formulario-producto .col-lg-6 {
-    min-width: 180px;
-  }
-  .formulario-producto .btn {
-    font-size: 0.85rem;
-    padding: 0.35rem 0.6rem;
-  }
+  .formulario-producto .row { gap: .5rem; }
+  .formulario-producto [class*="col-"] { min-width: 180px; }
 }
 
-/* ====== Desktop (≥992) ====== */
+
+/* === widths compactas (reutilizables) === */
+.fp-w-xxs { max-width: 120px; }
+.fp-w-xs  { max-width: 160px; }
+.fp-w-sm  { max-width: 220px; }
+.fp-w-md  { max-width: 280px; }
+
+/* Para inputs/selects que deben encoger bien dentro de su col */
+.formulario-producto .fp-narrow {
+  width: 100%;
+}
+
+/* En pantallas grandes, que no se estiren: */
 @media (min-width: 992px) {
-  .formulario-producto .form-control-sm,
-  .formulario-producto .form-select-sm {
-    font-size: 0.92rem;
+  .formulario-producto .fp-col-auto {
+    width: auto !important;      /* deja que tome el max-width que le des */
+    flex: 0 0 auto !important;   /* no crecer */
   }
-}
-
-/* ====== Botón principal (tu estilo) ====== */
-.button-green-sm {
-  background-image: linear-gradient(-180deg, #00c851, #007e33);
-  border-radius: 6px;
-  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: inline-block;
-  font-family: Inter, -apple-system, system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
-  height: 32px;
-  line-height: 32px;
-  padding: 0 16px;
-  font-size: 0.85rem;
-  border: 0;
-  transition: box-shadow 0.2s, transform 0.1s ease-in-out;
-}
-.button-green-sm:hover {
-  box-shadow: rgba(0, 200, 81, 0.4) 0 3px 8px;
-}
-.button-green-sm:active {
-  transform: scale(0.96);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }

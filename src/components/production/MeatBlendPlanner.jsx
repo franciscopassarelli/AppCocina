@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import { produceMeatBlend } from "../../api/meatBlend";
+import "../styles/MeatBlendPlanner.css";
+
 
 const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
@@ -215,7 +217,7 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
       <div className="row g-3" style={{ alignItems: "stretch" }}>
         {/* IZQ: piezas */}
         <div className="col-12 col-lg-6">
-          <div className="card h-100" style={{ background: "#1f1f1f", color: "#eee" }}>
+         <div className="card h-100 meat-blend-card">
             <div className="card-body">
               <h6 className="card-title mb-2">Piezas de carne (desde productos)</h6>
 

@@ -8,15 +8,10 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { useDepartamentos } from "../../context/DepartamentosContext";
 import DepartmentsManagerModal from "./DepartmentsManagerModal";
 
+const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 export default function ProductForm() {
-  const {
-    productos,
-    agregarProducto,
-    actualizarProducto,
-    eliminarProducto,
-  } = useProductos();
-
+  const { productos, agregarProducto, actualizarProducto, eliminarProducto } = useProductos();
   const { departamentos } = useDepartamentos();
 
   const [nombre, setNombre] = useState("");
@@ -25,15 +20,14 @@ export default function ProductForm() {
   const [pesoPromedio, setPesoPromedio] = useState("");
   const [stockCritico, setStockCritico] = useState("");
   const [productoEditando, setProductoEditando] = useState(null);
-  const [departamento, setDepartamento] = useState(""); // string (displayName)
+  const [departamento, setDepartamento] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
+
   const [productoParaStock, setProductoParaStock] = useState(null);
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(false);
-
-  // Modal de gestión de departamentos
   const [showDepModal, setShowDepModal] = useState(false);
 
   // Alerta stock / vencimiento
@@ -43,7 +37,7 @@ export default function ProductForm() {
       return;
     }
     const hayAlerta = productos.some(
-      (p) => p.stock <= p.stockCritico || new Date(p.fechaVencimiento) < new Date()
+      (p) => Number(p.stock) <= Number(p.stockCritico) || new Date(p.fechaVencimiento) < new Date()
     );
     setMostrarAlertaStock(hayAlerta);
   }, [productos]);
@@ -51,7 +45,7 @@ export default function ProductForm() {
   // Cargar datos al editar
   useEffect(() => {
     if (productoEditando) {
-      setNombre(productoEditando.nombre);
+      setNombre(productoEditando.nombre || "");
       setStock(productoEditando.stock?.toString() || "");
       setUnidad(productoEditando.unidad || "kg");
       setPesoPromedio(productoEditando.pesoPromedio?.toString() || "");
@@ -59,13 +53,17 @@ export default function ProductForm() {
       setStockCritico(productoEditando.stockCritico?.toString() || "");
       setFacturaRemito(productoEditando.facturaRemito || "");
 
-      const vencimiento = new Date(productoEditando.fechaVencimiento);
-      const fechaLocal = new Date(
-        vencimiento.getTime() + Math.abs(vencimiento.getTimezoneOffset() * 60000)
-      )
-        .toISOString()
-        .split("T")[0];
-      setFechaVencimiento(fechaLocal);
+      const v = new Date(productoEditando.fechaVencimiento);
+      if (!isNaN(v.getTime())) {
+        const fechaLocal = new Date(
+          v.getTime() + Math.abs(v.getTimezoneOffset() * 60000)
+        )
+          .toISOString()
+          .split("T")[0];
+        setFechaVencimiento(fechaLocal);
+      } else {
+        setFechaVencimiento("");
+      }
     }
   }, [productoEditando]);
 
@@ -77,7 +75,7 @@ export default function ProductForm() {
     setPesoPromedio("");
     setStockCritico("");
     setProductoEditando(null);
-    setDepartamento(departamentos[0]?.displayName || ""); // default al primero si existe
+    setDepartamento(departamentos[0]?.displayName || "");
     setFechaVencimiento("");
     setFacturaRemito("");
   };
@@ -85,9 +83,7 @@ export default function ProductForm() {
   // Guardar producto
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito)
-      return;
+    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito) return;
     if (unidad !== "unidad" && !pesoPromedio) return;
 
     const loteInicial = {
@@ -104,7 +100,7 @@ export default function ProductForm() {
       stock: parseFloat(stock),
       unidad,
       pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
-      departamento, // string (displayName)
+      departamento,
       stockCritico: parseFloat(stockCritico),
       fechaVencimiento,
       facturaRemito,
@@ -129,22 +125,21 @@ export default function ProductForm() {
       const producto = productos.find((p) => p._id === productoId);
       if (!producto) return;
 
-      const nuevoStock = (producto.stock || 0) + (nuevoLote.cantidad || 0);
+      const nuevoStock = (Number(producto.stock) || 0) + (Number(nuevoLote.cantidad) || 0);
       const lotesActualizados = [...(producto.lotes || []), nuevoLote];
 
-      const productoActualizado = {
+      await actualizarProducto(productoId, {
         ...producto,
         stock: nuevoStock,
         lotes: lotesActualizados,
-      };
-
-      await actualizarProducto(productoId, productoActualizado);
+      });
       setProductoParaStock(null);
     } catch (err) {
       console.error("Error al agregar stock:", err);
     }
   };
 
+  // Borrar producto
   const handleEliminar = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
     try {
@@ -155,6 +150,41 @@ export default function ProductForm() {
     }
   };
 
+  // 🔥 Borrar lote individual
+  const handleEliminarLote = async (productoId, loteIndex) => {
+    const producto = productos.find((p) => p._id === productoId);
+    if (!producto) return;
+
+    const lotes = Array.isArray(producto.lotes) ? [...producto.lotes] : [];
+    const lote = lotes[loteIndex];
+    if (!lote) return;
+
+    const disponible = Number(lote.cantidadDisponible ?? lote.cantidad ?? 0);
+    const mensaje =
+      disponible > 0
+        ? `Se descontarán ${nf2.format(disponible)} ${producto.unidad} del stock total. ¿Eliminar este lote?`
+        : "Este lote ya está completamente usado. ¿Eliminarlo de todas formas?";
+
+    if (!window.confirm(mensaje)) return;
+
+    try {
+      // nuevo stock = stock actual - cantidadDisponible del lote (no negativo)
+      const nuevoStock = Math.max(0, Number(producto.stock || 0) - disponible);
+
+      // eliminar el lote
+      lotes.splice(loteIndex, 1);
+
+      await actualizarProducto(productoId, {
+        ...producto,
+        stock: nuevoStock,
+        lotes,
+      });
+    } catch (e) {
+      console.error("Error eliminando lote:", e);
+      alert("No se pudo eliminar el lote.");
+    }
+  };
+
   const toggleLotes = (productoId) => {
     setLotesVisibles((prev) => ({
       ...prev,
@@ -162,7 +192,7 @@ export default function ProductForm() {
     }));
   };
 
-  // Filtro por departamento (usa la lista del contexto)
+  // Filtro por departamento
   const productosFiltrados = useMemo(() => {
     return productos.filter(
       (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
@@ -226,10 +256,7 @@ export default function ProductForm() {
       {/* Encabezado + botón para gestionar departamentos */}
       <div className="d-flex align-items-center justify-content-between mb-2">
         <h5 className="m-0">Productos agregados</h5>
-        <button
-          className="btn btn-sm btn-outline-secondary"
-          onClick={() => setShowDepModal(true)}
-        >
+        <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowDepModal(true)}>
           <i className="bi bi-gear-wide-connected me-1" />
           Gestionar departamentos
         </button>
@@ -270,36 +297,30 @@ export default function ProductForm() {
                         <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
                           <span className="badge badge-nombre">{prod.nombre}</span>
                           <span className="badge badge-stock">
-                            {prod.stock} {prod.unidad}
+                            {nf2.format(Number(prod.stock || 0))} {prod.unidad}
                           </span>
                           {prod.unidad !== "unidad" && (
                             <span className="badge badge-peso">
-                              {prod.pesoPromedio} {prod.unidad === "l" ? "ml" : "g"} (unidad)
+                              {nf2.format(Number(prod.pesoPromedio || 0))} {prod.unidad === "l" ? "ml" : "g"} (unidad)
                             </span>
                           )}
                           {typeof prod.stockCritico !== "undefined" && (
-                            <span className="badge badge-critico">Crítico: {prod.stockCritico}</span>
+                            <span className="badge badge-critico">Crítico: {nf2.format(Number(prod.stockCritico || 0))}</span>
                           )}
                         </div>
 
                         <div className="text-muted small mb-1">
                           <strong>Venc.:</strong>{" "}
                           {prod.fechaVencimiento
-                            ? (() => {
-                                const [año, mes, día] = new Date(prod.fechaVencimiento)
-                                  .toISOString()
-                                  .split("T")[0]
-                                  .split("-");
-                                return `${día}/${mes}/${año}`;
-                              })()
+                            ? new Date(prod.fechaVencimiento).toLocaleDateString("es-AR")
                             : "Sin fecha"}
                         </div>
 
                         <div className="text-muted small mb-1">
                           <strong>Creado:</strong>{" "}
-                          {new Date(prod.fechaCreacion).toLocaleDateString("es-AR")} —{" "}
+                          {prod.fechaCreacion ? new Date(prod.fechaCreacion).toLocaleDateString("es-AR") : "—"} —{" "}
                           <strong>Actualizado:</strong>{" "}
-                          {new Date(prod.fechaActualizacion).toLocaleDateString("es-AR")}
+                          {prod.fechaActualizacion ? new Date(prod.fechaActualizacion).toLocaleDateString("es-AR") : "—"}
                         </div>
 
                         <div className="text-muted small">
@@ -332,45 +353,67 @@ export default function ProductForm() {
                         {lotesVisibles[prod._id] && (
                           <div className="mt-2">
                             <h6 className="text-muted mb-1">Lotes registrados:</h6>
-                            <table className="table table-sm table-bordered">
-                              <thead>
-                                <tr>
-                                  <th>Factura/Remito</th>
-                                  <th>CANTIDAD DE FACTURA/REMITO</th>
-                                  <th>CANTIDAD QUE SE CONTO</th>
-                                  <th>Vencimiento</th>
-                                  <th>Fecha ingreso</th>
-                                  <th>Estado</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {prod.lotes.map((lote, idx) => {
-                                  const cantidadTotal = lote.cantidad;
-                                  const cantidadDisponible = lote.cantidadDisponible ?? lote.cantidad;
-                                  let estado = "Disponible";
-                                  let estadoClase = "text-success";
+                            <div className="table-responsive">
+                              <table className="table table-sm table-bordered align-middle">
+                                <thead>
+                                  <tr>
+                                    <th>Factura/Remito</th>
+                                    <th>CANTIDAD DE FACTURA/REMITO</th>
+                                    <th>CANTIDAD QUE SE CONTO</th>
+                                    <th>Vencimiento</th>
+                                    <th>Ingreso</th>
+                                    <th>Estado</th>
+                                    <th style={{ width: 80 }}></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {prod.lotes.map((lote, idx) => {
+                                    const cantidadTotal = Number(lote.cantidad || 0);
+                                    const cantidadDisponible = Number(
+                                      lote.cantidadDisponible ?? lote.cantidad ?? 0
+                                    );
 
-                                  if (cantidadDisponible === 0) {
-                                    estado = "Usado";
-                                    estadoClase = "text-danger";
-                                  } else if (cantidadDisponible < cantidadTotal) {
-                                    estado = "Parcial";
-                                    estadoClase = "text-warning";
-                                  }
+                                    let estado = "Disponible";
+                                    let estadoClase = "text-success";
+                                    if (cantidadDisponible === 0) {
+                                      estado = "Usado";
+                                      estadoClase = "text-danger";
+                                    } else if (cantidadDisponible < cantidadTotal) {
+                                      estado = "Parcial";
+                                      estadoClase = "text-warning";
+                                    }
 
-                                  return (
-                                    <tr key={idx}>
-                                      <td>{lote.numeroFactura}</td>
-                                      <td>{cantidadTotal}</td>
-                                      <td>{lote.lote}</td>
-                                      <td>{new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")}</td>
-                                      <td>{new Date(lote.fechaIngreso).toLocaleDateString("es-AR")}</td>
-                                      <td className={estadoClase}>{estado}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                                    return (
+                                      <tr key={`${prod._id}-lote-${idx}`}>
+                                        <td>{lote.numeroFactura || "—"}</td>
+                                        <td>{nf2.format(cantidadTotal)}</td>
+                                        <td>{lote.lote || "—"}</td>
+                                        <td>
+                                          {lote.fechaVencimiento
+                                            ? new Date(lote.fechaVencimiento).toLocaleDateString("es-AR")
+                                            : "—"}
+                                        </td>
+                                        <td>
+                                          {lote.fechaIngreso
+                                            ? new Date(lote.fechaIngreso).toLocaleDateString("es-AR")
+                                            : "—"}
+                                        </td>
+                                        <td className={estadoClase}>{estado}</td>
+                                        <td className="text-end">
+                                          <button
+                                            className="btn btn-sm btn-outline-danger"
+                                            title="Eliminar lote"
+                                            onClick={() => handleEliminarLote(prod._id, idx)}
+                                          >
+                                            <i className="bi bi-trash" />
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                           </div>
                         )}
                       </>
@@ -384,10 +427,7 @@ export default function ProductForm() {
       )}
 
       {/* Modal de gestión de departamentos */}
-      <DepartmentsManagerModal
-        show={showDepModal}
-        onClose={() => setShowDepModal(false)}
-      />
+      <DepartmentsManagerModal show={showDepModal} onClose={() => setShowDepModal(false)} />
     </>
   );
 }

@@ -1,0 +1,24 @@
+/* src/components/styles/MeatBlendPlanner.css */
+.meat-blend-card {
+  background: #1f1f1f !important;
+  color: #eee;
+  border: 1px solid #2c2c2c;
+  border-radius: 10px;
+}
+.meat-blend-card .form-control,
+.meat-blend-card .form-select {
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  color: #eee;
+}
+.meat-blend-card .form-control:focus,
+.meat-blend-card .form-select:focus {
+  border-color: #00c851;
+  box-shadow: 0 0 0 0.15rem rgba(0, 200, 81, .25);
+}
+.meat-blend-card table {
+  color: #ddd;
+  border-color: #3a3a3a;
+}
+.meat-blend-card thead { background: #2a2a2a; }
+.meat-blend-card tbody tr:hover { background: #262626; }

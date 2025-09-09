@@ -179,3 +179,17 @@
 }
 
 
+/* Cuando los paneles estén dentro de .production-row, que ocupen todo el ancho de su columna */
+.production-row .production-panel {
+  max-width: none;   /* anula el 500px */
+  width: 100%;
+  margin: 0;         /* sacá el centrado */
+  height: 100%;      /* para estirar al alto de la columna */
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center;
+}
+
+/* Si querés que ambos tengan la misma altura siempre */
+.production-row .col-lg-6 { display: flex; }
+.production-row .col-lg-6 > .production-panel { flex: 1; }

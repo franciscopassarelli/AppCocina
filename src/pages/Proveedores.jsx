@@ -158,14 +158,14 @@ export default function ProveedoresPage() {
 
       {/* CREAR LOTE DE PROVEEDOR */}
       <div className="card p-3 mb-3">
-        <h6 className="mb-2">Nuevo lote de proveedor (buffer)</h6>
+        <h6 className="mb-2">Nuevo stock fabrica</h6>
         <form onSubmit={handleCrear} className="row g-2 align-items-end">
           <div className="col-md-2">
             <label className="form-label small">Proveedor</label>
             <input className="form-control form-control-sm" value={proveedor} onChange={e=>setProveedor(e.target.value)} />
           </div>
           <div className="col-md-5">
-  <label className="form-label small">Producto</label>
+  <label className="form-label small">Departamento</label>
   <ProductPicker
     productos={productos}
     value={productoId}
@@ -191,7 +191,7 @@ export default function ProveedoresPage() {
             <input className="form-control form-control-sm" value={numeroFactura} onChange={e=>setNumeroFactura(e.target.value)} required />
           </div>
           <div className="col-md-2">
-            <label className="form-label small">Lote prov. (opcional)</label>
+            <label className="form-label small">Lote (opcional)</label>
             <input className="form-control form-control-sm" value={loteProveedor} onChange={e=>setLoteProveedor(e.target.value)} />
           </div>
           <div className="col-md-2">
@@ -303,7 +303,7 @@ export default function ProveedoresPage() {
       {asignando && (
         <div className="alerta-overlay" onClick={() => setAsignando(null)}>
           <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
-            <h6 className="mb-2">Asignar a producto</h6>
+            <h6 className="mb-2">Asignar stock al local</h6>
 
             <div className="mb-2">
               <strong>{asignando.lote.nombreProducto}</strong> • Disponible:{" "}

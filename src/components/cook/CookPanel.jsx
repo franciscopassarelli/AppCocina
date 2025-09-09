@@ -9,7 +9,7 @@ import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
-import MeatBlendPlanner from "../production/MeatBlendPlanner";
+import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
 import { getRecipes } from "../../api/recipes.js";
 
 export default function CookPanel() {
@@ -298,14 +298,34 @@ export default function CookPanel() {
         </div>
       )}
 
-      {/* ===== Producción (recetas) ===== */}
-      <div className="container production-panel">
-        <h3 className="mb-3">Producción</h3>
+   {/* ===== Producción (recetas) + Carne (Blend) ===== */}
+<div className="container mb-4">
+  <div className="row g-3 align-items-stretch production-row">
+    {/* Panel Producción */}
+    <div className="col-12 col-lg-6">
+      <div className="production-panel">
+        <h3 className="mb-3">Producción (Recetas)</h3>
         <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
         <button className="button-green-lg" onClick={() => setShowPlan(true)}>
           Nueva producción
         </button>
       </div>
+    </div>
+
+    {/* Panel Carne */}
+    <div className="col-12 col-lg-6">
+      <div className="production-panel">
+        <h3 className="mb-3">Carne (Medallones)</h3>
+        <p className="mb-4 text-info">Cargar piezas → limpieza → calcular grasa → producir</p>
+        <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
+          Nueva producción
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 
     
 
@@ -319,30 +339,12 @@ export default function CookPanel() {
       />
 
   
-      {/* ===== Carne (Limpieza & Blend) ===== */}
-      <div className="container section-card card-dark">
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <h5 className="mb-0">Carne (Producción Medallones)</h5>
-          <button
-            className="btn btn-outline-secondary btn-sm"
-            onClick={() => setShowMeatPlanner((v) => !v)}
-          >
-            {showMeatPlanner ? "Ocultar" : "Mostrar"}
-          </button>
-        </div>
-        <AnimatePresence>
-          {showMeatPlanner && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-            >
-              <MeatBlendPlanner />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+
+{/* Modal del planner */}
+<MeatBlendPlannerModal
+  show={showMeatPlanner}
+  onClose={() => setShowMeatPlanner(false)}
+/>
 
       {/* ===== Ingreso rápido de stock ===== */}
       <div className="container section-card card-dark">

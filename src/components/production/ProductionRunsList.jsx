@@ -210,7 +210,7 @@ export default function ProductionRunsList({ apiBase }) {
                           {consumidosArr.map((c) => (
                             <span key={c.key} className="chip" title={`${c.label}: ${c.qty} ${c.unidad}`}>
                               <span className="chip-label">{c.label}</span>
-                              <span className="chip-qty">{c.qty} {c.unidad}</span>
+                              <span className="chip-qty"> {c.qty} {c.unidad}</span>
                             </span>
                           ))}
                         </div>
