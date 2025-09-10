@@ -59,6 +59,8 @@
 .formulario-producto .form-check {
   display: flex;
   align-items: center;
+  gap: 0.3rem;
+  
 
 }
 
@@ -111,6 +113,32 @@
 .button-red-sm:hover { box-shadow: rgba(255,68,68,0.5) 0 3px 8px; }
 .button-red-sm:active { transform: scale(0.98); }
 .button-red-sm:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
+
+/* ===== Botón verde (variante chica) - a juego con .button-green-lg ===== */
+.button-green-sm {
+  background-image: linear-gradient(-180deg, #00c851, #007e33);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  padding: 6px 12px;
+  font-size: 13px;
+  line-height: 1.2;
+  transition: box-shadow 0.2s, transform 0.08s ease-in-out, opacity 0.2s;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.button-green-sm:hover { box-shadow: rgba(0, 200, 81, 0.4) 0 3px 8px; }
+.button-green-sm:active { transform: scale(0.98); }
+.button-green-sm:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /* Ancho completo */
 .w-100 { width: 100%; }

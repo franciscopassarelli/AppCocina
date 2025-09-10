@@ -188,10 +188,10 @@ export default function FormularioProducto({
           step="any"
           disabled={noAplicaPeso}
         />
-        <div className="form-check">
+        <div className="">
           <input
             type="checkbox"
-            className="form-check-input mt-3"
+            className=""
             id="noAplicaPeso"
             checked={noAplicaPeso}
             onChange={(e) => {
@@ -200,7 +200,6 @@ export default function FormularioProducto({
               if (checked) setPesoPromedio("");
             }}
           />
-          <label htmlFor="noAplicaPeso" className="form-check-label small mb-0">No aplica</label>
         </div>
       </div>
     </div>
@@ -260,7 +259,7 @@ export default function FormularioProducto({
 
   {/* Botones */}
   <div className="col-auto d-flex gap-2">
-    <button type="submit" className="btn btn-success btn-sm">
+    <button type="submit" className="button-green-sm">
       {productoEditando ? "Actualizar" : "Agregar"}
     </button>
     {productoEditando && (
