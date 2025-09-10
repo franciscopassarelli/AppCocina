@@ -1,65 +1,125 @@
-/* ====== Scope exclusivo del componente ====== */
+/* ===== Scope exclusivo del formulario productos ===== */
 .formulario-producto {
-  --fp-compact-height: 28px;      /* alto compacto */
-  --fp-compact-font: 0.82rem;     /* tipografía compacta */
+  font-family: "Segoe UI", sans-serif;
+  --fp-input-bg: #f9f9f9;
+  --fp-input-border: #ccc;
+  --fp-input-color: #222;
+  --fp-label-color: #555;
+  --fp-label-font: 0.85rem;
+  --fp-compact-height: 28px;
+  --fp-compact-font: 0.82rem;
 }
 
-/* Labels un toque más chicas y juntas */
-.formulario-producto .fp-label {
-  font-size: 0.78rem;
+/* Labels */
+.formulario-producto .form-label {
+  color: var(--fp-label-color);
+  font-size: var(--fp-label-font);
   margin-bottom: 0.2rem;
 }
 
-/* Inputs/Selects compactos (aplicás la clase fp-compact donde quieras) */
-.formulario-producto .fp-compact.form-control,
-.formulario-producto .fp-compact.form-select {
+/* Inputs / Selects */
+.formulario-producto input,
+.formulario-producto select {
+  background: var(--fp-input-bg);
+  border: 1px solid var(--fp-input-border);
+  color: var(--fp-input-color);
+  border-radius: 6px;
+  font-size: 0.92rem;
+  padding: 5px 10px;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.formulario-producto input:focus,
+.formulario-producto select:focus {
+  border-color: #00c851;
+  outline: none;
+  box-shadow: 0 0 4px rgba(0, 200, 81, 0.3);
+}
+
+/* Inputs compactos */
+.formulario-producto .fp-compact {
   height: var(--fp-compact-height);
   font-size: var(--fp-compact-font);
   line-height: 1.2;
   padding: 0.22rem 0.45rem;
 }
 
-/* Ajuste visual de selects compactos (flecha) */
-.formulario-producto .fp-compact.form-select {
-  padding-right: 1.8rem;
-}
-
-/* Spinners de number más discretos (Chrome) */
-.formulario-producto input[type="number"].fp-compact::-webkit-outer-spin-button,
-.formulario-producto input[type="number"].fp-compact::-webkit-inner-spin-button {
+/* Inputs de número sin spinner */
+.formulario-producto input[type="number"]::-webkit-inner-spin-button,
+.formulario-producto input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-/* (Firefox) */
-.formulario-producto input[type="number"].fp-compact {
+.formulario-producto input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Separación vertical más corta entre filas del form */
+/* Checkbox alineado */
+.formulario-producto .form-check {
+  display: flex;
+  align-items: center;
+
+}
+
+/* Botones verdes (Agregar/Actualizar) */
+.button-green-sm {
+  background-image: linear-gradient(-180deg, #00c851, #007e33);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.2;
+  padding: 6px 12px;
+  transition: box-shadow 0.2s, transform 0.08s ease-in-out, opacity 0.2s;
+  box-shadow: rgba(0, 0, 0, 0.1) 0 2px 4px;
+}
+.button-green-sm:hover { box-shadow: rgba(0, 200, 81, 0.4) 0 3px 8px; }
+.button-green-sm:active { transform: scale(0.98); }
+.button-green-sm:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
+
+/* Botón ghost (Cancelar) */
+.button-ghost-sm {
+  background: #fff;
+  color: #222;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s, border-color .15s, transform .08s;
+}
+.button-ghost-sm:hover { background: #f0f0f0; border-color: #bbb; }
+.button-ghost-sm:active { transform: scale(0.98); }
+
+/* Botón rojo (Borrar) */
+.button-red-sm {
+  background-image: linear-gradient(-180deg, #ff4444, #cc0000);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 400;
+  font-size: 13px;
+  padding: 6px 12px;
+  transition: box-shadow 0.2s, transform 0.08s ease-in-out;
+  box-shadow: rgba(0,0,0,0.1) 0 2px 4px;
+}
+.button-red-sm:hover { box-shadow: rgba(255,68,68,0.5) 0 3px 8px; }
+.button-red-sm:active { transform: scale(0.98); }
+.button-red-sm:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
+
+/* Ancho completo */
+.w-100 { width: 100%; }
+
+/* Espaciado de filas */
 .formulario-producto .row + .row { margin-top: 0.3rem; }
 
-/* Responsive suave para que no se desarme en tablet */
-@media (min-width: 768px) and (max-width: 991px) {
+/* Responsive suave */
+@media (max-width: 991px) {
   .formulario-producto .row { gap: .5rem; }
-  .formulario-producto [class*="col-"] { min-width: 180px; }
-}
-
-
-/* === widths compactas (reutilizables) === */
-.fp-w-xxs { max-width: 120px; }
-.fp-w-xs  { max-width: 160px; }
-.fp-w-sm  { max-width: 220px; }
-.fp-w-md  { max-width: 280px; }
-
-/* Para inputs/selects que deben encoger bien dentro de su col */
-.formulario-producto .fp-narrow {
-  width: 100%;
-}
-
-/* En pantallas grandes, que no se estiren: */
-@media (min-width: 992px) {
-  .formulario-producto .fp-col-auto {
-    width: auto !important;      /* deja que tome el max-width que le des */
-    flex: 0 0 auto !important;   /* no crecer */
-  }
+  .formulario-producto [class*="col-"] { min-width: 150px; }
 }

@@ -13,7 +13,7 @@ const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 export default function ProductForm() {
   const { productos, agregarProducto, actualizarProducto, eliminarProducto } = useProductos();
   const { departamentos } = useDepartamentos();
-
+  const [noAplicaPeso, setNoAplicaPeso] = useState(false);
   const [nombre, setNombre] = useState("");
   const [stock, setStock] = useState("");
   const [unidad, setUnidad] = useState("kg");
@@ -23,7 +23,7 @@ export default function ProductForm() {
   const [departamento, setDepartamento] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
-
+  
   const [productoParaStock, setProductoParaStock] = useState(null);
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
@@ -84,7 +84,8 @@ export default function ProductForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito) return;
-    if (unidad !== "unidad" && !pesoPromedio) return;
+    if (unidad !== "unidad" && !noAplicaPeso && !pesoPromedio) return;
+
 
     const loteInicial = {
       lote: "Lote inicial",
@@ -99,7 +100,7 @@ export default function ProductForm() {
       nombre,
       stock: parseFloat(stock),
       unidad,
-      pesoPromedio: unidad === "unidad" ? 0 : parseFloat(pesoPromedio),
+      pesoPromedio: pesoPromedio ? parseFloat(pesoPromedio) : 0,
       departamento,
       stockCritico: parseFloat(stockCritico),
       fechaVencimiento,
@@ -238,6 +239,8 @@ export default function ProductForm() {
         setFechaVencimiento={setFechaVencimiento}
         setFacturaRemito={setFacturaRemito}
         limpiarFormulario={limpiarFormulario}
+        noAplicaPeso={noAplicaPeso}
+        setNoAplicaPeso={setNoAplicaPeso}
       />
 
       <div className="container py-4">
@@ -300,10 +303,13 @@ export default function ProductForm() {
                             {nf2.format(Number(prod.stock || 0))} {prod.unidad}
                           </span>
                           {prod.unidad !== "unidad" && (
-                            <span className="badge badge-peso">
-                              {nf2.format(Number(prod.pesoPromedio || 0))} {prod.unidad === "l" ? "ml" : "g"} (unidad)
-                            </span>
-                          )}
+  <span className="badge badge-peso">
+    {prod.pesoPromedio
+      ? `${nf2.format(Number(prod.pesoPromedio))} ${prod.unidad === "l" ? "ml" : "g"} (unidad)`
+      : "-"}
+  </span>
+)}
+                         
                           {typeof prod.stockCritico !== "undefined" && (
                             <span className="badge badge-critico">Crítico: {nf2.format(Number(prod.stockCritico || 0))}</span>
                           )}

@@ -23,9 +23,14 @@ export default function FormularioProducto({
   setFechaVencimiento,
   setFacturaRemito,
   limpiarFormulario,
+  noAplicaPeso,
+  setNoAplicaPeso,
 }) {
   const { departamentos, add, rename, remove } = useDepartamentos();
   const { productos, actualizarProducto } = useProductos();
+ 
+ 
+ 
 
   // Modales locales (crear, renombrar, borrar)
   const [showNewModal, setShowNewModal] = useState(false);
@@ -119,153 +124,154 @@ export default function FormularioProducto({
 
   return (
     <div className="card card-body mb-4 shadow-sm formulario-producto">
-      <form onSubmit={onSubmit} className="row g-2 align-items-end form-like-proveedores">
+     <form onSubmit={onSubmit} className="d-flex flex-wrap align-items-end gap-2">
 
-       {/* Nombre (más angosto) */}
-<div className="col-md-5 fp-col-auto">
-  <label className="form-label fp-label">Nombre</label>
-  <input
-    id="nombre"
-    type="text"
-    className="form-control form-control-sm fp-compact fp-narrow fp-w-sm"
-    value={nombre}
-    onChange={(e) => setNombre(e.target.value)}
-    required
-  />
-</div>
+  {/* Nombre */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Nombre</label>
+    <input
+      type="text"
+      className="form-control form-control-sm"
+      value={nombre}
+      onChange={(e) => setNombre(e.target.value)}
+      required
+    />
+  </div>
 
-        {/* Departamento + acciones */}
-        <div className="col-md-4">
-          <label className="form-label fp-label">Departamento</label>
-          <div className="d-flex align-items-center gap-2">
-            <select
-              id="departamento"
-              className="form-select form-select-sm"
-              value={departamento || ""}
-              onChange={(e) => setDepartamento(e.target.value)}
-            >
-              {departamentos.length === 0 && <option value="">(sin departamentos)</option>}
-              {departamentos.map((d) => (
-                <option key={d._id} value={d.displayName}>{d.displayName}</option>
-              ))}
-            </select>
+  {/* Departamento + botones */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Departamento</label>
+    <div className="d-flex align-items-center gap-2">
+      <select
+        className="form-select form-select-sm"
+        value={departamento || ""}
+        onChange={(e) => setDepartamento(e.target.value)}
+      >
+        {departamentos.length === 0 && <option value="">(sin departamentos)</option>}
+        {departamentos.map(d => <option key={d._id} value={d.displayName}>{d.displayName}</option>)}
+      </select>
+      <div className="d-flex gap-1">
+        <button type="button" className="btn btn-sm btn-outline-success" onClick={openNew} title="Nuevo">
+          <i className="bi bi-plus-lg"></i>
+        </button>
+        <button type="button" className="btn btn-sm btn-outline-primary" onClick={openEdit} title="Editar" disabled={!selectedDept}>
+          <i className="bi bi-pencil-square"></i>
+        </button>
+        <button type="button" className="btn btn-sm btn-outline-danger" onClick={openDelete} title="Borrar" disabled={!selectedDept}>
+          <i className="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
-            <div className="d-flex align-items-center gap-1">
-              <button type="button" className="btn btn-sm btn-outline-success" onClick={openNew} title="Nuevo">
-                <i className="bi bi-plus-lg"></i>
-              </button>
-              <button type="button" className="btn btn-sm btn-outline-primary" onClick={openEdit} title="Editar" disabled={!selectedDept}>
-                <i className="bi bi-pencil-square"></i>
-              </button>
-              <button type="button" className="btn btn-sm btn-outline-danger" onClick={openDelete} title="Borrar" disabled={!selectedDept}>
-                <i className="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-        </div>
+  {/* Unidad */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Unidad</label>
+    <select className="form-select form-select-sm" value={unidad} onChange={(e) => setUnidad(e.target.value)}>
+      <option value="kg">kg</option>
+      <option value="l">l</option>
+      <option value="unidad">unidad</option>
+    </select>
+  </div>
 
-        {/* Unidad */}
-        <div className="col-md-1">
-          <label className="form-label fp-label">Unidad</label>
-          <select
-            id="unidad"
-            className="form-select form-select-sm"
-            value={unidad}
-            onChange={(e) => setUnidad(e.target.value)}
-          >
-            <option value="kg">kg</option>
-            <option value="l">l</option>
-            <option value="unidad">unidad</option>
-          </select>
-        </div>
-
-        {/* Peso / Volumen (compacto) */}
-        {unidad !== "unidad" && (
-          <div className="col-md-2">
-            <label className="form-label fp-label">{unidad === "l" ? "Volumen (ml)" : "Peso (g)"}</label>
-            <input
-              id="pesoPromedio"
-              type="number"
-              className="form-control form-control-sm fp-compact"
-              value={pesoPromedio}
-              onChange={(e) => setPesoPromedio(e.target.value)}
-              min="0"
-              step="any"
-              required
-            />
-          </div>
-        )}
-
-        {/* Stock (compacto) */}
-        <div className="col-md-2 fp-col-auto">
-  <label className="form-label fp-label">Stock</label>
-  <input
-    id="stock"
-    type="number"
-    className="form-control form-control-sm fp-compact fp-narrow fp-w-xxs"
-    value={stock}
-    onChange={(e) => setStock(e.target.value)}
-    min="0"
-    step="any"
-    required
-  />
-</div>
-
-        {/* Crítico (compacto) */}
-       <div className="col-md-2 fp-col-auto">
-  <label className="form-label fp-label">Crítico</label>
-  <input
-    id="stockCritico"
-    type="number"
-    className="form-control form-control-sm fp-compact fp-narrow fp-w-xxs"
-    value={stockCritico}
-    onChange={(e) => setStockCritico(e.target.value)}
-    min="0"
-    step="any"
-    required
-  />
-</div>
-
-        {/* Factura/Remito */}
-        <div className="col-md-3">
-          <label className="form-label fp-label">Factura/Remito</label>
+  {/* Peso/Volumen */}
+  {unidad !== "unidad" && (
+    <div className="col-auto">
+      <div className="d-flex align-items-center gap-2">
+        <label className="form-label small">{unidad === "l" ? "Volumen (ml)" : "Peso (g)"}</label>
+        <input
+          type="number"
+          className="form-control form-control-sm mt-3"
+          value={noAplicaPeso ? "" : pesoPromedio}
+          onChange={(e) => setPesoPromedio(e.target.value)}
+          min="0"
+          step="any"
+          disabled={noAplicaPeso}
+        />
+        <div className="form-check">
           <input
-            id="facturaRemito"
-            type="text"
-            className="form-control form-control-sm"
-            value={facturaRemito}
-            onChange={(e) => setFacturaRemito(e.target.value)}
-            required
+            type="checkbox"
+            className="form-check-input mt-3"
+            id="noAplicaPeso"
+            checked={noAplicaPeso}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setNoAplicaPeso(checked);
+              if (checked) setPesoPromedio("");
+            }}
           />
+          <label htmlFor="noAplicaPeso" className="form-check-label small mb-0">No aplica</label>
         </div>
+      </div>
+    </div>
+  )}
 
-        {/* Fecha venc. */}
-        <div className="col-md-2">
-          <label htmlFor="fecha-vencimiento" className="form-label fp-label">Vencimiento</label>
-          <input
-            id="fecha-vencimiento"
-            type="date"
-            className="form-control form-control-sm"
-            value={fechaVencimiento}
-            onChange={(e) => setFechaVencimiento(e.target.value)}
-            required
-          />
-        </div>
+  {/* Stock */}
+  <div className="col-auto">
+    <label className="form-label small">Stock</label>
+    <input
+      type="number"
+      className="form-control form-control-sm"
+      value={stock}
+      onChange={(e) => setStock(e.target.value)}
+      min="0"
+      step="any"
+      required
+    />
+  </div>
 
-        {/* Botones */}
-        <div className="col-md-2">
-          <button className="button-green-sm w-100" type="submit">
-            {productoEditando ? "Actualizar" : "Agregar"}
-          </button>
-        </div>
-        {productoEditando && (
-          <div className="col-md-2">
-            <button type="button" className="button-ghost-sm w-100" onClick={limpiarFormulario}>
-              Cancelar
-            </button>
-          </div>
-        )}
-      </form>
+  {/* Crítico */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Crítico</label>
+    <input
+      type="number"
+      className="form-control form-control-sm"
+      value={stockCritico}
+      onChange={(e) => setStockCritico(e.target.value)}
+      min="0"
+      step="any"
+      required
+    />
+  </div>
+
+  {/* Factura/Remito */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Factura/Remito</label>
+    <input
+      type="text"
+      className="form-control form-control-sm"
+      value={facturaRemito}
+      onChange={(e) => setFacturaRemito(e.target.value)}
+      required
+    />
+  </div>
+
+  {/* Fecha vencimiento */}
+  <div className="col-auto">
+    <label className="form-label small mb-1">Vencimiento</label>
+    <input
+      type="date"
+      className="form-control form-control-sm"
+      value={fechaVencimiento}
+      onChange={(e) => setFechaVencimiento(e.target.value)}
+      required
+    />
+  </div>
+
+  {/* Botones */}
+  <div className="col-auto d-flex gap-2">
+    <button type="submit" className="btn btn-success btn-sm">
+      {productoEditando ? "Actualizar" : "Agregar"}
+    </button>
+    {productoEditando && (
+      <button type="button" className="btn btn-outline-secondary btn-sm" onClick={limpiarFormulario}>
+        Cancelar
+      </button>
+    )}
+  </div>
+
+</form>
+
 
       {/* ===== Modales ===== */}
       {showNewModal && (
