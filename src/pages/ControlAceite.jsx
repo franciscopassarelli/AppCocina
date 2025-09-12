@@ -3,27 +3,26 @@ import { GiOilDrum } from "react-icons/gi";
 import { FiRefreshCw } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProductos } from "../context/ProductoContext";
-import "../components/styles/ControlAceite.css";
+import "../components/styles/ControlAceite.css"; 
 
 const ControlAceite = () => {
   const { productos, actualizarStock, agregarRegistroHistorial } = useProductos();
-
   const aceite = productos.find(p => p.nombre.toLowerCase() === "aceite");
 
-  const [horasUso, setHorasUso] = useState(0); // valor inicial de simulación
-  const [cantidadUsada, setCantidadUsada] = useState(""); // litros usados
-  const [desperdicio, setDesperdicio] = useState("");   // desperdicio en litros
+  const [horasDesdeCambio, setHorasDesdeCambio] = useState(0); // Timer para alerta
+  const [cantidadUsada, setCantidadUsada] = useState("");
+  const [desperdicio, setDesperdicio] = useState("");
   const [historial, setHistorial] = useState([]);
   const [alerta, setAlerta] = useState("");
 
-  // Estado del aceite según horas de uso
+  // Estado del aceite
   const getEstadoAceite = (uso) => {
     if (uso <= 30) return { estado: "Bueno", color: "success" };
     if (uso <= 50) return { estado: "Regular", color: "warning" };
     return { estado: "Crítico", color: "danger" };
   };
 
-  // Cargar historial desde backend
+  // Cargar historial
   useEffect(() => {
     if (!aceite) return;
 
@@ -36,9 +35,9 @@ const ControlAceite = () => {
           .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         setHistorial(historialAceite);
 
-        // Actualizar horasUso según último registro
         if (historialAceite.length > 0) {
-          setHorasUso(historialAceite[0].uso);
+          // Reseteamos el timer según el último cambio registrado
+          setHorasDesdeCambio(0);
         }
       } catch (err) {
         console.error("Error cargando historial:", err);
@@ -48,29 +47,23 @@ const ControlAceite = () => {
     fetchHistorial();
   }, [aceite]);
 
-  // ALERTA: solo después de 15 días desde el último registro
+  // Timer: aumenta cada segundo
   useEffect(() => {
-    if (historial.length === 0) return setAlerta("");
+    const timer = setInterval(() => {
+      setHorasDesdeCambio(prev => prev + 1 / 3600); // 1 segundo -> 1/3600 horas
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const ultimoRegistro = historial[0];
-    const diasTranscurridos = Math.floor(
-      (new Date() - new Date(ultimoRegistro.fecha)) / (1000 * 60 * 60 * 24)
-    );
-
-    if (diasTranscurridos < 15) {
-      setAlerta(""); // No mostrar alerta si no pasaron 15 días
-      return;
-    }
-
-    const estadoAceite = getEstadoAceite(ultimoRegistro.uso);
-    if (estadoAceite.estado === "Regular") {
-      setAlerta("⚠️ El aceite está en estado REGULAR. Considera cambiarlo pronto.");
-    } else if (estadoAceite.estado === "Crítico") {
-      setAlerta("🚨 El aceite está en estado CRÍTICO. Debe cambiarse inmediatamente.");
+  // ALERTA basada en el timer
+  useEffect(() => {
+    const umbralHoras = 30; // ejemplo: 30h para alerta
+    if (horasDesdeCambio >= umbralHoras) {
+      setAlerta("⚠️ Es hora de cambiar el aceite.");
     } else {
       setAlerta("");
     }
-  }, [historial]);
+  }, [horasDesdeCambio]);
 
   const handleRegistrarCambio = async (e) => {
     e.preventDefault();
@@ -85,15 +78,15 @@ const ControlAceite = () => {
       return;
     }
 
-    // Actualizar stock en backend
+    // Actualizar stock
     await actualizarStock(aceite._id, nuevoStock);
 
-    // Crear registro de historial
+    // Crear registro para historial
     const registro = {
       producto: aceite._id,
       fecha: new Date(),
-      uso: usoNum,
-      unidades: nuevoStock,
+      uso: usoNum,           
+      unidades: nuevoStock,  
       desperdicio: desperdicioNum,
       fechaVencimiento: aceite.fechaVencimiento || null,
       facturaRemito: "",
@@ -108,7 +101,9 @@ const ControlAceite = () => {
       const data = await res.json();
       agregarRegistroHistorial(data);
       setHistorial(prev => [data, ...prev]);
-      setHorasUso(0);
+
+      // Reiniciamos el timer al registrar un cambio
+      setHorasDesdeCambio(0);
       setCantidadUsada("");
       setDesperdicio("");
     } catch (err) {
@@ -118,10 +113,10 @@ const ControlAceite = () => {
 
   if (!aceite) return <p className="text-center mt-3 text-white">No se encontró el producto Aceite.</p>;
 
-  const estadoActual = getEstadoAceite(horasUso);
+  const estadoActual = getEstadoAceite(horasDesdeCambio);
 
   return (
-    <div className="cookpanel-container text-white">
+    <div className="aceite-container">
       <h2 className="text-center mb-4 d-flex align-items-center justify-content-center gap-3">
         <GiOilDrum size={40} />
         <span>Control de Aceite</span>
@@ -131,7 +126,7 @@ const ControlAceite = () => {
       <AnimatePresence>
         {alerta && (
           <motion.div
-            className={`cookpanel-alert bg-${estadoActual.color}`}
+            className={`aceite-alert bg-${estadoActual.color}`}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -143,9 +138,9 @@ const ControlAceite = () => {
       </AnimatePresence>
 
       {/* PANEL PRINCIPAL */}
-      <div className="section-card card-dark mb-4 text-center p-4">
+      <div className="aceite-card">
         <h5 className="mb-3">Estado actual</h5>
-        <p>Horas de uso: <strong>{horasUso}h</strong></p>
+        <p>Horas desde último cambio: <strong>{horasDesdeCambio.toFixed(2)}h</strong></p>
         <p>Estado del aceite: <span className={`text-${estadoActual.color}`}><strong>{estadoActual.estado}</strong></span></p>
         <p>Litros restantes: <strong>{aceite.stock.toFixed(2)} L</strong></p>
 
@@ -154,7 +149,7 @@ const ControlAceite = () => {
           <input
             type="number"
             placeholder="Litros usados"
-            className="form-control form-control-sm"
+            className="aceite-input"
             value={cantidadUsada}
             onChange={(e) => setCantidadUsada(e.target.value)}
             min="0"
@@ -164,7 +159,7 @@ const ControlAceite = () => {
           <input
             type="number"
             placeholder="Desperdicio (opcional)"
-            className="form-control form-control-sm"
+            className="aceite-input"
             value={desperdicio}
             onChange={(e) => setDesperdicio(e.target.value)}
             min="0"
@@ -177,12 +172,12 @@ const ControlAceite = () => {
       </div>
 
       {/* HISTORIAL */}
-      <div className="section-card card-dark p-3">
+      <div className="aceite-card">
         <h5 className="mb-3 text-center">Historial de cambios</h5>
         {historial.length === 0 ? (
           <p className="text-muted text-center">No hay registros aún.</p>
         ) : (
-          <table className="historial-table">
+          <table className="aceite-table">
             <thead>
               <tr>
                 <th>Fecha</th>
@@ -196,11 +191,11 @@ const ControlAceite = () => {
               {historial.map((h, i) => (
                 <tr key={i}>
                   <td>{new Date(h.fecha).toLocaleDateString("es-AR")}</td>
-                  <td>{h.uso.toFixed(2)}</td>
-                  <td>{h.unidades.toFixed(2)}</td>
-                  <td>{h.desperdicio.toFixed(2)}</td>
-                  <td className={`text-${h.uso <= 30 ? "success" : h.uso <= 50 ? "warning" : "danger"}`}>
-                    {h.uso <= 30 ? "Bueno" : h.uso <= 50 ? "Regular" : "Crítico"}
+                  <td>{(h.uso ?? 0).toFixed(2)}</td>
+                  <td>{(h.unidades ?? 0).toFixed(2)}</td>
+                  <td>{(h.desperdicio ?? 0).toFixed(2)}</td>
+                  <td className={`text-${(h.uso ?? 0) <= 30 ? "success" : (h.uso ?? 0) <= 50 ? "warning" : "danger"}`}>
+                    {(h.uso ?? 0) <= 30 ? "Bueno" : (h.uso ?? 0) <= 50 ? "Regular" : "Crítico"}
                   </td>
                 </tr>
               ))}

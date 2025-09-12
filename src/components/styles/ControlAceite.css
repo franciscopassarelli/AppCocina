@@ -1,18 +1,96 @@
-/* Contenedor principal (ya lo tenés en cookpanel-container) */
-
-/* Ajustes específicos para ControlAceite */
-.cookpanel-alert.bg-success {
-  background-color: #28a745 !important;
-  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.5);
+/* ====== Contenedor principal de ControlAceite ====== */
+.aceite-container {
+  background-color: #000;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: #fff;
+  font-family: Inter, sans-serif;
 }
 
-.cookpanel-alert.bg-warning {
-  background-color: #ffc107 !important;
-  color: #000 !important;
-  box-shadow: 0 4px 10px rgba(255, 193, 7, 0.5);
+/* ====== Alerta flotante ====== */
+.aceite-alert {
+  margin-bottom: 20px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 4px 10px rgba(0, 200, 81, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: opacity 0.3s ease;
 }
 
-.cookpanel-alert.bg-danger {
-  background-color: #dc3545 !important;
-  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.5);
+.aceite-alert.bg-success { background-color: #28a745; }
+.aceite-alert.bg-warning { background-color: #ffc107; color: #000; }
+.aceite-alert.bg-danger { background-color: #dc3545; }
+
+/* ====== Tarjeta de sección ====== */
+.aceite-card {
+  background-color: #111;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #333;
+  text-align: center;
+}
+
+/* ====== Inputs pequeños ====== */
+.aceite-card .aceite-input {
+  font-size: 0.875rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #fff;
+  width: 120px;
+  margin: 0 auto;
+}
+
+/* ====== Botón verde dentro de ControlAceite ====== */
+.aceite-card .button-green-lg {
+  font-size: 1rem;
+  padding: 0 20px;
+  height: 40px;
+}
+
+/* ====== Tabla de historial ====== */
+.aceite-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.aceite-table th,
+.aceite-table td {
+  border: 1px solid #333;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.aceite-table th {
+  background-color: #222;
+}
+
+.aceite-table tbody tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+.aceite-table tbody tr:hover {
+  background-color: #2a2a2a;
+}
+
+.text-success { color: #28a745; }
+.text-warning { color: #ffc107; }
+.text-danger { color: #dc3545; }
+
+/* ====== Responsive ====== */
+@media (max-width: 576px) {
+  .aceite-card .aceite-input { width: 100px; }
+  .aceite-table th, .aceite-table td { font-size: 0.75rem; padding: 4px 6px; }
 }
