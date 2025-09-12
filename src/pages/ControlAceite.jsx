@@ -10,7 +10,7 @@ const ControlAceite = () => {
 
   const aceite = productos.find(p => p.nombre.toLowerCase() === "aceite");
 
-  const [horasUso, setHorasUso] = useState(40); // valor inicial de simulación
+  const [horasUso, setHorasUso] = useState(0); // valor inicial de simulación
   const [cantidadUsada, setCantidadUsada] = useState(""); // litros usados
   const [desperdicio, setDesperdicio] = useState("");   // desperdicio en litros
   const [historial, setHistorial] = useState([]);
