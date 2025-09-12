@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaBell, FaUserCog, FaTruck, FaBookOpen } from "react-icons/fa";
+import { FaBell, FaUserCog, FaTruck, FaBookOpen, FaTint } from "react-icons/fa";
 import { GiCook } from "react-icons/gi";
 import { useProductos } from "../../context/ProductoContext";
 import "../styles/Navbar.css";
@@ -139,6 +139,18 @@ export default function Navbar() {
               <span className="nav-label">Recetas</span>
             </Link>
           </li>
+
+  <li className="nav-item w-100">
+            <Link
+              className={`nav-link nav-btn ${isActive("/aceite") ? "active" : ""}`}
+              to="/aceite"
+              title="Recetas"
+            >
+              <FaTint className="nav-icon" />
+              <span className="nav-label">C.Aceite</span>
+            </Link>
+          </li>
+
         </ul>
       </div>
     </nav>

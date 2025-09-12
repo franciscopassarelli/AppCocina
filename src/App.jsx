@@ -12,6 +12,7 @@ import CookDashboard from "./pages/CookDashboard";
 import RecipeAdmin from "./pages/RecipeAdmin";
 import ProveedoresPage from "./pages/Proveedores";
 import Navbar from "./components/common/Navbar";
+import ControlAceite from "./pages/ControlAceite";
 
 // Providers (ajustá los nombres si tu context exporta distinto)
 import { DepartamentosProvider } from "./context/DepartamentosContext";
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/recipeadmin" element={<RecipeAdmin />} />
         <Route path="/proveedores" element={<ProveedoresPage />} />
         <Route path="*" element={<Navigate to="/cook" replace />} />
+        <Route path= "/aceite" element={<ControlAceite/>} />
       </Routes>
     </Router>
   </ProductoProvider>

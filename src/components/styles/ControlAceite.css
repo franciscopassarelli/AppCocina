@@ -1,0 +1,18 @@
+/* Contenedor principal (ya lo tenés en cookpanel-container) */
+
+/* Ajustes específicos para ControlAceite */
+.cookpanel-alert.bg-success {
+  background-color: #28a745 !important;
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.5);
+}
+
+.cookpanel-alert.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  box-shadow: 0 4px 10px rgba(255, 193, 7, 0.5);
+}
+
+.cookpanel-alert.bg-danger {
+  background-color: #dc3545 !important;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.5);
+}

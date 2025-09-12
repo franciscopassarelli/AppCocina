@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const historialSchema = new mongoose.Schema({
-  producto: { type: String, required: true }, // Podés guardar el nombre o usar una ref
+  producto: { type: mongoose.Schema.Types.ObjectId, ref: "Producto", required: true },
   fecha: { type: Date, default: Date.now },
   uso: { type: Number, required: true }, // cantidad utilizada
   unidades: { type: Number, required: true },
@@ -11,3 +11,5 @@ const historialSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Historial", historialSchema);
+
+
