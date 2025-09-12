@@ -9,7 +9,7 @@ const ControlAceite = () => {
   const { productos, actualizarStock, agregarRegistroHistorial } = useProductos();
   const aceite = productos.find(p => p.nombre.toLowerCase() === "aceite");
 
-  const [horasDesdeCambio, setHorasDesdeCambio] = useState(0); // Timer para alerta
+  const [horasDesdeCambio, setHorasDesdeCambio] = useState(0);
   const [cantidadUsada, setCantidadUsada] = useState("");
   const [desperdicio, setDesperdicio] = useState("");
   const [historial, setHistorial] = useState([]);
@@ -35,8 +35,12 @@ const ControlAceite = () => {
           .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         setHistorial(historialAceite);
 
+        // Calcular horas desde el último cambio
         if (historialAceite.length > 0) {
-          // Reseteamos el timer según el último cambio registrado
+          const ultimoRegistro = historialAceite[0];
+          const horasPasadas = (new Date() - new Date(ultimoRegistro.fecha)) / (1000 * 60 * 60);
+          setHorasDesdeCambio(horasPasadas);
+        } else {
           setHorasDesdeCambio(0);
         }
       } catch (err) {
@@ -50,14 +54,14 @@ const ControlAceite = () => {
   // Timer: aumenta cada segundo
   useEffect(() => {
     const timer = setInterval(() => {
-      setHorasDesdeCambio(prev => prev + 1 / 3600); // 1 segundo -> 1/3600 horas
+      setHorasDesdeCambio(prev => prev + 1 / 3600);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   // ALERTA basada en el timer
   useEffect(() => {
-    const umbralHoras = 30; // ejemplo: 30h para alerta
+    const umbralHoras = 30; // ejemplo
     if (horasDesdeCambio >= umbralHoras) {
       setAlerta("⚠️ Es hora de cambiar el aceite.");
     } else {
@@ -81,12 +85,12 @@ const ControlAceite = () => {
     // Actualizar stock
     await actualizarStock(aceite._id, nuevoStock);
 
-    // Crear registro para historial
+    // Crear registro historial
     const registro = {
       producto: aceite._id,
       fecha: new Date(),
-      uso: usoNum,           
-      unidades: nuevoStock,  
+      uso: usoNum,
+      unidades: nuevoStock,
       desperdicio: desperdicioNum,
       fechaVencimiento: aceite.fechaVencimiento || null,
       facturaRemito: "",
@@ -144,7 +148,6 @@ const ControlAceite = () => {
         <p>Estado del aceite: <span className={`text-${estadoActual.color}`}><strong>{estadoActual.estado}</strong></span></p>
         <p>Litros restantes: <strong>{aceite.stock.toFixed(2)} L</strong></p>
 
-        {/* FORMULARIO */}
         <form onSubmit={handleRegistrarCambio} className="d-flex flex-column gap-2 mt-3">
           <input
             type="number"
