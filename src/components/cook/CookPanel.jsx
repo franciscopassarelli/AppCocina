@@ -315,7 +315,7 @@ export default function CookPanel() {
     {/* Panel Carne */}
     <div className="col-12 col-lg-6">
       <div className="production-panel">
-        <h3 className="mb-3">Carne (Medallones)</h3>
+        <h3 className="mb-3">Burger (Medallones)</h3>
         <p className="mb-4 text-info">Cargar piezas → limpieza → calcular grasa → producir</p>
         <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
           Nueva producción

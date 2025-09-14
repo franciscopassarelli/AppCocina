@@ -18,12 +18,12 @@ router.get('/lotes', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-
 // POST /api/proveedores/lotes  (crear buffer)
 router.post('/lotes', async (req, res) => {
   try {
     const {
-      proveedor,
+      providerId,              // NUEVO (opcional)
+      proveedor,               // LEGACY (string)
       productoId,
       nombreProducto,
       unidad,
@@ -42,8 +42,19 @@ router.post('/lotes', async (req, res) => {
     const prod = await Producto.findById(productoId);
     if (!prod) return res.status(404).json({ error: 'Producto no encontrado' });
 
+    // Si viene providerId, buscamos y guardamos también providerNombre
+    let providerNombre;
+    if (providerId) {
+      const Provider = require('../models/Provider');
+      const prov = await Provider.findById(providerId);
+      if (!prov) return res.status(404).json({ error: 'Proveedor no encontrado' });
+      providerNombre = prov.nombre;
+    }
+
     const doc = await ProveedorLote.create({
-      proveedor: proveedor || undefined,
+      providerId: providerId || undefined,
+      providerNombre: providerNombre || (proveedor || undefined), // fallback al legacy
+      proveedor: proveedor || undefined, // (opcional) seguir guardando el string
       productoId,
       nombreProducto: nombreProducto || prod.nombre,
       unidad,
@@ -61,6 +72,7 @@ router.post('/lotes', async (req, res) => {
     res.status(400).json({ error: e.message });
   }
 });
+
 
 // POST /api/proveedores/lotes/:id/asignar
 // body: { productoId (igual al del lote), cantidad, fechaVencimiento?, sinVencimiento? }

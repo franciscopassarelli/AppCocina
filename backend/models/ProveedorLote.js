@@ -1,9 +1,11 @@
-// backend/models/ProveedorLote.js
 const { Schema, model } = require('mongoose');
 
 const ProveedorLoteSchema = new Schema(
   {
-    proveedor: String,
+    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' }, // NUEVO
+    providerNombre: String,                                       // NUEVO
+    proveedor: String, // legacy
+
     productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
     nombreProducto: String,
 
@@ -14,9 +16,7 @@ const ProveedorLoteSchema = new Schema(
     numeroFactura: { type: String, required: true },
     loteProveedor: String,
 
-    // ⚠️ Opcional en el buffer (la real se decide al asignar)
     fechaVencimiento: { type: Date },
-
     fechaIngreso: { type: Date, default: Date.now },
     notas: String,
 
