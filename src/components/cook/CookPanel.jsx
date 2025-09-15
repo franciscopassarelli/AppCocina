@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
@@ -11,6 +11,20 @@ import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
 import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
 import { getRecipes } from "../../api/recipes.js";
+import { getRuns } from "../../api/productionRuns"; // Historial de producciones
+
+const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
+
+const PRODUCIDAS_STORAGE_KEY = "productions_pool_v1";       // pool disponible para descontar
+const LAST_SEEN_STORAGE_KEY  = "productions_totals_seen_v1"; // totales vistos (para delta)
+const STORAGE_KEY = "activeRuns";                            // corridas activas
+
+// === Helpers de LocalStorage ===
+const readJSON = (k, def) => {
+  try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : def; }
+  catch { return def; }
+};
+const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
 export default function CookPanel() {
   const {
@@ -20,20 +34,6 @@ export default function CookPanel() {
     actualizarProducto,
   } = useProductos();
 
-  // ===== Helpers de persistencia local =====
-  const STORAGE_KEY = "activeRuns";
-  const readActiveRuns = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  };
-  const writeActiveRuns = (runs) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(runs));
-  };
-
   // ===== Estado existente =====
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const [usoDelDia, setUsoDelDia] = useState("");
@@ -42,57 +42,48 @@ export default function CookPanel() {
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true);
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
 
-  // Persistimos runs activos localmente
-  const [activeRuns, setActiveRuns] = useState(() => readActiveRuns());
-
-  const [confirmingRun, setConfirmingRun] = useState(null);
-  const [cargando, setCargando] = useState(false);
+  // Despliegues por depto
+  const [deptoActivoProducidas, setDeptoActivoProducidas] = useState(null);
   const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
   const [departamentoActivoListado, setDepartamentoActivoListado] = useState(null);
+
+  const [activeRuns, setActiveRuns] = useState(() => readJSON(STORAGE_KEY, []));
+  const [confirmingRun, setConfirmingRun] = useState(null);
+  const [cargando, setCargando] = useState(false);
   const [fechaVencimientoElaborado, setFechaVencimientoElaborado] = useState("");
 
-  // ===== Producción (recetas / runs) =====
+  // Recetas / modales
   const [recipes, setRecipes] = useState([]);
   const [showPlan, setShowPlan] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // ===== Carne (planner) =====
+  // Burger planner
   const [showMeatPlanner, setShowMeatPlanner] = useState(false);
 
-  // ===== Ingreso rápido de stock =====
+  // Quick stock
   const [showQuickStock, setShowQuickStock] = useState(false);
   const [productoParaStock, setProductoParaStock] = useState(null);
 
   const productoSeleccionado = productos.find((p) => p._id === productoIdSeleccionado);
   const API_URL = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
 
-  // ======= Persistencia y sincronización de activeRuns =======
-  useEffect(() => {
-    writeActiveRuns(activeRuns);
-  }, [activeRuns]);
+  // ===== Persistencia y sincronización de activeRuns =====
+  useEffect(() => { writeJSON(STORAGE_KEY, activeRuns); }, [activeRuns]);
 
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === STORAGE_KEY) {
-        setActiveRuns(e.newValue ? JSON.parse(e.newValue) : []);
-      }
-    };
+    const onStorage = (e) => { if (e.key === STORAGE_KEY) setActiveRuns(e.newValue ? JSON.parse(e.newValue) : []); };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   useEffect(() => {
     const onBeforeUnload = (e) => {
-      if (activeRuns.length > 0) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+      if (activeRuns.length > 0) { e.preventDefault(); e.returnValue = ""; }
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [activeRuns.length]);
 
-  // Helper para obtener la clave única de una receta
   const recipeKeyOf = (r) => r?.recipeId || r?.recipe?._id || r?.recipeNombre || r?.recipeName;
 
   function handleStarted(run) {
@@ -168,7 +159,7 @@ export default function CookPanel() {
 
     let usoRestante = esInsumoUnidad ? cantUnidades : uso;
 
-    // FEFO local por lotes
+    // FEFO por lotes
     let lotesUtilizados = [];
     let nuevosLotes = [...(productoSeleccionado.lotes || [])]
       .sort((a, b) => new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento))
@@ -228,7 +219,7 @@ export default function CookPanel() {
     }
   };
 
-  // ===== Ingreso rápido de stock (agregar lote desde cocina) =====
+  // ===== Ingreso rápido de stock =====
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
@@ -249,6 +240,7 @@ export default function CookPanel() {
     }
   };
 
+  // Derivados de UI
   const cantidadUtil =
     productoSeleccionado && unidades
       ? esInsumoUnidad
@@ -268,7 +260,7 @@ export default function CookPanel() {
     return acc;
   }, {});
 
-  // ===== Confirmación (cierra modal y quita de activos si OK) =====
+  // Confirmación run
   function handleConfirmClose(ok, runId) {
     setShowConfirm(false);
     if (ok) {
@@ -277,6 +269,184 @@ export default function CookPanel() {
     }
     setConfirmingRun(null);
   }
+
+  // ========================
+  // “Producidas” pool INCREMENTAL (delta)
+  // ========================
+
+  // 1) Cargar runs
+  const [runs, setRuns] = useState([]);
+  const [loadingRuns, setLoadingRuns] = useState(true);
+
+  async function refreshRuns() {
+    setLoadingRuns(true);
+    try {
+      const data = await getRuns();
+      setRuns(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("Error cargando runs:", e);
+    } finally {
+      setLoadingRuns(false);
+    }
+  }
+
+  useEffect(() => {
+    refreshRuns();
+    const h = () => refreshRuns();
+    window.addEventListener("runs:changed", h);
+    return () => window.removeEventListener("runs:changed", h);
+  }, []);
+
+  // 2) Mapear total producido por “clave de producto”
+  const producedBaseByProduct = useMemo(() => {
+    const map = new Map(); // key: productoId || recipeNombre; value: { qty, unidad, producto? }
+    for (const r of runs) {
+      const qty = Number(r.unidadesProducidas || 0);
+      if (!qty) continue;
+
+      const productId = r.productoFinalId || r.productoId || null;
+
+      let producto = null;
+      let key = null;
+
+      if (productId) {
+        producto = productos.find((p) => String(p._id) === String(productId)) || null;
+        key = productId;
+      } else {
+        // fallback por nombre de receta
+        const nombre = r.recipeNombre || r.recipeName || "";
+        producto =
+          productos.find(
+            (p) => (p.nombre || "").toLowerCase() === (nombre || "").toLowerCase()
+          ) || null;
+        key = producto ? producto._id : (r.recipeNombre || `RUN-${r._id}`);
+      }
+
+      const unidad = r.unidadesProducidasUnidad || producto?.unidad || "unidad";
+      const prev = map.get(key) || { qty: 0, unidad, producto, recipeNombre: r.recipeNombre || "" };
+      prev.qty += qty;
+      if (!prev.producto && producto) prev.producto = producto;
+      prev.unidad = prev.unidad || unidad;
+      map.set(key, prev);
+    }
+    return map;
+  }, [runs, productos]);
+
+  // 3) Estado persistido: pool restante por producto
+  const [poolRestante, setPoolRestante] = useState(() => readJSON(PRODUCIDAS_STORAGE_KEY, {}));
+  const savePool = (next) => { setPoolRestante(next); writeJSON(PRODUCIDAS_STORAGE_KEY, next); };
+
+  // 4) INCREMENTAR pool cuando hay nuevas producciones (Δ vs "last seen")
+  useEffect(() => {
+    // 4.1 Totales actuales por key (desde historial)
+    const currentTotals = {};
+    for (const [key, v] of producedBaseByProduct.entries()) {
+      currentTotals[String(key)] = {
+        qty: Number(v.qty || 0),
+        unidad: v.unidad || "unidad",
+        nombre: v.producto?.nombre || v.recipeNombre || "Producto",
+        productoId: v.producto?._id || null,
+        departamento: v.producto?.departamento || "Otros",
+      };
+    }
+
+    // 4.2 Totales vistos previamente
+    const prevSeen = readJSON(LAST_SEEN_STORAGE_KEY, {});
+    const poolHasData = Object.keys(poolRestante || {}).length > 0;
+
+    // Si ya tenías pool y nunca guardamos "last seen", lo inicializamos para no duplicar
+    if (!Object.keys(prevSeen).length && poolHasData) {
+      writeJSON(LAST_SEEN_STORAGE_KEY, currentTotals);
+      return;
+    }
+
+    // 4.3 Calcular deltas y sumarlos al pool
+    let nextPool = { ...poolRestante };
+    let changed = false;
+
+    for (const [key, cur] of Object.entries(currentTotals)) {
+      const prevQty = Number(prevSeen[key]?.qty || 0);
+      const delta = Math.max(0, Number(cur.qty) - prevQty);
+      if (delta > 0) {
+        const existingQty = Number(nextPool[key]?.qty || 0);
+        nextPool[key] = { ...(nextPool[key] || {}), ...cur, qty: existingQty + delta };
+        changed = true;
+      }
+    }
+
+    if (changed) savePool(nextPool);
+
+    // 4.4 Guardar "last seen" = totales actuales
+    writeJSON(LAST_SEEN_STORAGE_KEY, currentTotals);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [producedBaseByProduct]); // se actualiza cuando cambia el historial
+
+  // 5) Lista para UI: SOLO el pool (lo realmente disponible hoy)
+  const listaProducidas = useMemo(() => {
+    const items = Object.entries(poolRestante || {})
+      .map(([key, v]) => ({
+        key,
+        productoId: v.productoId || null,
+        nombre: v.nombre || "Producto",
+        unidad: v.unidad || "unidad",
+        qty: Number(v.qty || 0),
+        departamento: v.departamento || "Otros",
+      }))
+      .filter((it) => it.qty > 0);
+
+    return items.reduce((acc, it) => {
+      const d = it.departamento || "Otros";
+      if (!acc[d]) acc[d] = [];
+      acc[d].push(it);
+      return acc;
+    }, {});
+  }, [poolRestante]);
+
+  // 6) Descontar SIEMPRE descuenta del stock real (si hay productoId)
+  async function descontarDelPool(item, cantidad) {
+    const cant = Number(cantidad || 0);
+    if (!Number.isFinite(cant) || cant <= 0) {
+      mostrarMensajeAlerta("Cantidad inválida.");
+      return;
+    }
+    const actual = Number(poolRestante?.[item.key]?.qty || 0);
+    if (cant > actual) {
+      mostrarMensajeAlerta("La cantidad supera lo disponible en Producciones.");
+      return;
+    }
+
+    // 6.1. Actualizo pool
+    const next = {
+      ...poolRestante,
+      [item.key]: {
+        ...(poolRestante[item.key] || {}),
+        qty: actual - cant,
+        unidad: item.unidad,
+        nombre: item.nombre,
+        productoId: item.productoId || null,
+        departamento: item.departamento || "Otros",
+      },
+    };
+    savePool(next);
+
+    // 6.2. Resto stock real del producto (si está mapeado)
+    if (item.productoId) {
+      try {
+        const prod = productos.find((p) => String(p._id) === String(item.productoId));
+        if (prod) {
+          const nuevoStock = Math.max(0, Number(prod.stock || 0) - cant);
+          await actualizarProducto(prod._id, { ...prod, stock: nuevoStock });
+        }
+      } catch (e) {
+        console.error("Error descontando del stock real:", e);
+        mostrarMensajeAlerta("No se pudo descontar del stock real.");
+      }
+    }
+
+    mostrarMensajeAlerta(`Descontado ${cant} ${item.unidad} de ${item.nombre}.`);
+  }
+
+  // ========================
 
   return (
     <div className="container-fluid cookpanel-container">
@@ -298,38 +468,34 @@ export default function CookPanel() {
         </div>
       )}
 
-   {/* ===== Producción (recetas) + Carne (Blend) ===== */}
-<div className="container mb-4">
-  <div className="row g-3 align-items-stretch production-row">
-    {/* Panel Producción */}
-    <div className="col-12 col-lg-6">
-      <div className="production-panel">
-        <h3 className="mb-3">Producción (Recetas)</h3>
-        <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
-        <button className="button-green-lg" onClick={() => setShowPlan(true)}>
-          Nueva producción
-        </button>
+      {/* ===== Producción (recetas) + Carne (Blend) ===== */}
+      <div className="container mb-4">
+        <div className="row g-3 align-items-stretch production-row">
+          {/* Panel Producción */}
+          <div className="col-12 col-lg-6">
+            <div className="production-panel">
+              <h3 className="mb-3">Producción (Recetas)</h3>
+              <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
+              <button className="button-green-lg" onClick={() => setShowPlan(true)}>
+                Nueva producción
+              </button>
+            </div>
+          </div>
+
+          {/* Panel Carne */}
+          <div className="col-12 col-lg-6">
+            <div className="production-panel">
+              <h3 className="mb-3">Burger (Medallones)</h3>
+              <p className="mb-4 text-info">Cargar piezas → limpieza → calcular grasa → producir</p>
+              <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
+                Nueva producción
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    {/* Panel Carne */}
-    <div className="col-12 col-lg-6">
-      <div className="production-panel">
-        <h3 className="mb-3">Burger (Medallones)</h3>
-        <p className="mb-4 text-info">Cargar piezas → limpieza → calcular grasa → producir</p>
-        <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
-          Nueva producción
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-    
-
-      {/* Panel de producciones activas (persiste en storage) */}
+      {/* Panel de producciones activas */}
       <ActiveProductionsPanel
         runs={activeRuns}
         onConfirm={(run) => {
@@ -338,13 +504,11 @@ export default function CookPanel() {
         }}
       />
 
-  
-
-{/* Modal del planner */}
-<MeatBlendPlannerModal
-  show={showMeatPlanner}
-  onClose={() => setShowMeatPlanner(false)}
-/>
+      {/* Modal del planner */}
+      <MeatBlendPlannerModal
+        show={showMeatPlanner}
+        onClose={() => setShowMeatPlanner(false)}
+      />
 
       {/* ===== Ingreso rápido de stock ===== */}
       <div className="container section-card card-dark">
@@ -398,7 +562,7 @@ export default function CookPanel() {
         ))}
       </div>
 
-      {/* ===== Listado por departamento (flujo existente) ===== */}
+      {/* ===== Listado por departamento (Uso Manual del stock) ===== */}
       <div className="container section-card card-dark">
         <h5 className="mb-3 text-center">Uso Manual del stock</h5>
         {!productoSeleccionado && (
@@ -447,6 +611,99 @@ export default function CookPanel() {
               </motion.div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* ===== Producidas (pool para descontar) ===== */}
+      <div className="container section-card card-dark">
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <h5 className="mb-0 text-center">Producciones (Producidas para descontar)</h5>
+          {/* (Sin switch y sin botón Reiniciar) */}
+        </div>
+
+        {loadingRuns ? (
+          <div className="text-muted">Cargando corridas…</div>
+        ) : Object.keys(listaProducidas).length === 0 ? (
+          <div className="text-muted">Sin producciones disponibles.</div>
+        ) : (
+          Object.entries(listaProducidas).map(([depto, items]) => (
+            <motion.div
+              key={`pool-${depto}`}
+              className="text-white my-3 py-2 px-3 rounded border mx-auto department-panel"
+              onClick={() => {
+                setDeptoActivoProducidas(depto === deptoActivoProducidas ? null : depto);
+              }}
+              whileHover={{ scale: 1.015 }}
+            >
+              <h5 className="mb-2 text-center department-title d-flex justify-content-center align-items-center gap-2">
+                <span>{depto}</span>
+                <span className="small text-secondary">
+                  ({items.reduce((a, b) => a + (Number(b.qty) || 0), 0)} totales)
+                </span>
+              </h5>
+
+              <AnimatePresence>
+                {deptoActivoProducidas === depto && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 products-grid"
+                  >
+                    {items.map((it) => (
+                      <motion.div
+                        key={it.key}
+                        className="btn shadow d-flex flex-column justify-content-center align-items-center text-center product-btn"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={(e) => e.stopPropagation()} // no colapsar panel
+                      >
+                        <strong className="text-center">{it.nombre}</strong>
+                        <div className="small mt-2 text-secondary">
+                          Producidas disponibles: {nf0.format(it.qty)} {it.unidad}
+                        </div>
+                        <div className="d-flex gap-2 mt-2 w-100 justify-content-center">
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            className="form-control form-control-sm"
+                            placeholder="Cant."
+                            style={{ width: 100 }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const val = e.currentTarget.value;
+                                e.currentTarget.value = "";
+                                descontarDelPool(it, val);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <button
+                            className="button-green-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const wrap = e.currentTarget.parentElement;
+                              const input = wrap.querySelector("input");
+                              const val = input?.value || "";
+                              if (input) input.value = "";
+                              descontarDelPool(it, val);
+                            }}
+                          >
+                            Descontar
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))
         )}
       </div>
 
@@ -509,13 +766,15 @@ export default function CookPanel() {
                 {!esInsumoUnidad && (
                   <div className="text-start mb-2 small">
                     <p>
-                      <strong>Cantidad útil:</strong> {cantidadUtil.toFixed(3)} {unidad}
+                      <strong>Cantidad útil:</strong>{" "}
+                      {((parseInt(unidades || 0) * (productoSeleccionado.pesoPromedio || 0)) / 1000).toFixed(3)} {unidad}
                     </p>
                     <p>
                       <strong>Desperdicio:</strong> {desperdicio} {unidad}
                     </p>
                     <p>
-                      <strong>Promedio por unidad:</strong> {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
+                      <strong>Promedio por unidad:</strong>{" "}
+                      {(productoSeleccionado.pesoPromedio / 1000).toFixed(3)} {unidad}
                     </p>
                     <p>
                       <strong>Vencimiento original del producto comprado:</strong>{" "}
