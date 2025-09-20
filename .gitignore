@@ -14,7 +14,7 @@ dist-ssr
 *.local
 
 # Archivos de entorno
-.env
+.env 
 /backend/   # Ignora toda la carpeta backend
 
 # Editor directories and files

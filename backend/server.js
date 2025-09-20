@@ -13,7 +13,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+ 
 // Mongo
 const uri = process.env.MONGO_URI;
 mongoose.connect(uri)
