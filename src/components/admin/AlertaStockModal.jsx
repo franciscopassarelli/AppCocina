@@ -10,6 +10,7 @@ export default function AlertaStockModal({ productos, visible, onClose }) {
     const alertasDetectadas = productos.flatMap((producto) => {
       const alertasProducto = [];
 
+      // 🔹 Bajo stock (nivel producto)
       const stock = Number(producto.stock);
       const stockCritico = Number(producto.stockCritico);
 
@@ -20,23 +21,30 @@ export default function AlertaStockModal({ productos, visible, onClose }) {
         });
       }
 
-      if (producto.fechaVencimiento) {
-        const fechaVenc = new Date(producto.fechaVencimiento);
-        const diferenciaDias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
+      // 🔹 Vencimientos (nivel lote, pero sólo si hay cantidad > 0)
+      if (producto.lotes && Array.isArray(producto.lotes)) {
+        producto.lotes.forEach((lote) => {
+          if (lote.cantidad > 0 && lote.fechaVencimiento) {
+            const fechaVenc = new Date(lote.fechaVencimiento);
+            const diferenciaDias = Math.ceil(
+              (fechaVenc - hoy) / (1000 * 60 * 60 * 24)
+            );
 
-        if (!isNaN(diferenciaDias)) {
-          if (diferenciaDias <= 10 && diferenciaDias > 5) {
-            alertasProducto.push({
-              tipo: "vencimiento-próximo",
-              mensaje: `${producto.nombre} vence en ${diferenciaDias} días`,
-            });
-          } else if (diferenciaDias <= 5 && diferenciaDias >= 0) {
-            alertasProducto.push({
-              tipo: "vencimiento-urgente",
-              mensaje: `${producto.nombre} vence en ${diferenciaDias} días. Tomar acción urgente.`,
-            });
+            if (!isNaN(diferenciaDias)) {
+              if (diferenciaDias <= 10 && diferenciaDias > 5) {
+                alertasProducto.push({
+                  tipo: "vencimiento-próximo",
+                  mensaje: `${producto.nombre} (lote ${lote.codigo || ""}) vence en ${diferenciaDias} días`,
+                });
+              } else if (diferenciaDias <= 5 && diferenciaDias >= 0) {
+                alertasProducto.push({
+                  tipo: "vencimiento-urgente",
+                  mensaje: `${producto.nombre} (lote ${lote.codigo || ""}) vence en ${diferenciaDias} días. Tomar acción urgente.`,
+                });
+              }
+            }
           }
-        }
+        });
       }
 
       return alertasProducto;

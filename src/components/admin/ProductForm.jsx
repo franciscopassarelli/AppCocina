@@ -10,9 +10,14 @@ import DepartmentsManagerModal from "./DepartmentsManagerModal";
 
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
+// ===== Umbrales de vencimiento =====
+const DIAS_ALERTA = 10; // alerta (<= 10 días)
+const DIAS_URGENTE = 5; // urgente (<= 5 días) -> lo resuelve el modal visualmente
+
 export default function ProductForm() {
   const { productos, agregarProducto, actualizarProducto, eliminarProducto } = useProductos();
   const { departamentos } = useDepartamentos();
+
   const [noAplicaPeso, setNoAplicaPeso] = useState(false);
   const [nombre, setNombre] = useState("");
   const [stock, setStock] = useState("");
@@ -23,26 +28,66 @@ export default function ProductForm() {
   const [departamento, setDepartamento] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
-  
+
   const [productoParaStock, setProductoParaStock] = useState(null);
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
+
+  // 👇 Modal de alerta (igual que en CookPanel)
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(false);
+
   const [showDepModal, setShowDepModal] = useState(false);
 
-  // Alerta stock / vencimiento
+  // ===== Helpers de fecha =====
+  const startOfDay = (d) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+
+  const daysUntil = (isoOrDate) => {
+    if (!isoOrDate) return Infinity;
+    const hoy = startOfDay(new Date());
+    const fv = startOfDay(new Date(isoOrDate));
+    return Math.ceil((fv - hoy) / (1000 * 60 * 60 * 24));
+  };
+
+  // ===== Alerta stock / vencimiento (como CookPanel) =====
   useEffect(() => {
-    if (productos.length === 0) {
+    if (!Array.isArray(productos) || productos.length === 0) {
       setMostrarAlertaStock(false);
       return;
     }
-    const hayAlerta = productos.some(
-      (p) => Number(p.stock) <= Number(p.stockCritico) || new Date(p.fechaVencimiento) < new Date()
-    );
+
+    const hoy = startOfDay(new Date());
+
+    const hayAlerta = productos.some((p) => {
+      const stockNum = Number(p.stock) || 0;
+      const crit = Number(p.stockCritico) || 0;
+
+      // 1) Si no hay stock, no alerta de vencimiento (igual que en CookPanel)
+      if (stockNum <= 0) return false;
+
+      // 2) Stock crítico
+      if (stockNum <= crit) return true;
+
+      // 3) Lotes con stock disponible y vencimiento (vencidos o por vencer en <= 10 días)
+      const lotes = Array.isArray(p.lotes) ? p.lotes : [];
+      return lotes.some((l) => {
+        const disp = Number(l.cantidadDisponible ?? l.cantidad ?? 0);
+        if (disp <= 0) return false;
+        if (!l.fechaVencimiento) return false;
+
+        const fv = startOfDay(new Date(l.fechaVencimiento));
+        const dias = Math.ceil((fv - hoy) / (1000 * 60 * 60 * 24));
+        return dias <= DIAS_ALERTA; // incluye vencidos (dias < 0) y próximos a vencer
+      });
+    });
+
     setMostrarAlertaStock(hayAlerta);
   }, [productos]);
 
-  // Cargar datos al editar
+  // ===== Cargar datos al editar =====
   useEffect(() => {
     if (productoEditando) {
       setNombre(productoEditando.nombre || "");
@@ -55,19 +100,20 @@ export default function ProductForm() {
 
       const v = new Date(productoEditando.fechaVencimiento);
       if (!isNaN(v.getTime())) {
-        const fechaLocal = new Date(
-          v.getTime() + Math.abs(v.getTimezoneOffset() * 60000)
-        )
+        const fechaLocal = new Date(v.getTime() + Math.abs(v.getTimezoneOffset() * 60000))
           .toISOString()
           .split("T")[0];
         setFechaVencimiento(fechaLocal);
       } else {
         setFechaVencimiento("");
       }
+    } else {
+      // si no hay edición, setear depto por defecto (si existe)
+      if (!departamento) setDepartamento(departamentos[0]?.displayName || "");
     }
-  }, [productoEditando]);
+  }, [productoEditando, departamentos, departamento]);
 
-  // Limpiar form
+  // ===== Limpiar form =====
   const limpiarFormulario = () => {
     setNombre("");
     setStock("");
@@ -80,12 +126,11 @@ export default function ProductForm() {
     setFacturaRemito("");
   };
 
-  // Guardar producto
+  // ===== Guardar producto =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito) return;
     if (unidad !== "unidad" && !noAplicaPeso && !pesoPromedio) return;
-
 
     const loteInicial = {
       lote: "Lote inicial",
@@ -120,7 +165,7 @@ export default function ProductForm() {
     }
   };
 
-  // Agregar stock (lote)
+  // ===== Agregar stock (nuevo lote) =====
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
@@ -129,18 +174,14 @@ export default function ProductForm() {
       const nuevoStock = (Number(producto.stock) || 0) + (Number(nuevoLote.cantidad) || 0);
       const lotesActualizados = [...(producto.lotes || []), nuevoLote];
 
-      await actualizarProducto(productoId, {
-        ...producto,
-        stock: nuevoStock,
-        lotes: lotesActualizados,
-      });
+      await actualizarProducto(productoId, { ...producto, stock: nuevoStock, lotes: lotesActualizados });
       setProductoParaStock(null);
     } catch (err) {
       console.error("Error al agregar stock:", err);
     }
   };
 
-  // Borrar producto
+  // ===== Borrar producto =====
   const handleEliminar = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
     try {
@@ -151,7 +192,7 @@ export default function ProductForm() {
     }
   };
 
-  // 🔥 Borrar lote individual
+  // ===== Borrar lote individual =====
   const handleEliminarLote = async (productoId, loteIndex) => {
     const producto = productos.find((p) => p._id === productoId);
     if (!producto) return;
@@ -169,17 +210,10 @@ export default function ProductForm() {
     if (!window.confirm(mensaje)) return;
 
     try {
-      // nuevo stock = stock actual - cantidadDisponible del lote (no negativo)
       const nuevoStock = Math.max(0, Number(producto.stock || 0) - disponible);
-
-      // eliminar el lote
       lotes.splice(loteIndex, 1);
 
-      await actualizarProducto(productoId, {
-        ...producto,
-        stock: nuevoStock,
-        lotes,
-      });
+      await actualizarProducto(productoId, { ...producto, stock: nuevoStock, lotes });
     } catch (e) {
       console.error("Error eliminando lote:", e);
       alert("No se pudo eliminar el lote.");
@@ -187,20 +221,17 @@ export default function ProductForm() {
   };
 
   const toggleLotes = (productoId) => {
-    setLotesVisibles((prev) => ({
-      ...prev,
-      [productoId]: !prev[productoId],
-    }));
+    setLotesVisibles((prev) => ({ ...prev, [productoId]: !prev[productoId] }));
   };
 
-  // Filtro por departamento
+  // ===== Filtro por departamento =====
   const productosFiltrados = useMemo(() => {
     return productos.filter(
       (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
     );
   }, [productos, departamentoSeleccionado]);
 
-  // Agrupar por departamento
+  // ===== Agrupar por departamento =====
   const productosPorDepartamento = useMemo(() => {
     return productosFiltrados.reduce((acc, prod) => {
       const key = prod.departamento || "(sin departamento)";
@@ -212,6 +243,7 @@ export default function ProductForm() {
 
   return (
     <>
+      {/* 🔔 Modal de alerta por stock crítico / vencimientos */}
       <AlertaStockModal
         productos={productos}
         visible={mostrarAlertaStock}
@@ -303,15 +335,16 @@ export default function ProductForm() {
                             {nf2.format(Number(prod.stock || 0))} {prod.unidad}
                           </span>
                           {prod.unidad !== "unidad" && (
-  <span className="badge badge-peso">
-    {prod.pesoPromedio
-      ? `${nf2.format(Number(prod.pesoPromedio))} ${prod.unidad === "l" ? "ml" : "g"} (unidad)`
-      : "-"}
-  </span>
-)}
-                         
+                            <span className="badge badge-peso">
+                              {prod.pesoPromedio
+                                ? `${nf2.format(Number(prod.pesoPromedio))} ${prod.unidad === "l" ? "ml" : "g"} (unidad)`
+                                : "-"}
+                            </span>
+                          )}
                           {typeof prod.stockCritico !== "undefined" && (
-                            <span className="badge badge-critico">Crítico: {nf2.format(Number(prod.stockCritico || 0))}</span>
+                            <span className="badge badge-critico">
+                              Crítico: {nf2.format(Number(prod.stockCritico || 0))}
+                            </span>
                           )}
                         </div>
 
@@ -375,9 +408,7 @@ export default function ProductForm() {
                                 <tbody>
                                   {prod.lotes.map((lote, idx) => {
                                     const cantidadTotal = Number(lote.cantidad || 0);
-                                    const cantidadDisponible = Number(
-                                      lote.cantidadDisponible ?? lote.cantidad ?? 0
-                                    );
+                                    const cantidadDisponible = Number(lote.cantidadDisponible ?? lote.cantidad ?? 0);
 
                                     let estado = "Disponible";
                                     let estadoClase = "text-success";
