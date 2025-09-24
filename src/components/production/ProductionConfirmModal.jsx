@@ -62,10 +62,9 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
     }
     if (!found) {
       const target = (nombreProductoFinal || "").trim().toLowerCase();
-      found =
-        productos.find(
-          (p) => (p.nombre || "").trim().toLowerCase() === target
-        ) || null;
+      found = productos.find(
+        (p) => (p.nombre || "").trim().toLowerCase() === target
+      ) || null;
     }
     return found;
   }
@@ -109,16 +108,22 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
       await confirmRun(run._id, payload);
       window.dispatchEvent(new CustomEvent("runs:changed"));
 
-      // 2) Upsert en inventario
+      // 2) Upsert en inventario (⬇️ ajustes clave)
       const existente = findExistingProducto();
+
+      // top-level en YYYY-MM-DD (como guarda tu FormularioProducto)
+      const topLevelFecha = noAplicaVenc ? "" : fechaVenc;
+      // en lotes usamos ISO
       const isoVto = noAplicaVenc ? null : new Date(`${fechaVenc}T00:00:00`).toISOString();
+      // factura/remito no vacío (evita 400s)
+      const facturaRemito = `PROD-${run._id}`;
 
       const lote = {
         lote: `Prod-${new Date().toLocaleDateString("es-AR")}`,
         cantidad: n,
         cantidadDisponible: n,
         fechaVencimiento: isoVto,
-        numeroFactura: "",
+        numeroFactura: facturaRemito,
         fechaIngreso: new Date().toISOString(),
       };
 
@@ -129,10 +134,12 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
         const productoActualizado = {
           ...existente,
           stock: nuevoStock,
-          unidad: existente.unidad || unidadProducida, // respeta lo previo o setea
-          departamento, // 👈 asegura/mueve al departamento elegido
+          unidad: existente.unidad || unidadProducida,
+          departamento,                     // asegura que aparece en ese departamento
+          stockCritico: Number(existente.stockCritico || 0),
+          fechaVencimiento: topLevelFecha,  // YYYY-MM-DD (consistente con tu form)
+          facturaRemito,
           lotes,
-          fechaVencimiento: isoVto ?? existente.fechaVencimiento ?? null,
           fechaActualizacion: new Date().toISOString(),
         };
 
@@ -141,13 +148,13 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
         const nuevoProducto = {
           nombre: nombreProductoFinal,
           stock: n,
-          unidad: unidadProducida, // 'unidad' | 'kg' | 'l'
+          unidad: ["unidad", "kg", "l"].includes(unidadProducida) ? unidadProducida : "unidad",
           pesoPromedio: 0,
-          departamento,
+          departamento,                     // displayName válido
           stockCritico: 0,
-          fechaVencimiento: isoVto,
-          facturaRemito: "",
-          lotes: [lote],
+          fechaVencimiento: topLevelFecha,  // YYYY-MM-DD arriba
+          facturaRemito,
+          lotes: [lote],                    // ISO adentro del lote
           fechaCreacion: new Date().toISOString(),
           fechaActualizacion: new Date().toISOString(),
         };
@@ -157,8 +164,8 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
 
       onClose(true);
     } catch (e) {
-      console.error(e);
-      setErrorMsg("Error al confirmar la producción.");
+      console.error("❌ Error al confirmar/crear producto", e.response?.status, e.response?.data);
+      setErrorMsg(e?.response?.data?.error || "Error al confirmar la producción.");
       onClose(false);
     } finally {
       setLoading(false);
@@ -213,9 +220,7 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
               className="form-control"
               value={producidas}
               onChange={(e) => setProducidas(e.target.value)}
-              placeholder={
-                unidadProducida === "kg" ? "Ej: 12.5" : unidadProducida === "l" ? "Ej: 8.75" : "Ej: 24"
-              }
+              placeholder={unidadProducida === "kg" ? "Ej: 12.5" : unidadProducida === "l" ? "Ej: 8.75" : "Ej: 24"}
               required
             />
             <select
@@ -235,12 +240,8 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
         {/* Resumen */}
         <div className="mb-3 small">
           <div className="d-flex flex-wrap gap-3">
-            <span>
-              <strong>Desperdicio:</strong> {nf2.format(desperdicio)} {unidadProducida}
-            </span>
-            <span>
-              <strong>Eficiencia:</strong> {eficienciaPorc == null ? "—" : `${nf2.format(eficienciaPorc)}%`}
-            </span>
+            <span><strong>Desperdicio:</strong> {nf2.format(desperdicio)} {unidadProducida}</span>
+            <span><strong>Eficiencia:</strong> {eficienciaPorc == null ? "—" : `${nf2.format(eficienciaPorc)}%`}</span>
             {diferencia < 0 && (
               <span className="text-success">
                 <strong>Sobreproducción:</strong> {nf2.format(Math.abs(diferencia))} {unidadProducida}
