@@ -1,4 +1,3 @@
-// backend/models/Provider.js
 const { Schema, model } = require('mongoose');
 
 const ProviderSchema = new Schema(

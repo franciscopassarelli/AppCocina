@@ -241,7 +241,7 @@ export default function FormularioProducto({
       className="form-control form-control-sm"
       value={facturaRemito}
       onChange={(e) => setFacturaRemito(e.target.value)}
-      required
+    
     />
   </div>
 
@@ -253,7 +253,7 @@ export default function FormularioProducto({
       className="form-control form-control-sm"
       value={fechaVencimiento}
       onChange={(e) => setFechaVencimiento(e.target.value)}
-      required
+      
     />
   </div>
 

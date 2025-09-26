@@ -1,10 +1,6 @@
-// models/ProductionRun.js
 const { Schema, model } = require('mongoose');
 
-/**
- * Lote consumido de un insumo durante la producción.
- * Se guarda tal como se descontó (número de factura, lote, cantidad, vencimiento).
- */
+
 const ConsumidoLoteSchema = new Schema(
   {
     numeroFactura: String,
@@ -15,25 +11,19 @@ const ConsumidoLoteSchema = new Schema(
   { _id: false }
 );
 
-/**
- * Ingrediente consumido (en la UNIDAD REAL DEL PRODUCTO: kg | l | unidad).
- * Lo dejamos como String sin enum para no bloquear casos raros futuros.
- */
+
 const ConsumidoSchema = new Schema(
   {
     productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
     nombreProducto: String,
-    unidad: { type: String },           // p. ej. 'kg' | 'l' | 'unidad'
-    cantidad: { type: Number, min: 0 }, // total consumido en unidad del producto
+    unidad: { type: String },           
+    cantidad: { type: Number, min: 0 }, 
     lotes: { type: [ConsumidoLoteSchema], default: [] },
   },
   { _id: false }
 );
 
-/**
- * Ingrediente requerido por la receta (UNIDAD BASE DE RECETA: g | kg | ml | l | unidad).
- * Este valor luego se convierte a la unidad real del producto al momento de descontar.
- */
+
 const RequeridoSchema = new Schema(
   {
     productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
@@ -43,40 +33,35 @@ const RequeridoSchema = new Schema(
       enum: ['g', 'kg', 'ml', 'l', 'unidad'],
       required: true,
     },
-    requerido: { type: Number, required: true, min: 0 }, // en unidad base de receta
+    requerido: { type: Number, required: true, min: 0 }, 
   },
   { _id: false }
 );
 
-/**
- * Corrida de producción (ProductionRun)
- * - startedAt se setea al crear el run (/start)
- * - endedAt y durationSec se setean al confirmar (/confirm)
- */
+
 const ProductionRunSchema = new Schema(
   {
     recipeId: { type: Schema.Types.ObjectId, ref: 'Recipe' }, // ← ya NO required
-  recipeNombre: { type: String, required: true },
+    recipeNombre: { type: String, required: true },
     fechaVencimientoProductoFinal: { type: Date },
 
     unidadesPlanificadas: { type: Number, required: true, min: 0 },
     unidadesProducidas: { type: Number, default: 0, min: 0 },
     unidadesProducidasUnidad: { type: String, enum: ['unidad','kg','l'], default: 'unidad' },
 
-    ingredientesRequeridos: { type: [RequeridoSchema], default: [] },  // g|kg|ml|l|unidad
-    ingredientesConsumidos: { type: [ConsumidoSchema], default: [] },  // kg|l|unidad
+    ingredientesRequeridos: { type: [RequeridoSchema], default: [] },  
+    ingredientesConsumidos: { type: [ConsumidoSchema], default: [] },  
 
     startedAt: Date,
     endedAt: Date,
-    durationSec: Number, // segundos (endedAt - startedAt)
+    durationSec: Number, 
 
-    // Quién inició la corrida (opcional)
+    
     creadoPor: { type: String },
 
-    // Quién produjo (se setea al confirmar)
-    preparadoPor: { type: String }, // 👈 nuevo
+    
+    preparadoPor: { type: String }, 
 
-    // Estado del run: 'open' al iniciar, 'closed' al confirmar
     status: {
       type: String,
       enum: ['open', 'closed'],
@@ -87,7 +72,6 @@ const ProductionRunSchema = new Schema(
   { timestamps: true }
 );
 
-// Índices útiles para listados/filtrado
 ProductionRunSchema.index({ createdAt: -1 });
 ProductionRunSchema.index({ recipeId: 1, createdAt: -1 });
 

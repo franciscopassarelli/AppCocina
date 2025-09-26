@@ -129,29 +129,33 @@ export default function ProductForm() {
   // ===== Guardar producto =====
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!nombre || !stock || !unidad || !stockCritico || !fechaVencimiento || !facturaRemito) return;
-    if (unidad !== "unidad" && !noAplicaPeso && !pesoPromedio) return;
+  if (!nombre || !stock || !unidad || !stockCritico) return;
+  if (unidad !== "unidad" && !noAplicaPeso && !pesoPromedio) return;
 
-    const loteInicial = {
-      lote: "Lote inicial",
-      cantidad: parseFloat(stock),
-      cantidadDisponible: parseFloat(stock),
-      fechaVencimiento: new Date(fechaVencimiento + "T00:00:00").toISOString(),
-      numeroFactura: facturaRemito,
-      fechaIngreso: new Date().toISOString(),
-    };
 
-    const productoData = {
-      nombre,
-      stock: parseFloat(stock),
-      unidad,
-      pesoPromedio: pesoPromedio ? parseFloat(pesoPromedio) : 0,
-      departamento,
-      stockCritico: parseFloat(stockCritico),
-      fechaVencimiento,
-      facturaRemito,
-      lotes: [loteInicial],
-    };
+const loteInicial = {
+  lote: "Lote inicial",
+  cantidad: parseFloat(stock),
+  cantidadDisponible: parseFloat(stock),
+  fechaVencimiento: fechaVencimiento
+    ? new Date(fechaVencimiento + "T00:00:00").toISOString()
+    : null,
+  numeroFactura: facturaRemito?.trim() || "-",
+  fechaIngreso: new Date().toISOString(),
+};
+
+const productoData = {
+  nombre,
+  stock: parseFloat(stock),
+  unidad,
+  pesoPromedio: pesoPromedio ? parseFloat(pesoPromedio) : 0,
+  departamento,
+  stockCritico: parseFloat(stockCritico),
+  fechaVencimiento: fechaVencimiento || null,
+  facturaRemito: facturaRemito?.trim() || "-",
+  lotes: [loteInicial],
+};
+
 
     try {
       if (productoEditando) {

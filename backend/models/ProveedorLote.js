@@ -2,9 +2,9 @@ const { Schema, model } = require('mongoose');
 
 const ProveedorLoteSchema = new Schema(
   {
-    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' }, // NUEVO
-    providerNombre: String,                                       // NUEVO
-    proveedor: String, // legacy
+    providerId: { type: Schema.Types.ObjectId, ref: 'Provider' },
+    providerNombre: String,                                      
+    proveedor: String, 
 
     productoId: { type: Schema.Types.ObjectId, ref: 'Producto', required: true },
     nombreProducto: String,

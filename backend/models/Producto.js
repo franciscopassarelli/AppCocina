@@ -10,8 +10,8 @@ const productoSchema = new mongoose.Schema({
   stockCritico: { type: Number, default: 0 },
   fechaCreacion: { type: Date, default: Date.now },
   fechaActualizacion: { type: Date, default: Date.now },
-  fechaVencimiento: { type: Date, required: true },
-  facturaRemito: { type: String, required: true },
+  fechaVencimiento: { type: Date, default: null }, // no obligatorio
+  facturaRemito: { type: String, default: "-" },
  lotes: [
     {
       numeroFactura: String,
@@ -23,6 +23,5 @@ const productoSchema = new mongoose.Schema({
   ],
 });
 
-// Exportar el modelo
 module.exports = mongoose.model("Producto", productoSchema);
 
