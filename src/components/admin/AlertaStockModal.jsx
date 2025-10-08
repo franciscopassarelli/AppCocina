@@ -1,42 +1,46 @@
 import React, { useEffect, useState } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../styles/AlertaStock.css";
+import { useAlertSettings } from "../../context/AlertSettingsContext";
 
 export default function AlertaStockModal({ productos, visible, onClose }) {
+  const { settings, isPausedNow } = useAlertSettings();
   const [alertas, setAlertas] = useState([]);
 
   useEffect(() => {
+    if (!settings.enabled) { setAlertas([]); return; }
+    if (isPausedNow) { setAlertas([]); return; }
+
     const hoy = new Date();
     const alertasDetectadas = productos.flatMap((producto) => {
       const alertasProducto = [];
 
       // 🔹 Bajo stock (nivel producto)
-      const stock = Number(producto.stock);
-      const stockCritico = Number(producto.stockCritico);
-
-      if (!isNaN(stock) && !isNaN(stockCritico) && stock <= stockCritico) {
-        alertasProducto.push({
-          tipo: "stock",
-          mensaje: `${producto.nombre} tiene bajo stock (${producto.stock} ${producto.unidad})`,
-        });
+      if (settings.showStock) {
+        const stock = Number(producto.stock);
+        const stockCritico = Number(producto.stockCritico);
+        if (!isNaN(stock) && !isNaN(stockCritico) && stock <= stockCritico) {
+          alertasProducto.push({
+            tipo: "stock",
+            mensaje: `${producto.nombre} tiene bajo stock (${producto.stock} ${producto.unidad})`,
+          });
+        }
       }
 
-      // 🔹 Vencimientos (nivel lote, pero sólo si hay cantidad > 0)
+      // 🔹 Vencimientos (nivel lote, solo si hay cantidad > 0)
       if (producto.lotes && Array.isArray(producto.lotes)) {
         producto.lotes.forEach((lote) => {
           if (lote.cantidad > 0 && lote.fechaVencimiento) {
             const fechaVenc = new Date(lote.fechaVencimiento);
-            const diferenciaDias = Math.ceil(
-              (fechaVenc - hoy) / (1000 * 60 * 60 * 24)
-            );
+            const diferenciaDias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
 
             if (!isNaN(diferenciaDias)) {
-              if (diferenciaDias <= 10 && diferenciaDias > 5) {
+              if (diferenciaDias <= 10 && diferenciaDias > 5 && settings.showExpiryUpcoming) {
                 alertasProducto.push({
                   tipo: "vencimiento-próximo",
                   mensaje: `${producto.nombre} (lote ${lote.codigo || ""}) vence en ${diferenciaDias} días`,
                 });
-              } else if (diferenciaDias <= 5 && diferenciaDias >= 0) {
+              } else if (diferenciaDias <= 5 && diferenciaDias >= 0 && settings.showExpiryUrgent) {
                 alertasProducto.push({
                   tipo: "vencimiento-urgente",
                   mensaje: `${producto.nombre} (lote ${lote.codigo || ""}) vence en ${diferenciaDias} días. Tomar acción urgente.`,
@@ -51,13 +55,13 @@ export default function AlertaStockModal({ productos, visible, onClose }) {
     });
 
     setAlertas(alertasDetectadas);
-  }, [productos]);
+  }, [productos, settings, isPausedNow]);
 
-  if (!visible || alertas.length === 0) return null;
+  if (!visible || !settings.enabled || isPausedNow || alertas.length === 0) return null;
 
   return (
-    <div className="alerta-overlay">
-      <div className="alerta-modal">
+    <div className="alerta-overlay" onClick={onClose}>
+      <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>
         <h5 className="text-warning fw-bold mb-3">
           <i className="bi bi-bell-fill me-2"></i> Alertas del sistema
         </h5>

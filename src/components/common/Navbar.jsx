@@ -1,28 +1,69 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaBell, FaUserCog, FaTruck, FaBookOpen, FaTint } from "react-icons/fa";
+import { FaBell, FaUserCog, FaTruck, FaBookOpen, FaTint, FaCog } from "react-icons/fa";
 import { GiCook } from "react-icons/gi";
 import { useProductos } from "../../context/ProductoContext";
+import { useAlertSettings } from "../../context/AlertSettingsContext";
+import AlertSettingsModal from "../common/AlertSettingsModal";
 import "../styles/Navbar.css";
 
 export default function Navbar() {
   const { pathname } = useLocation();
   const { productos } = useProductos();
+  const { settings, isPausedNow } = useAlertSettings();
+
   const [mostrarAlertas, setMostrarAlertas] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    // al cambiar de ruta, cerrar alertas
     setMostrarAlertas(false);
   }, [pathname]);
 
-  const productosAlertaRoja = productos.filter((p) => p.stock <= p.stockCritico);
-  const productosAlertaAmarilla = productos.filter(
-    (p) => p.stock > p.stockCritico && p.stock <= p.stockCritico * 2
-  );
+  // Filtrado de alertas según ajustes (sólo stock acá – vencimientos los tratás en AlertaStockModal)
+  const productosAlertaRoja = useMemo(() => {
+    if (!settings.enabled || isPausedNow || !settings.showStock) return [];
+    return productos.filter((p) => Number(p.stock) <= Number(p.stockCritico));
+  }, [productos, settings, isPausedNow]);
+
+  const productosAlertaAmarilla = useMemo(() => {
+    if (!settings.enabled || isPausedNow || !settings.showStock) return [];
+    return productos.filter((p) => {
+      const s = Number(p.stock), c = Number(p.stockCritico);
+      return s > c && s <= c * 2;
+    });
+  }, [productos, settings, isPausedNow]);
+
   const hayAlertas = productosAlertaRoja.length > 0 || productosAlertaAmarilla.length > 0;
 
   const isActive = (route) =>
     pathname === route || pathname.startsWith(`${route}/`);
+
+  const dropdownContent = () => {
+    if (!settings.enabled) return <span className="dropdown-item-text text-muted">🔕 Alertas desactivadas</span>;
+    if (isPausedNow) return <span className="dropdown-item-text text-warning">⏸️ Alertas en pausa</span>;
+    if (!settings.showStock) return <span className="dropdown-item-text text-muted">🔕 Stock: oculto</span>;
+    if (!hayAlertas) return <span className="dropdown-item-text text-success">✅ No hay alertas</span>;
+    return (
+      <>
+        {productosAlertaRoja.map((p) => (
+          <div key={p._id} className="dropdown-item text-danger fw-bold text-wrap">
+            🔴 {p.nombre}
+            <br />
+            <small>Stock crítico: {Number(p.stock).toFixed(2)} {p.unidad}</small>
+          </div>
+        ))}
+        {productosAlertaAmarilla.map((p) => (
+          <div key={p._id} className="dropdown-item text-warning text-wrap">
+            🟠 {p.nombre}
+            <br />
+            <small>Stock bajo: {Number(p.stock).toFixed(2)} {p.unidad}</small>
+          </div>
+        ))}
+      </>
+    );
+  };
+
+  const showBadge = settings.enabled && settings.showNavbarBadge && !isPausedNow && hayAlertas;
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3 position-relative">
@@ -42,7 +83,7 @@ export default function Navbar() {
 
       <div className="collapse navbar-collapse" id="navbarNav">
         <ul className="navbar-nav ms-auto align-items-center">
-          {/* Alertas */}
+          {/* Campana / Alertas */}
           <li className="nav-item me-3 position-relative">
             <button
               className="btn btn-link text-white position-relative"
@@ -52,7 +93,7 @@ export default function Navbar() {
               title="Alertas de stock"
             >
               <FaBell />
-              {hayAlertas && (
+              {showBadge && (
                 <span
                   className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                   style={{ fontSize: "0.6rem" }}
@@ -68,28 +109,22 @@ export default function Navbar() {
                 onClick={() => setMostrarAlertas(false)}
               >
                 <h6 className="dropdown-header">Alertas de stock</h6>
-                {hayAlertas ? (
-                  <>
-                    {productosAlertaRoja.map((p) => (
-                      <div key={p._id} className="dropdown-item text-danger fw-bold text-wrap">
-                        🔴 {p.nombre}
-                        <br />
-                        <small>Stock crítico: {Number(p.stock).toFixed(2)} {p.unidad}</small>
-                      </div>
-                    ))}
-                    {productosAlertaAmarilla.map((p) => (
-                      <div key={p._id} className="dropdown-item text-warning text-wrap">
-                        🟠 {p.nombre}
-                        <br />
-                        <small>Stock bajo: {Number(p.stock).toFixed(2)} {p.unidad}</small>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <span className="dropdown-item-text text-success">✅ No hay alertas</span>
-                )}
+                {dropdownContent()}
               </div>
             )}
+          </li>
+
+          {/* Engranaje / Ajustes de alertas */}
+          <li className="nav-item me-3">
+            <button
+              className="btn btn-link text-white"
+              style={{ fontSize: "1.2rem" }}
+              title="Ajustes de alertas"
+              aria-label="Ajustes de alertas"
+              onClick={() => setShowSettings(true)}
+            >
+              <FaCog />
+            </button>
           </li>
 
           {/* Admin */}
@@ -140,19 +175,22 @@ export default function Navbar() {
             </Link>
           </li>
 
-  <li className="nav-item w-100">
+          {/* Aceite */}
+          <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/aceite") ? "active" : ""}`}
               to="/aceite"
-              title="Recetas"
+              title="C.Aceite"
             >
               <FaTint className="nav-icon" />
               <span className="nav-label">C.Aceite</span>
             </Link>
           </li>
-
         </ul>
       </div>
+
+      {/* Modal ajustes */}
+      <AlertSettingsModal show={showSettings} onClose={() => setShowSettings(false)} />
     </nav>
   );
 }
