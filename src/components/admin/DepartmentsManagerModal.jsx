@@ -10,10 +10,9 @@ export default function DepartmentsManagerModal({ show, onClose }) {
   const [nuevo, setNuevo] = useState("");
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
-  const [pendingDelete, setPendingDelete] = useState(null); // dep a borrar
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [replacement, setReplacement] = useState("");
 
-  // Productos afectados por el depto que se quiere borrar
   const afectados = useMemo(() => {
     if (!pendingDelete) return [];
     return productos.filter(
@@ -26,7 +25,6 @@ export default function DepartmentsManagerModal({ show, onClose }) {
     return departamentos.filter((d) => d._id !== pendingDelete._id);
   }, [departamentos, pendingDelete]);
 
-  // ===== Crear =====
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!nuevo.trim()) return;
@@ -38,7 +36,6 @@ export default function DepartmentsManagerModal({ show, onClose }) {
     }
   };
 
-  // ===== Editar =====
   const startEdit = (d) => {
     setEditId(d._id);
     setEditName(d.displayName);
@@ -59,7 +56,6 @@ export default function DepartmentsManagerModal({ show, onClose }) {
     }
   };
 
-  // ===== Borrar (con reemplazo opcional) =====
   const askDelete = (d) => {
     setPendingDelete(d);
     setReplacement("");
@@ -90,7 +86,6 @@ export default function DepartmentsManagerModal({ show, onClose }) {
     setReplacement("");
   };
 
-  // ===== Render =====
   if (!show) return null;
 
   return (
@@ -102,7 +97,7 @@ export default function DepartmentsManagerModal({ show, onClose }) {
         </div>
 
         <div className="dep-modal-body">
-          {/* Crear */}
+          
           <form className="input-group input-group-sm mb-3" onSubmit={handleCreate}>
             <span className="input-group-text">Nuevo</span>
             <input
@@ -176,7 +171,6 @@ export default function DepartmentsManagerModal({ show, onClose }) {
         </div>
       </div>
 
-      {/* Diálogo de borrado con reemplazo */}
       {pendingDelete && (
         <div className="dep-dialog-backdrop" onClick={closeDeleteDialog}>
           <div className="dep-dialog" onClick={(e) => e.stopPropagation()}>

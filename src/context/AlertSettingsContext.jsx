@@ -3,16 +3,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 const LS_KEY = "alert_settings_v1";
 
 const defaultSettings = {
-  // Maestro
-  enabled: true,              // activar/desactivar alertas globalmente
-  showNavbarBadge: true,      // mostrar el badge en la campana del navbar
-  // Pausas
-  paused: false,              // pausa manual
-  pauseUntil: null,           // ISO string; si es futuro, también pausa
-  // Tipos
-  showStock: true,            // alertas de stock bajo
-  showExpiryUrgent: true,     // vencimiento <= 5 días
-  showExpiryUpcoming: true,   // vencimiento <= 10 y > 5
+  
+  enabled: true,              
+  showNavbarBadge: true,      
+  paused: false,            
+  pauseUntil: null,           
+  showStock: true,            
+  showExpiryUrgent: true,     
+  showExpiryUpcoming: true,
 };
 
 const AlertSettingsContext = createContext(null);

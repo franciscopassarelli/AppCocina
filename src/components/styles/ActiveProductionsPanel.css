@@ -16,12 +16,10 @@
   font-size: 0.9rem;
 }
 
-/* Lista de cards */
 .active-productions-list {
   width: 100%;
 }
 
-/* Card individual */
 .active-production-card {
   min-width: 280px;
   max-width: 360px;
@@ -29,12 +27,10 @@
   color: #eee;
 }
 
-/* Texto de insumos consumidos */
 .consumidos-text {
   word-break: break-word;
 }
 
-/* Responsive */
 @media (max-width: 576px) {
   .active-production-card {
     min-width: 100%;

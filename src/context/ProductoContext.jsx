@@ -16,7 +16,6 @@ export function ProductoProvider({ children }) {
   const API_HISTORIAL_URL = import.meta.env.VITE_API_HISTORIAL_URL;
 
   useEffect(() => {
-    // Cargar productos
     axios.get(API_PRODUCTOS_URL)
       .then((res) => {
         console.log("📦 Productos recibidos del backend:", res.data);
@@ -24,7 +23,6 @@ export function ProductoProvider({ children }) {
       })
       .catch((err) => console.error("Error al cargar productos:", err));
 
-    // Cargar historial
     axios.get(API_HISTORIAL_URL)
       .then((res) => {
         const historialData = res.data;
@@ -118,7 +116,7 @@ export function ProductoProvider({ children }) {
         historial,
         historialPorDia,
         agregarRegistroHistorial,
-        obtenerYActualizarProductos, // 👈 importante
+        obtenerYActualizarProductos,
       }}
     >
       {children}

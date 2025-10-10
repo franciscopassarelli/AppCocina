@@ -5,7 +5,6 @@ require("dotenv").config();
 
 const app = express();
 
-// CORS
 app.use(cors({
   origin: ["http://localhost:5173", "https://app-cocina.vercel.app"],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
@@ -14,13 +13,11 @@ app.use(cors({
 
 app.use(express.json());
  
-// Mongo
 const uri = process.env.MONGO_URI;
 mongoose.connect(uri)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Health
 app.get("/api", (_req, res) => res.send("✅ API funcionando correctamente"));
 app.use((req, _res, next) => {
   if (req.path.startsWith('/api/meat-blend')) {
@@ -30,7 +27,6 @@ app.use((req, _res, next) => {
 });
 app.get('/api/meat-blend/health', (_req, res) => res.json({ ok: true }));
 
-// Routers
 const productoRoutes = require("./routes/productos");
 const historialRoutes = require("./routes/historial");
 const recipesRouter = require('./routes/recipes');
@@ -49,7 +45,6 @@ app.use('/api/production-runs', productionRunsRouter);
 app.use("/api/productos", productoRoutes);
 app.use("/api/historial", historialRoutes);
 
-// Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

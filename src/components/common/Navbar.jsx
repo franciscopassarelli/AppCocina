@@ -19,7 +19,6 @@ export default function Navbar() {
     setMostrarAlertas(false);
   }, [pathname]);
 
-  // Filtrado de alertas según ajustes (sólo stock acá – vencimientos los tratás en AlertaStockModal)
   const productosAlertaRoja = useMemo(() => {
     if (!settings.enabled || isPausedNow || !settings.showStock) return [];
     return productos.filter((p) => Number(p.stock) <= Number(p.stockCritico));
@@ -83,7 +82,6 @@ export default function Navbar() {
 
       <div className="collapse navbar-collapse" id="navbarNav">
         <ul className="navbar-nav ms-auto align-items-center">
-          {/* Campana / Alertas */}
           <li className="nav-item me-3 position-relative">
             <button
               className="btn btn-link text-white position-relative"
@@ -114,7 +112,6 @@ export default function Navbar() {
             )}
           </li>
 
-          {/* Engranaje / Ajustes de alertas */}
           <li className="nav-item me-3">
             <button
               className="btn btn-link text-white"
@@ -127,7 +124,6 @@ export default function Navbar() {
             </button>
           </li>
 
-          {/* Admin */}
           <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/admin") ? "active" : ""}`}
@@ -139,7 +135,6 @@ export default function Navbar() {
             </Link>
           </li>
 
-          {/* Cocina */}
           <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/cook") ? "active" : ""}`}
@@ -151,7 +146,6 @@ export default function Navbar() {
             </Link>
           </li>
 
-          {/* Proveedores */}
           <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/proveedores") ? "active" : ""}`}
@@ -163,7 +157,6 @@ export default function Navbar() {
             </Link>
           </li>
 
-          {/* Recetas */}
           <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/recipeadmin") ? "active" : ""}`}
@@ -175,7 +168,6 @@ export default function Navbar() {
             </Link>
           </li>
 
-          {/* Aceite */}
           <li className="nav-item w-100">
             <Link
               className={`nav-link nav-btn ${isActive("/aceite") ? "active" : ""}`}
@@ -189,7 +181,6 @@ export default function Navbar() {
         </ul>
       </div>
 
-      {/* Modal ajustes */}
       <AlertSettingsModal show={showSettings} onClose={() => setShowSettings(false)} />
     </nav>
   );

@@ -1,4 +1,3 @@
-/* ===== Botón verde (variante chica) - a juego con .button-green-lg ===== */
 .button-green-sm {
   background-image: linear-gradient(-180deg, #00c851, #007e33);
   color: #fff;
@@ -24,7 +23,6 @@
   box-shadow: none;
 }
 
-/* ===== Botón ghost (para “Cancelar”, “limpiar búsqueda”, etc.) ===== */
 .button-ghost-sm {
   background: #222;
   color: #fff;
@@ -42,7 +40,7 @@
 .button-ghost-sm:hover { background: #272727; border-color: #555; }
 .button-ghost-sm:active { transform: scale(0.98); }
 
-/* ===== Píldoras oscuras para tabs “Abiertos / Todos” ===== */
+
 .btn-tabs {
   display: inline-flex;
   gap: 8px;
@@ -64,5 +62,5 @@
 .button-dark-pill:hover { color: #fff; }
 .button-dark-pill.active { background: #2a2a2a; color: #fff; }
 
-/* ancho completo cuando haga falta */
+
 .w-100 { width: 100%; }

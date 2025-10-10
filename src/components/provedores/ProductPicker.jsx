@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-// Pequeña utilidad para resaltar coincidencias
 function highlight(text, query) {
   if (!query) return text;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -19,35 +18,32 @@ const MAX_RECENTS = 6;
 
 export default function ProductPicker({
   productos = [],
-  value,                   // productId seleccionado
-  onChange,                // (productId) => void
+  value,                   
+  onChange,                
   placeholder = "Buscar producto…",
   autoFocus = false,
-  showUnit = true,         // muestra (kg|l|unidad)
+  showUnit = true,         
   className = "",
 }) {
   const [query, setQuery] = useState("");
   const [dept, setDept] = useState("Todos");
   const [open, setOpen] = useState(false);
-  const [hi, setHi] = useState(0); // highlighted index
+  const [hi, setHi] = useState(0); 
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Departamentos únicos
   const departamentos = useMemo(() => {
     const set = new Set();
     for (const p of productos) if (p?.departamento) set.add(p.departamento);
     return ["Todos", ...Array.from(set).sort()];
   }, [productos]);
 
-  // Mapa por id
   const prodMap = useMemo(() => {
     const m = new Map();
     for (const p of productos) m.set(p._id, p);
     return m;
   }, [productos]);
 
-  // Recientes
   const [recents, setRecents] = useState([]);
   useEffect(() => {
     try {
@@ -63,17 +59,15 @@ export default function ProductPicker({
     } catch {}
   };
 
-  // Filtrado
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return productos
       .filter((p) => (dept === "Todos" ? true : p.departamento === dept))
       .filter((p) => (q ? (p.nombre || "").toLowerCase().includes(q) : true))
       .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
-      .slice(0, 12); // límite de sugerencias
+      .slice(0, 12); 
   }, [productos, dept, query]);
 
-  // Cerrar al click afuera
   useEffect(() => {
     const onDocClick = (e) => {
       if (!wrapRef.current) return;
@@ -83,7 +77,6 @@ export default function ProductPicker({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // Teclado
   const onKeyDown = (e) => {
     if (!open) return;
     if (e.key === "ArrowDown") {
@@ -106,14 +99,12 @@ export default function ProductPicker({
     pushRecent(id);
     setOpen(false);
     setQuery("");
-    // focus próximo input si hace falta
   };
 
   const selected = value ? prodMap.get(value) : null;
 
   return (
     <div className={className} ref={wrapRef} style={{ position: "relative" }}>
-      {/* Selector de departamento + buscador */}
       <div className="d-flex gap-2">
         <select
           className="form-select form-select-sm"
@@ -140,7 +131,6 @@ export default function ProductPicker({
             aria-label="Buscar producto"
           />
 
-          {/* Dropdown */}
           {open && (query || recents.length > 0) && (
             <div
               className="shadow"
@@ -157,7 +147,6 @@ export default function ProductPicker({
                 overflow: "auto",
               }}
             >
-              {/* Recientes */}
               {!query && recents.length > 0 && (
                 <div className="p-2 border-bottom bg-light">
                   <div className="small text-muted mb-1">Usados recientemente</div>
@@ -181,7 +170,6 @@ export default function ProductPicker({
                 </div>
               )}
 
-              {/* Resultados */}
               {(query ? filtered : []).map((p, idx) => (
                 <button
                   key={p._id}
@@ -199,7 +187,6 @@ export default function ProductPicker({
                 </button>
               ))}
 
-              {/* Sin resultados */}
               {query && filtered.length === 0 && (
                 <div className="p-2 text-muted small">Sin resultados</div>
               )}
@@ -207,8 +194,6 @@ export default function ProductPicker({
           )}
         </div>
       </div>
-
-      {/* Seleccionado */}
       {selected && (
         <div className="small text-muted mt-1">
           Seleccionado: <strong>{selected.nombre}</strong>{" "}

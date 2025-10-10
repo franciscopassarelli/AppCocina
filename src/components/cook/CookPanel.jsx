@@ -12,9 +12,9 @@ import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
 import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
 import { getRecipes } from "../../api/recipes.js";
 
-const STORAGE_KEY = "activeRuns"; // corridas activas
+const STORAGE_KEY = "activeRuns"; 
 
-// === Helpers de LocalStorage ===
+
 const readJSON = (k, def) => {
   try {
     const raw = localStorage.getItem(k);
@@ -25,13 +25,10 @@ const readJSON = (k, def) => {
 };
 const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-// Conversión de unidades de entrada -> unidad base del producto
 function toProductoUnidad(valor, unidadEntrada, unidadProducto) {
   const n = Number(valor) || 0;
   if (!Number.isFinite(n) || n <= 0) return 0;
 
-  // unidad base = unidadProducto: 'unidad' | 'kg' | 'l'
-  // entradas permitidas: 'unidad', 'kg', 'g', 'l', 'ml'
   if (unidadProducto === "unidad") return n;
 
   if (unidadProducto === "kg") {
@@ -57,7 +54,7 @@ export default function CookPanel() {
     actualizarProducto,
   } = useProductos();
 
-  // ===== Estado =====
+ 
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const [descCantidad, setDescCantidad] = useState("");
   const [descUnidad, setDescUnidad] = useState("unidad");
@@ -66,7 +63,7 @@ export default function CookPanel() {
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true);
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
 
-  // Despliegues por depto
+
   const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
   const [departamentoActivoListado, setDepartamentoActivoListado] = useState(null);
 
@@ -74,22 +71,21 @@ export default function CookPanel() {
   const [confirmingRun, setConfirmingRun] = useState(null);
   const [cargando, setCargando] = useState(false);
 
-  // Recetas / modales
+  
   const [recipes, setRecipes] = useState([]);
   const [showPlan, setShowPlan] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Burger planner
+
   const [showMeatPlanner, setShowMeatPlanner] = useState(false);
 
-  // Quick stock
+  
   const [showQuickStock, setShowQuickStock] = useState(false);
   const [productoParaStock, setProductoParaStock] = useState(null);
 
   const productoSeleccionado = productos.find((p) => p._id === productoIdSeleccionado);
-  const API_URL = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
+  const API_URL = import.meta.env.VITE_API_URL; 
 
-  // ===== Persistencia y sincronización de activeRuns =====
   useEffect(() => {
     writeJSON(STORAGE_KEY, activeRuns);
   }, [activeRuns]);
@@ -131,7 +127,6 @@ export default function CookPanel() {
     setShowPlan(false);
   }
 
-  // ===== Carga de recetas =====
   useEffect(() => {
     let cancelado = false;
 
@@ -162,7 +157,7 @@ export default function CookPanel() {
     setTimeout(() => setAlerta(null), 3200);
   };
 
-  // Preconfigurar unidad del input al abrir modal de uso manual
+ 
   useEffect(() => {
     if (productoSeleccionado) {
       if (productoSeleccionado.unidad === "kg") setDescUnidad("kg");
@@ -172,7 +167,6 @@ export default function CookPanel() {
     }
   }, [productoSeleccionado]);
 
-  // ===== Registrar uso manual (descuento directo, FEFO) =====
   const handleRegistrar = async () => {
     const prod = productoSeleccionado;
     if (!prod) {
@@ -185,15 +179,12 @@ export default function CookPanel() {
       mostrarMensajeAlerta("Ingresá una cantidad válida a descontar.");
       return;
     }
-
-    // Convertimos a la unidad base del producto (kg/l/unidad)
     const aDescontar = toProductoUnidad(cantidadIngresada, descUnidad, prod.unidad);
     if (aDescontar <= 0) {
       mostrarMensajeAlerta("La cantidad a descontar en la unidad del producto es inválida.");
       return;
     }
 
-    // FEFO: descontar de lotes por fecha de vencimiento ascendente
     let restante = aDescontar;
     const lotesOrdenados = [...(prod.lotes || [])].sort(
       (a, b) => new Date(a.fechaVencimiento || 0) - new Date(b.fechaVencimiento || 0)
@@ -206,7 +197,7 @@ export default function CookPanel() {
       if (disponible <= 0) return l;
 
       const d = Math.min(disponible, restante);
-      const nuevoDisponible = +(disponible - d).toFixed(6); // precisión
+      const nuevoDisponible = +(disponible - d).toFixed(6); 
 
       restante -= d;
 
@@ -222,11 +213,10 @@ export default function CookPanel() {
       0
     );
 
-    // Registro de historial simple (opcional)
     const nuevoRegistro = {
       producto: prod.nombre,
       fecha: new Date(),
-      uso: prod.unidad === "unidad" ? 0 : aDescontar, // en kg o l
+      uso: prod.unidad === "unidad" ? 0 : aDescontar, 
       unidades: prod.unidad === "unidad" ? Math.round(aDescontar) : 0,
       desperdicio: 0,
       motivo: "Uso manual",
@@ -235,14 +225,14 @@ export default function CookPanel() {
     try {
       setCargando(true);
 
-      // Persistir cambios
+     
       await fetch(`${API_URL}/productos/${prod._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stock: nuevoStock, lotes: nuevosLotes }),
       });
 
-      // Si tu backend requiere historial:
+     
       try {
         await fetch(`${API_URL}/historial`, {
           method: "POST",
@@ -251,12 +241,11 @@ export default function CookPanel() {
         });
         agregarRegistroHistorial({ ...nuevoRegistro, id: crypto.randomUUID() });
       } catch {
-        /* opcional */
+       
       }
 
       await actualizarStock(prod._id, nuevoStock);
 
-      // limpiar
       setDescCantidad("");
       setProductoIdSeleccionado(null);
 
@@ -269,7 +258,7 @@ export default function CookPanel() {
     }
   };
 
-  // ===== Ingreso rápido de stock =====
+  
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
@@ -294,7 +283,6 @@ export default function CookPanel() {
     }
   };
 
-  // Agrupar productos por departamento
   const productosPorDepartamento = productos.reduce((acc, prod) => {
     const depto = prod.departamento || "Otros";
     if (!acc[depto]) acc[depto] = [];
@@ -302,7 +290,6 @@ export default function CookPanel() {
     return acc;
   }, {});
 
-  // Confirmación run
   function handleConfirmClose(ok, runId) {
     setShowConfirm(false);
     if (ok) {
@@ -332,10 +319,8 @@ export default function CookPanel() {
         </div>
       )}
 
-      {/* ===== Producción (recetas) + Carne (Blend) ===== */}
       <div className="container mb-4">
         <div className="row g-3 align-items-stretch production-row">
-          {/* Panel Producción */}
           <div className="col-12 col-lg-6">
             <div className="production-panel">
               <h3 className="mb-3">Producción (Recetas)</h3>
@@ -346,7 +331,6 @@ export default function CookPanel() {
             </div>
           </div>
 
-          {/* Panel Carne */}
           <div className="col-12 col-lg-6">
             <div className="production-panel">
               <h3 className="mb-3">Burger (Medallones)</h3>
@@ -359,7 +343,6 @@ export default function CookPanel() {
         </div>
       </div>
 
-      {/* Panel de producciones activas */}
       <ActiveProductionsPanel
         runs={activeRuns}
         onConfirm={(run) => {
@@ -368,13 +351,11 @@ export default function CookPanel() {
         }}
       />
 
-      {/* Modal del planner */}
       <MeatBlendPlannerModal
         show={showMeatPlanner}
         onClose={() => setShowMeatPlanner(false)}
       />
 
-      {/* ===== Ingreso rápido de stock ===== */}
       <div className="container section-card card-dark">
         <h5 className="mb-3 text-center">Ingreso rápido de stock</h5>
 
@@ -428,7 +409,6 @@ export default function CookPanel() {
         ))}
       </div>
 
-      {/* ===== Listado por departamento (Uso Manual del stock) ===== */}
       <div className="container section-card card-dark">
         <h5 className="mb-3 text-center">Uso Manual del stock</h5>
         {!productoSeleccionado && (
@@ -510,7 +490,6 @@ export default function CookPanel() {
                   {productoSeleccionado.unidad}
                 </p>
 
-                {/* Entrada genérica de descuento */}
                 <div className="row g-2 mb-2">
                   <div className="col-md-7">
                     <label className="form-label form-label-sm">Cantidad a descontar</label>
@@ -595,7 +574,6 @@ export default function CookPanel() {
         )}
       </AnimatePresence>
 
-      {/* ===== Modales ===== */}
       <ModalAddStock
         show={showQuickStock}
         producto={productoParaStock}

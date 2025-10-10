@@ -1,12 +1,11 @@
-// src/components/provedores/ProvidersDirectoryModal.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
 export default function ProvidersDirectoryModal({
   show,
   onClose,
   providers = [],
-  onRefresh,            // async () => void
-  onOpenDetails,       // (provider) => void
+  onRefresh,           
+  onOpenDetails,      
 }) {
   const [q, setQ] = useState("");
 

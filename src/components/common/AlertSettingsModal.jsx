@@ -1,4 +1,3 @@
-// src/components/common/AlertSettingsModal.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { useAlertSettings } from "../../context/AlertSettingsContext";
 
@@ -8,7 +7,6 @@ export default function AlertSettingsModal({ show, onClose }) {
   const { settings, setSettings, isPausedNow, resumeNow, quickPauseHours, pauseToday } = useAlertSettings();
   const [draft, setDraft] = useState(settings);
 
-  // ✅ Hooks siempre arriba (se ejecutan SIEMPRE en cualquier render)
   useEffect(() => {
     if (show) setDraft(settings);
   }, [show, settings]);
@@ -28,7 +26,6 @@ export default function AlertSettingsModal({ show, onClose }) {
     onClose?.();
   };
 
-  // ⬅️ Recién acá decidimos si mostramos o no
   if (!show) return null;
 
   return (
@@ -39,7 +36,6 @@ export default function AlertSettingsModal({ show, onClose }) {
           Estado: <strong>{pausedLabel}</strong>
         </p>
 
-        {/* Activar/Desactivar global */}
         <div className="form-check form-switch mb-2">
           <input
             id="enabled"
@@ -53,7 +49,6 @@ export default function AlertSettingsModal({ show, onClose }) {
           </label>
         </div>
 
-        {/* Tipos */}
         <div className="mb-3">
           <label className="form-label fw-semibold">Tipos de alerta</label>
           <div className="d-flex flex-column gap-2">
@@ -96,7 +91,6 @@ export default function AlertSettingsModal({ show, onClose }) {
           </div>
         </div>
 
-        {/* Badge en navbar */}
         <div className="form-check form-switch mb-3">
           <input
             id="showNavbarBadge"
@@ -110,7 +104,6 @@ export default function AlertSettingsModal({ show, onClose }) {
           </label>
         </div>
 
-        {/* Pausas rápidas */}
         <div className="mb-3">
           <label className="form-label fw-semibold">Pausar</label>
           <div className="d-flex flex-wrap gap-2">

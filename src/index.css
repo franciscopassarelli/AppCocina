@@ -1,10 +1,8 @@
-/* Scroll horizontal para móviles */
 .historial-container {
   overflow-x: auto;
   width: 100%;
 }
 
-/* Responsive para botones */
 @media (max-width: 576px) {
   .historial-buttons {
     flex-direction: column;

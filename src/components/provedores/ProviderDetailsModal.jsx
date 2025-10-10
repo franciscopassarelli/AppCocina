@@ -1,4 +1,3 @@
-// src/components/provedores/ProviderDetailsModal.jsx
 import React from "react";
 
 export default function ProviderDetailsModal({ show, provider, onClose }) {

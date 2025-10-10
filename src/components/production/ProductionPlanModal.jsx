@@ -13,9 +13,9 @@ export default function ProductionPlanModal({
 }) {
   const [recipeId, setRecipeId] = useState("");
   const [cantidad, setCantidad] = useState("");
-  const [checked, setChecked] = useState({}); // idx -> bool
+  const [checked, setChecked] = useState({}); 
   const [msg, setMsg] = useState(null);
-  const [showAll, setShowAll] = useState(false); // 👈 para ver más/menos insumos
+  const [showAll, setShowAll] = useState(false); 
 
   const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
   const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
@@ -34,7 +34,7 @@ export default function ProductionPlanModal({
     [recipes, recipeId]
   );
 
-  // Calcular requeridos según cantidad elegida
+ 
   const requeridos = useMemo(() => {
     if (!recipe || !cantidad) return [];
     const n = Number(cantidad) || 0;
@@ -74,7 +74,7 @@ export default function ProductionPlanModal({
     if (!recipeId || !cantidad) return;
     setMsg(null);
 
-    // Validar stock
+    
     const faltantes = requeridos.filter((r) => r.disponible < r.total);
     if (faltantes.length > 0) {
       setMsg({
@@ -87,7 +87,7 @@ export default function ProductionPlanModal({
     }
 
     try {
-      // 1) Crear run
+      
       const run = await startRun({
         recipeId,
         unidadesPlanificadas: Number(cantidad),
@@ -96,7 +96,7 @@ export default function ProductionPlanModal({
       let updatedRun = run;
 
       if (consumirAhora) {
-        // 2) Consumir tildados
+        
         const items = requeridos
           .filter((r) => checked[r.idx])
           .map((r) => ({
@@ -125,7 +125,7 @@ export default function ProductionPlanModal({
         try {
           const payload = await res.json();
           if (payload?.run) updatedRun = payload.run;
-        } catch { /* no-op */ }
+        } catch {  }
       }
 
       setMsg({ type: "success", text: "Producción iniciada correctamente" });
@@ -142,7 +142,6 @@ export default function ProductionPlanModal({
 
   if (!show) return null;
 
-  // ⬇️ límites para tablet: más chico y sin scroll interno de paneles
   return (
     <div
       className="alerta-overlay"
@@ -150,14 +149,14 @@ export default function ProductionPlanModal({
       style={{
         padding: 12,
         alignItems: "flex-start",
-        overflow: "auto", // scroll general si hace falta
+        overflow: "auto", 
       }}
     >
       <div
         className="alerta-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(1000px, 96vw)", // 👈 un poco más chico
+          width: "min(1000px, 96vw)", 
           margin: "14px auto",
           borderRadius: 14,
           background: "#202020",
@@ -166,7 +165,6 @@ export default function ProductionPlanModal({
           padding: 16,
         }}
       >
-        {/* HEADER */}
         <div className="d-flex flex-wrap justify-content-between align-items-center mb-2">
           <h5 className="mb-0">Planificar producción</h5>
           {recipe && (
@@ -182,7 +180,6 @@ export default function ProductionPlanModal({
           </div>
         )}
 
-        {/* RECETAS (grilla compacta sin buscador) */}
         <div className="mb-2">
           <label className="form-label">Receta</label>
           <div
@@ -203,9 +200,9 @@ export default function ProductionPlanModal({
                     backgroundColor: activa ? "#2e7d32" : "#2a2a2a",
                     border: activa ? "2px solid #2e7d32" : "1px solid #3d3d3d",
                     borderRadius: 10,
-                    minHeight: 56,      // 👈 más bajo que la versión anterior
+                    minHeight: 56,     
                     padding: "8px 8px",
-                    fontSize: "0.9rem", // 👈 levemente más chico
+                    fontSize: "0.9rem", 
                     opacity: isBlocked ? 0.6 : 1,
                     cursor: isBlocked ? "not-allowed" : "pointer",
                   }}
@@ -239,7 +236,6 @@ export default function ProductionPlanModal({
           </div>
         </div>
 
-        {/* CANTIDAD */}
         <div className="d-flex flex-wrap align-items-end justify-content-between mt-2 mb-1">
           <div style={{ minWidth: 240 }}>
             <label className="form-label fw-bold">Cantidad a producir (unidades, kg, litros)</label>
@@ -261,7 +257,6 @@ export default function ProductionPlanModal({
             </div>
           </div>
 
-          {/* 👇 Tildar todos solo si hay receta seleccionada */}
           {recipe && requeridos.length > 0 && (
             <div className="d-flex gap-2 mt-3 mt-md-0">
               <button
@@ -282,12 +277,11 @@ export default function ProductionPlanModal({
           )}
         </div>
 
-        {/* INSUMOS (grilla compacta + ver más/menos) */}
         {recipe ? (
           <div className="mt-2">
             <label className="form-label">Insumos requeridos</label>
             {(() => {
-              const VISIBLE = 8; // 👈 cantidad visible por defecto (para no crecer demasiado)
+              const VISIBLE = 8; 
               const mostrar = showAll ? requeridos : requeridos.slice(0, VISIBLE);
 
               return (
@@ -354,7 +348,6 @@ export default function ProductionPlanModal({
           <div className="text-muted mt-2">Elegí una receta para ver los insumos.</div>
         )}
 
-        {/* FOOTER */}
         <div
           className="d-flex flex-wrap gap-2 justify-content-end mt-3 pt-2"
           style={{ borderTop: "1px solid #2b2b2b" }}

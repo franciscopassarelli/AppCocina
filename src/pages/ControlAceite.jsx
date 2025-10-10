@@ -15,14 +15,12 @@ const ControlAceite = () => {
   const [historial, setHistorial] = useState([]);
   const [alerta, setAlerta] = useState("");
 
-  // Estado del aceite
   const getEstadoAceite = (uso) => {
     if (uso <= 30) return { estado: "Bueno", color: "success" };
     if (uso <= 50) return { estado: "Regular", color: "warning" };
     return { estado: "Crítico", color: "danger" };
   };
 
-  // Cargar historial
   useEffect(() => {
     if (!aceite) return;
 
@@ -35,7 +33,6 @@ const ControlAceite = () => {
           .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         setHistorial(historialAceite);
 
-        // Calcular horas desde el último cambio
         if (historialAceite.length > 0) {
           const ultimoRegistro = historialAceite[0];
           const horasPasadas = (new Date() - new Date(ultimoRegistro.fecha)) / (1000 * 60 * 60);
@@ -51,7 +48,6 @@ const ControlAceite = () => {
     fetchHistorial();
   }, [aceite]);
 
-  // Timer: aumenta cada segundo
   useEffect(() => {
     const timer = setInterval(() => {
       setHorasDesdeCambio(prev => prev + 1 / 3600);
@@ -59,9 +55,8 @@ const ControlAceite = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // ALERTA basada en el timer
   useEffect(() => {
-    const umbralHoras = 30; // ejemplo
+    const umbralHoras = 30; 
     if (horasDesdeCambio >= umbralHoras) {
       setAlerta("⚠️ Es hora de cambiar el aceite.");
     } else {
@@ -82,10 +77,8 @@ const ControlAceite = () => {
       return;
     }
 
-    // Actualizar stock
     await actualizarStock(aceite._id, nuevoStock);
 
-    // Crear registro historial
     const registro = {
       producto: aceite._id,
       fecha: new Date(),
@@ -106,7 +99,6 @@ const ControlAceite = () => {
       agregarRegistroHistorial(data);
       setHistorial(prev => [data, ...prev]);
 
-      // Reiniciamos el timer al registrar un cambio
       setHorasDesdeCambio(0);
       setCantidadUsada("");
       setDesperdicio("");
@@ -126,7 +118,6 @@ const ControlAceite = () => {
         <span>Control de Aceite</span>
       </h2>
 
-      {/* ALERTA */}
       <AnimatePresence>
         {alerta && (
           <motion.div
@@ -141,7 +132,6 @@ const ControlAceite = () => {
         )}
       </AnimatePresence>
 
-      {/* PANEL PRINCIPAL */}
       <div className="aceite-card">
         <h5 className="mb-3">Estado actual</h5>
         <p>Horas desde último cambio: <strong>{horasDesdeCambio.toFixed(2)}h</strong></p>
@@ -174,7 +164,6 @@ const ControlAceite = () => {
         </form>
       </div>
 
-      {/* HISTORIAL */}
       <div className="aceite-card">
         <h5 className="mb-3 text-center">Historial de cambios</h5>
         {historial.length === 0 ? (

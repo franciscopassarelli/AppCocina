@@ -1,4 +1,3 @@
-// src/components/provedores/ProviderPicker.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { listProviders } from "../../api/providers";
 
@@ -15,14 +14,7 @@ function highlight(text = "", query = "") {
   );
 }
 
-/**
- * Props:
- *  - value: string (providerId seleccionado)
- *  - onChange: (providerId) => void
- *  - label?: string
- *  - compact?: boolean
- *  - onAddNew?: () => void   <-- NUEVO: abre modal de “Agregar proveedor”
- */
+
 export default function ProviderPicker({
   value,
   onChange,
@@ -32,13 +24,12 @@ export default function ProviderPicker({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [hi, setHi] = useState(0); // highlighted index
+  const [hi, setHi] = useState(0); 
   const [loading, setLoading] = useState(false);
   const [providers, setProviders] = useState([]);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Cargar proveedores (con filtro por q: nombre o CUIT)
   const fetchProviders = async (q = "") => {
     setLoading(true);
     try {
@@ -55,7 +46,6 @@ export default function ProviderPicker({
     fetchProviders("");
   }, []);
 
-  // Cerrar al click afuera
   useEffect(() => {
     const onDocClick = (e) => {
       if (!wrapRef.current) return;
@@ -65,7 +55,6 @@ export default function ProviderPicker({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
-  // Teclado
   const onKeyDown = (e) => {
     if (!open) return;
     if (e.key === "ArrowDown") {
@@ -93,7 +82,6 @@ export default function ProviderPicker({
     return providers.find((p) => p._id === value);
   }, [providers, value]);
 
-  // Buscar cuando cambia query (debounce sencillo)
   useEffect(() => {
     const t = setTimeout(() => {
       fetchProviders(query.trim());
@@ -106,7 +94,6 @@ export default function ProviderPicker({
       {label && <label className={`form-label ${compact ? "small mb-1" : ""}`}>{label}</label>}
 
       <div className="d-flex align-items-stretch gap-2">
-        {/* Buscador */}
         <div style={{ position: "relative", flex: 1 }}>
           <input
             ref={inputRef}
@@ -119,7 +106,6 @@ export default function ProviderPicker({
             aria-label="Buscar proveedor"
           />
 
-          {/* Dropdown */}
           {open && (
             <div
               className="shadow"
@@ -167,7 +153,6 @@ export default function ProviderPicker({
           )}
         </div>
 
-        {/* Botón Agregar proveedor (abre modal) */}
         <button
           type="button"
           className="button-green-sm"
@@ -178,7 +163,6 @@ export default function ProviderPicker({
         </button>
       </div>
 
-      {/* Seleccionado */}
       {selected && (
         <div className="small text-muted mt-1">
           Seleccionado: <strong>{selected.nombre}</strong>

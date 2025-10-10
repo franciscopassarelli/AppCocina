@@ -20,11 +20,10 @@ const esGrasa = (p) => /grasa|sebo/i.test(p.nombre || "");
 export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }) {
   const { productos = [] } = useProductos();
 
-  // ===== UI =====
   const [piezaProductoId, setPiezaProductoId] = useState("");
   const [piezaPeso, setPiezaPeso] = useState("");
   const [piezaUnidad, setPiezaUnidad] = useState("kg");
-  const [piezas, setPiezas] = useState([]); // [{id, productId, nombre, g}]
+  const [piezas, setPiezas] = useState([]); 
 
   const [fechaVenc, setFechaVenc] = useState("");
   const [noAplicaVenc, setNoAplicaVenc] = useState(false);
@@ -42,7 +41,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
   const FACTOR_GRASA = 0.32;
   const MEDALLON_GR = 80;
 
-  // ===== listas =====
   const carnes = useMemo(() => productos.filter(esCarne), [productos]);
   const grasas = useMemo(() => productos.filter(esGrasa), [productos]);
 
@@ -50,7 +48,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
     if (!grasaProductoId && grasas.length > 0) setGrasaProductoId(grasas[0]._id);
   }, [grasas, grasaProductoId]);
 
-  // ===== cálculos =====
   const carneTotalG = useMemo(
     () => piezas.reduce((acc, p) => acc + (Number(p.g) || 0), 0),
     [piezas]
@@ -105,7 +102,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
     setGrasaLimpia("");
     setGrasaLimpiaUnidad("kg");
     setGrasaProductoId(grasas[0]?._id || "");
-    // Mantengo "producidoPor" si querés repetir
   }
 
   const alertaDesperdicio =
@@ -113,9 +109,8 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
   const alertaGrasaAgregar =
     Number.isFinite(grasaPorAgregarG) && grasaPorAgregarG < 0 ? "text-warning" : "text-success";
 
-  // consumo sugerido (para mostrar / callback opcional)
   const consumoSugerido = useMemo(() => {
-    const map = new Map(); // productId -> gramos
+    const map = new Map(); 
     for (const p of piezas)
       map.set(p.productId, (map.get(p.productId) || 0) + (Number(p.g) || 0));
     if (grasaProductoId && grasaPorAgregarClampedG > 0) {
@@ -142,17 +137,14 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
     [grasas, grasaProductoId]
   );
 
-  // ===== guardar en backend =====
   async function producirYGuardar() {
     try {
       setSaving(true);
       setMsg(null);
 
-      // 1) piezas (auditoría): en kg
       const piezasKg = piezas.map((p) => +(p.g / 1000).toFixed(6));
 
-      // 2) consumos por producto (kg) + roles
-      const carneMap = new Map(); // productId -> kg
+      const carneMap = new Map(); 
       for (const p of piezas) {
         const kg = p.g / 1000;
         carneMap.set(p.productId, +((carneMap.get(p.productId) || 0) + kg).toFixed(6));
@@ -170,13 +162,11 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
         });
       }
 
-      // Validaciones
       if (consumos.length === 0) throw new Error("No hay consumos calculados.");
       if (medallones <= 0) throw new Error("No hay medallones para producir.");
       if (!noAplicaVenc && !fechaVenc)
         throw new Error("Indicá la fecha de vencimiento o marcá 'No aplica'.");
 
-      // 3) payload (SIN productoFinalId → no suma stock)
       const body = {
         piezas: piezasKg,
         carneLimpiaKg: +(carneLimpiaG / 1000).toFixed(6),
@@ -195,7 +185,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
 
       setMsg({ type: "success", text: "✅ Blend producido y corrida registrada." });
       window.dispatchEvent(new CustomEvent("runs:changed"));
-      // Se descuentan insumos → refrescar stock
       window.dispatchEvent(new Event("stock:changed"));
       resetAll();
     } catch (e) {
@@ -215,7 +204,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
       </div>
 
       <div className="row g-3" style={{ alignItems: "stretch" }}>
-        {/* IZQ: piezas */}
         <div className="col-12 col-lg-6">
          <div className="card h-100 meat-blend-card">
             <div className="card-body">
@@ -318,13 +306,11 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
           </div>
         </div>
 
-        {/* DER: limpieza, grasa, metas y guardar */}
         <div className="col-12 col-lg-6">
           <div className="card h-100" style={{ background: "#1f1f1f", color: "#eee" }}>
             <div className="card-body">
               <h6 className="card-title mb-2">Limpieza & proporciones</h6>
 
-              {/* Producido por */}
               <div className="mb-2">
                 <label className="form-label small">Producido por</label>
                 <input
@@ -335,7 +321,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 />
               </div>
 
-              {/* Producto de grasa (opcional) */}
               <div className="mb-2">
                 <label className="form-label small">Producto de grasa (opcional)</label>
                 <select
@@ -358,7 +343,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 )}
               </div>
 
-              {/* Vencimiento del producto final (se guarda en la corrida) */}
               <div className="mb-2">
                 <div className="d-flex align-items-center justify-content-between">
                   <label className="form-label small mb-0">Fecha de vencimiento</label>
@@ -388,7 +372,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 />
               </div>
 
-              {/* Entradas carne/grasa limpias */}
               <div className="row g-2">
                 <div className="col-7">
                   <label className="form-label small">Carne limpia</label>
@@ -438,7 +421,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 </div>
               </div>
 
-              {/* Resultados */}
               <hr className="text-secondary my-3" />
               <div className="row small gy-2">
                 <div className="col-6 d-flex justify-content-between">
@@ -476,7 +458,6 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 </div>
               )}
 
-              {/* Consumo sugerido + acciones */}
               <hr className="text-secondary my-3" />
               <div className="small">
                 <div className="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">

@@ -1,5 +1,4 @@
-// utils/fefo.js
-function consumirFEFO(producto, cantidad /* en misma unidad que producto.stock */) {
+function consumirFEFO(producto, cantidad) {
     const usados = [];
     let restante = Number(cantidad) || 0;
     const lotesOrdenados = [...(producto.lotes || [])]

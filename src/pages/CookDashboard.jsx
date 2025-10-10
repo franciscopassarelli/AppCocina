@@ -1,4 +1,3 @@
-// src/pages/CookDashboard.jsx
 import React from "react";
 import CookPanel from "../components/cook/CookPanel";
 import "../components/styles/CookDashboard.css"; 

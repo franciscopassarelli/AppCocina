@@ -1,12 +1,11 @@
-// src/pages/ProveedoresPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useProductos } from "../context/ProductoContext";
 import { listarLotesProveedor, crearLoteProveedor, asignarDesdeProveedor } from "../api/proveedores";
 import ProductPicker from "../components/provedores/ProductPicker";
 import ProviderPicker from "../components/provedores/ProviderPicker";
 import ProviderModal from "../components/provedores/ProviderFormModal";
-import ProvidersDirectoryModal from "../components/provedores/ProvidersDirectoryModal";   // <-- NUEVO
-import ProviderDetailsModal from "../components/provedores/ProviderDetailsModal";         // <-- NUEVO
+import ProvidersDirectoryModal from "../components/provedores/ProvidersDirectoryModal";   
+import ProviderDetailsModal from "../components/provedores/ProviderDetailsModal";        
 import { listProviders } from "../api/providers";
 import "../components/styles/proveedores.css";
 
@@ -57,7 +56,6 @@ export default function ProveedoresPage() {
     if (p?.unidad) setUnidad(p.unidad);
   }, [productoId, prodMap]);
 
-  // Lista de proveedores para nombres, búsqueda y detalle
   const [providers, setProviders] = useState([]);
   useEffect(() => {
     (async () => {
@@ -70,10 +68,9 @@ export default function ProveedoresPage() {
     [providers, providerId]
   );
 
-  // MODALES proveedores
   const [showProvCreateModal, setShowProvCreateModal] = useState(false);
   const [showProvDirectory, setShowProvDirectory] = useState(false);
-  const [showProvDetails, setShowProvDetails] = useState(null); // objeto proveedor ó null
+  const [showProvDetails, setShowProvDetails] = useState(null); 
 
   const handleProviderCreated = async (prov) => {
     try {
@@ -95,8 +92,7 @@ export default function ProveedoresPage() {
     try {
       await crearLoteProveedor({
         providerId,
-        proveedor: selectedProvider?.nombre, // texto plano para mostrar (fallback)
-        productoId,
+        proveedor: selectedProvider?.nombre,
         nombreProducto: prod.nombre,
         unidad,
         cantidadTotal: Number(cantidadTotal),
@@ -162,7 +158,6 @@ export default function ProveedoresPage() {
     return lotes.filter(l => (l.proveedor || "").toLowerCase().includes(q));
   }, [lotes, busqProv]);
 
-  // helper para encontrar el proveedor de un lote (por id o por nombre si el backend aún no guarda id)
   const findProviderForLote = (l) => {
     return (
       providers.find(p => String(p._id) === String(l.providerId)) ||
@@ -177,7 +172,6 @@ export default function ProveedoresPage() {
 
       {msg && <div className={`alert alert-${msg.type === 'danger' ? 'danger' : 'success'} py-2`}>{msg.text}</div>}
 
-      {/* CREAR LOTE DE PROVEEDOR */}
       <div className="card p-3 mb-3">
         <h6 className="mb-2">Nuevo stock fabrica</h6>
         <form onSubmit={handleCrear} className="row g-2 align-items-end">
@@ -244,7 +238,6 @@ export default function ProveedoresPage() {
         </form>
       </div>
 
-      {/* LISTA + FILTROS */}
       <div className="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
         <div className="btn-tabs">
           <button className={`button-dark-pill ${estadoFiltro==='open' ? 'active' : ''}`} onClick={()=>setEstadoFiltro('open')}>Abiertos</button>
@@ -258,7 +251,6 @@ export default function ProveedoresPage() {
             {busqProv && <button className="button-ghost-sm" type="button" onClick={()=>setBusqProv("")}>×</button>}
           </div>
 
-          {/* Botón “Proveedores” para abrir directorio */}
           <button type="button" className="button-green-sm" onClick={() => setShowProvDirectory(true)}>
             Proveedores
           </button>
@@ -339,14 +331,12 @@ export default function ProveedoresPage() {
         </div>
       )}
 
-      {/* MODAL: crear proveedor */}
       <ProviderModal
         show={showProvCreateModal}
         onClose={() => setShowProvCreateModal(false)}
         onCreated={handleProviderCreated}
       />
 
-      {/* MODAL: directorio de proveedores (con búsqueda y detalle) */}
       <ProvidersDirectoryModal
         show={showProvDirectory}
         onClose={() => setShowProvDirectory(false)}
@@ -355,14 +345,12 @@ export default function ProveedoresPage() {
         onOpenDetails={(prov) => setShowProvDetails(prov)}
       />
 
-      {/* MODAL: detalle individual desde la tabla */}
       <ProviderDetailsModal
         show={!!showProvDetails}
         provider={showProvDetails || null}
         onClose={() => setShowProvDetails(null)}
       />
 
-      {/* MODAL ASIGNAR */}
       {asignando && (
         <div className="alerta-overlay" onClick={() => setAsignando(null)}>
           <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>

@@ -10,7 +10,7 @@ const productoSchema = new mongoose.Schema({
   stockCritico: { type: Number, default: 0 },
   fechaCreacion: { type: Date, default: Date.now },
   fechaActualizacion: { type: Date, default: Date.now },
-  fechaVencimiento: { type: Date, default: null }, // no obligatorio
+  fechaVencimiento: { type: Date, default: null },
   facturaRemito: { type: String, default: "-" },
  lotes: [
     {

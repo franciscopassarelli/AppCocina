@@ -14,7 +14,6 @@ import ProveedoresPage from "./pages/Proveedores";
 import Navbar from "./components/common/Navbar";
 import ControlAceite from "./pages/ControlAceite";
 
-// Providers (ajustá los nombres si tu context exporta distinto)
 import { DepartamentosProvider } from "./context/DepartamentosContext";
 import { ProductoProvider } from "./context/ProductoContext";
 

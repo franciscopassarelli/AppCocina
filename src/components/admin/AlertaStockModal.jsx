@@ -14,8 +14,7 @@ export default function AlertaStockModal({ productos, visible, onClose }) {
     const hoy = new Date();
     const alertasDetectadas = productos.flatMap((producto) => {
       const alertasProducto = [];
-
-      // 🔹 Bajo stock (nivel producto)
+      
       if (settings.showStock) {
         const stock = Number(producto.stock);
         const stockCritico = Number(producto.stockCritico);
@@ -27,7 +26,6 @@ export default function AlertaStockModal({ productos, visible, onClose }) {
         }
       }
 
-      // 🔹 Vencimientos (nivel lote, solo si hay cantidad > 0)
       if (producto.lotes && Array.isArray(producto.lotes)) {
         producto.lotes.forEach((lote) => {
           if (lote.cantidad > 0 && lote.fechaVencimiento) {

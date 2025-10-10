@@ -57,7 +57,6 @@ export default function ProductionRunsList({ apiBase }) {
     return { totalProducidas: total, firstDate: min, lastDate: max };
   }, [runs]);
 
-  // Derivados (por si el backend aún no guarda desperdicio/eficiencia)
   function deriveWaste(r) {
     const plan = Number(r.unidadesPlanificadas || 0);
     const prod = Number(r.unidadesProducidas || 0);
@@ -107,7 +106,6 @@ export default function ProductionRunsList({ apiBase }) {
 
   return (
     <div className="card p-3 shadow-sm mt-4 runs-dark">
-      {/* Header */}
       <div className="list-header">
         <div className="title-side">
           <h5 className="mb-1">Historial de producción</h5>
@@ -140,7 +138,6 @@ export default function ProductionRunsList({ apiBase }) {
         </div>
       </div>
 
-      {/* Body */}
       {loading ? (
         <div className="d-flex align-items-center text-muted gap-2">
           <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
@@ -177,7 +174,6 @@ export default function ProductionRunsList({ apiBase }) {
                   unidad: c.unidad || "",
                 }));
 
-                // Derivados/servidor
                 const derived = deriveWaste(r);
                 const desperdicioCant = r.desperdicioCantidad ?? derived.desperdicioCantidad;
                 const desperdicioUni = r.desperdicioUnidad ?? derived.desperdicioUnidad;

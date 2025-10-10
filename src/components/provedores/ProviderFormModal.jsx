@@ -1,13 +1,7 @@
-// src/components/provedores/ProviderModal.jsx
 import React, { useState } from "react";
 import { createProvider } from "../../api/providers";
 
-/**
- * Props:
- *  - show: boolean
- *  - onClose: () => void
- *  - onCreated: (provider) => void
- */
+
 export default function ProviderModal({ show, onClose, onCreated }) {
   const [nombre, setNombre] = useState("");
   const [cuit, setCuit] = useState("");

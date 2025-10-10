@@ -10,9 +10,9 @@ import DepartmentsManagerModal from "./DepartmentsManagerModal";
 
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
-// ===== Umbrales de vencimiento =====
-const DIAS_ALERTA = 10; // alerta (<= 10 días)
-const DIAS_URGENTE = 5; // urgente (<= 5 días) -> lo resuelve el modal visualmente
+
+const DIAS_ALERTA = 10; 
+const DIAS_URGENTE = 5; 
 
 export default function ProductForm() {
   const { productos, agregarProducto, actualizarProducto, eliminarProducto } = useProductos();
@@ -33,12 +33,12 @@ export default function ProductForm() {
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
 
-  // 👇 Modal de alerta (igual que en CookPanel)
+  
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(false);
 
   const [showDepModal, setShowDepModal] = useState(false);
 
-  // ===== Helpers de fecha =====
+
   const startOfDay = (d) => {
     const x = new Date(d);
     x.setHours(0, 0, 0, 0);
@@ -52,8 +52,7 @@ export default function ProductForm() {
     return Math.ceil((fv - hoy) / (1000 * 60 * 60 * 24));
   };
 
-  // ===== Alerta stock / vencimiento (como CookPanel) =====
-  useEffect(() => {
+    useEffect(() => {
     if (!Array.isArray(productos) || productos.length === 0) {
       setMostrarAlertaStock(false);
       return;
@@ -65,13 +64,12 @@ export default function ProductForm() {
       const stockNum = Number(p.stock) || 0;
       const crit = Number(p.stockCritico) || 0;
 
-      // 1) Si no hay stock, no alerta de vencimiento (igual que en CookPanel)
+      
       if (stockNum <= 0) return false;
 
-      // 2) Stock crítico
+    
       if (stockNum <= crit) return true;
 
-      // 3) Lotes con stock disponible y vencimiento (vencidos o por vencer en <= 10 días)
       const lotes = Array.isArray(p.lotes) ? p.lotes : [];
       return lotes.some((l) => {
         const disp = Number(l.cantidadDisponible ?? l.cantidad ?? 0);
@@ -80,14 +78,13 @@ export default function ProductForm() {
 
         const fv = startOfDay(new Date(l.fechaVencimiento));
         const dias = Math.ceil((fv - hoy) / (1000 * 60 * 60 * 24));
-        return dias <= DIAS_ALERTA; // incluye vencidos (dias < 0) y próximos a vencer
+        return dias <= DIAS_ALERTA; 
       });
     });
 
     setMostrarAlertaStock(hayAlerta);
   }, [productos]);
 
-  // ===== Cargar datos al editar =====
   useEffect(() => {
     if (productoEditando) {
       setNombre(productoEditando.nombre || "");
@@ -108,12 +105,10 @@ export default function ProductForm() {
         setFechaVencimiento("");
       }
     } else {
-      // si no hay edición, setear depto por defecto (si existe)
       if (!departamento) setDepartamento(departamentos[0]?.displayName || "");
     }
   }, [productoEditando, departamentos, departamento]);
 
-  // ===== Limpiar form =====
   const limpiarFormulario = () => {
     setNombre("");
     setStock("");
@@ -126,7 +121,6 @@ export default function ProductForm() {
     setFacturaRemito("");
   };
 
-  // ===== Guardar producto =====
   const handleSubmit = async (e) => {
     e.preventDefault();
   if (!nombre || !stock || !unidad || !stockCritico) return;
@@ -169,7 +163,6 @@ const productoData = {
     }
   };
 
-  // ===== Agregar stock (nuevo lote) =====
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
@@ -185,7 +178,6 @@ const productoData = {
     }
   };
 
-  // ===== Borrar producto =====
   const handleEliminar = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
     try {
@@ -196,7 +188,6 @@ const productoData = {
     }
   };
 
-  // ===== Borrar lote individual =====
   const handleEliminarLote = async (productoId, loteIndex) => {
     const producto = productos.find((p) => p._id === productoId);
     if (!producto) return;
@@ -228,14 +219,12 @@ const productoData = {
     setLotesVisibles((prev) => ({ ...prev, [productoId]: !prev[productoId] }));
   };
 
-  // ===== Filtro por departamento =====
   const productosFiltrados = useMemo(() => {
     return productos.filter(
       (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
     );
   }, [productos, departamentoSeleccionado]);
 
-  // ===== Agrupar por departamento =====
   const productosPorDepartamento = useMemo(() => {
     return productosFiltrados.reduce((acc, prod) => {
       const key = prod.departamento || "(sin departamento)";
@@ -247,14 +236,12 @@ const productoData = {
 
   return (
     <>
-      {/* 🔔 Modal de alerta por stock crítico / vencimientos */}
       <AlertaStockModal
         productos={productos}
         visible={mostrarAlertaStock}
         onClose={() => setMostrarAlertaStock(false)}
       />
 
-      {/* Formulario */}
       <FormularioProducto
         onSubmit={handleSubmit}
         nombre={nombre}
@@ -292,7 +279,6 @@ const productoData = {
         </div>
       </div>
 
-      {/* Encabezado + botón para gestionar departamentos */}
       <div className="d-flex align-items-center justify-content-between mb-2">
         <h5 className="m-0">Productos agregados</h5>
         <button className="btn btn-sm btn-outline-secondary" onClick={() => setShowDepModal(true)}>
@@ -301,7 +287,6 @@ const productoData = {
         </button>
       </div>
 
-      {/* Filtros por departamento */}
       <div className="mb-3">
         <button
           className={`btn btn-sm me-2 ${departamentoSeleccionado === "Todos" ? "btn-dark" : "btn-outline-dark"}`}
@@ -320,7 +305,6 @@ const productoData = {
         ))}
       </div>
 
-      {/* Listado de productos agrupados por departamento */}
       {productos.length === 0 ? (
         <p>No hay productos aún.</p>
       ) : (
@@ -382,7 +366,6 @@ const productoData = {
                       </div>
                     </div>
 
-                    {/* ▼▼▼ Lotes ▼▼▼ */}
                     {prod.lotes && prod.lotes.length > 0 && (
                       <>
                         <button
@@ -467,7 +450,6 @@ const productoData = {
         </ul>
       )}
 
-      {/* Modal de gestión de departamentos */}
       <DepartmentsManagerModal show={showDepModal} onClose={() => setShowDepModal(false)} />
     </>
   );

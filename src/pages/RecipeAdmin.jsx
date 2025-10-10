@@ -11,9 +11,8 @@ const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
 
 export default function RecipeAdmin() {
   const { productos } = useProductos();
-  const API_BASE = import.meta.env.VITE_API_URL; // ej: http://localhost:5000/api
+  const API_BASE = import.meta.env.VITE_API_URL; 
 
-  // Form de creación
   const [nombre, setNombre] = useState("");
   const [ingredientes, setIngredientes] = useState([
     { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
@@ -21,23 +20,20 @@ export default function RecipeAdmin() {
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState(null);
 
-  // Listado y edición
   const [recipes, setRecipes] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
-  const [edit, setEdit] = useState(null); // receta en edición
+  const [edit, setEdit] = useState(null); 
   const [savingEdit, setSavingEdit] = useState(false);
-  const [expandedIds, setExpandedIds] = useState({}); // id -> bool
+  const [expandedIds, setExpandedIds] = useState({}); 
   const toggleExpand = (id) =>
   setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // index de productos
   const productosIndex = useMemo(() => {
     const map = new Map();
     productos.forEach((p) => map.set(p._id, p));
     return map;
   }, [productos]);
 
-  // cargar recetas
   async function refreshRecipes() {
     setLoadingList(true);
     try {
@@ -60,8 +56,6 @@ export default function RecipeAdmin() {
   return () => document.body.classList.remove('page-dark-bg');
 }, []);
 
-
-  // helpers form crear
   const addFila = () =>
     setIngredientes((prev) => [
       ...prev,
@@ -120,7 +114,7 @@ export default function RecipeAdmin() {
       ingredientes: ingredientes.map((ing) => ({
         productoId: ing.productoId,
         nombreProducto: ing.nombreProducto,
-        unidadBase: ing.unidadBase, // g | kg | ml | l | unidad
+        unidadBase: ing.unidadBase, 
         cantidadPorUnidad: Number(ing.cantidadPorUnidad),
       })),
     };
@@ -129,11 +123,8 @@ export default function RecipeAdmin() {
       setGuardando(true);
       const created = await createRecipe(API_BASE, body);
       setMsg({ type: "success", text: "Receta creada correctamente." });
-      // agregar al listado local
       setRecipes((prev) => [created, ...prev]);
-      // notificar a otros tabs/páginas
       window.dispatchEvent(new CustomEvent("recipes:changed"));
-      // limpiar form
       setNombre("");
       setIngredientes([
         { productoId: "", nombreProducto: "", unidadBase: "g", cantidadPorUnidad: "" },
@@ -146,7 +137,6 @@ export default function RecipeAdmin() {
     }
   };
 
-  // === Edición ===
   const openEdit = (r) => setEdit(JSON.parse(JSON.stringify(r)));
   const cancelEdit = () => setEdit(null);
 
@@ -206,7 +196,6 @@ export default function RecipeAdmin() {
         })),
       };
       const updated = await updateRecipe(API_BASE, edit._id, body);
-      // reemplazar en el listado
       setRecipes((prev) => prev.map((r) => (r._id === updated._id ? updated : r)));
       window.dispatchEvent(new CustomEvent("recipes:changed"));
       setEdit(null);
@@ -219,7 +208,6 @@ export default function RecipeAdmin() {
     }
   };
 
-  // === Borrado ===
   const removeRecipe = async (id) => {
     if (!confirm("¿Eliminar esta receta?")) return;
     try {
@@ -239,18 +227,11 @@ export default function RecipeAdmin() {
 
       {msg && <div className={`alert alert-${msg.type} py-2`}>{msg.text}</div>}
 
-      {/* ===== Form Crear ===== */}
      <form onSubmit={handleSubmit} className="card p-3 mb-4 recipe-form-card">
-  {/* Encabezado del form */}
   <div className="recipe-form__header">
     <h5 className="mb-0">Nueva receta</h5>
-    {/* Podés dejar sólo el submit de abajo si preferís */}
-    {/* <button className="btn btn-success btn-sm" disabled={guardando}>
-      {guardando ? "Guardando..." : "Crear receta"}
-    </button> */}
   </div>
 
-  {/* Nombre */}
   <div className="mb-3">
     <label className="form-label">Nombre de receta</label>
     <div className="input-with-icon">
@@ -264,7 +245,6 @@ export default function RecipeAdmin() {
     </div>
   </div>
 
-  {/* Ingredientes + acción */}
   <div className="d-flex justify-content-between align-items-center mt-2 mb-2">
     <h6 className="mb-0">Ingredientes</h6>
     <button
@@ -277,7 +257,6 @@ export default function RecipeAdmin() {
     </button>
   </div>
 
-  {/* Tabla ingredientes */}
 <div className="table-responsive responsive-table recipe-table-dark">
   <table className="table table-sm align-middle">
       <thead>
@@ -345,7 +324,6 @@ export default function RecipeAdmin() {
     </table>
   </div>
 
-  {/* Submit */}
   <div className="text-end mt-3">
     <button className="btn btn-success btn-success--stable" disabled={guardando}>
   {guardando ? "Guardando..." : "Crear receta"}
@@ -355,7 +333,6 @@ export default function RecipeAdmin() {
 </form>
 
 
-      {/* ===== Listado de Recetas ===== */}
     <div className="card p-3 shadow-sm recipe-list-card">
   <div className="d-flex justify-content-between align-items-center mb-2">
     <h5 className="mb-0">Recetas creadas</h5>
@@ -433,7 +410,6 @@ export default function RecipeAdmin() {
   )}
 </div>
 
-      {/* ===== Modal edición simple ===== */}
       {edit && (
         <div className="modal d-block" style={{ background: "rgba(0,0,0,0.5)" }} onClick={cancelEdit}>
   <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>

@@ -1,4 +1,3 @@
-/* ===== Scope exclusivo del formulario productos ===== */
 .formulario-producto {
   font-family: "Segoe UI", sans-serif;
   --fp-input-bg: #f9f9f9;
@@ -10,14 +9,12 @@
   --fp-compact-font: 0.82rem;
 }
 
-/* Labels */
 .formulario-producto .form-label {
   color: var(--fp-label-color);
   font-size: var(--fp-label-font);
   margin-bottom: 0.2rem;
 }
 
-/* Inputs / Selects */
 .formulario-producto input,
 .formulario-producto select {
   background: var(--fp-input-bg);
@@ -37,7 +34,6 @@
   box-shadow: 0 0 4px rgba(0, 200, 81, 0.3);
 }
 
-/* Inputs compactos */
 .formulario-producto .fp-compact {
   height: var(--fp-compact-height);
   font-size: var(--fp-compact-font);
@@ -45,7 +41,7 @@
   padding: 0.22rem 0.45rem;
 }
 
-/* Inputs de número sin spinner */
+
 .formulario-producto input[type="number"]::-webkit-inner-spin-button,
 .formulario-producto input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -55,7 +51,6 @@
   -moz-appearance: textfield;
 }
 
-/* Checkbox alineado */
 .formulario-producto .form-check {
   display: flex;
   align-items: center;
@@ -64,7 +59,6 @@
 
 }
 
-/* Botones verdes (Agregar/Actualizar) */
 .button-green-sm {
   background-image: linear-gradient(-180deg, #00c851, #007e33);
   color: #fff;
@@ -81,7 +75,6 @@
 .button-green-sm:active { transform: scale(0.98); }
 .button-green-sm:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
 
-/* Botón ghost (Cancelar) */
 .button-ghost-sm {
   background: #fff;
   color: #222;
@@ -98,7 +91,6 @@
 .button-ghost-sm:hover { background: #f0f0f0; border-color: #bbb; }
 .button-ghost-sm:active { transform: scale(0.98); }
 
-/* Botón rojo (Borrar) */
 .button-red-sm {
   background-image: linear-gradient(-180deg, #ff4444, #cc0000);
   color: #fff;
@@ -114,7 +106,6 @@
 .button-red-sm:active { transform: scale(0.98); }
 .button-red-sm:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
 
-/* ===== Botón verde (variante chica) - a juego con .button-green-lg ===== */
 .button-green-sm {
   background-image: linear-gradient(-180deg, #00c851, #007e33);
   color: #fff;
@@ -140,13 +131,10 @@
   box-shadow: none;
 }
 
-/* Ancho completo */
 .w-100 { width: 100%; }
 
-/* Espaciado de filas */
 .formulario-producto .row + .row { margin-top: 0.3rem; }
 
-/* Responsive suave */
 @media (max-width: 991px) {
   .formulario-producto .row { gap: .5rem; }
   .formulario-producto [class*="col-"] { min-width: 150px; }

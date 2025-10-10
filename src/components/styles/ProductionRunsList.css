@@ -1,4 +1,3 @@
-/* ===== Header con píldoras (dark) ===== */
 .runs-dark .list-header {
   display: flex;
   align-items: flex-start;
@@ -34,7 +33,6 @@
 }
 .runs-dark .actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 
-/* ===== Tabla centrada (desktop) ===== */
 .runs-dark .runs-table {
   table-layout: fixed;
   border-collapse: separate;
@@ -49,7 +47,6 @@
   border-color: #20232a;
 }
 
-/* Receta e Insumos a la izquierda para lectura */
 .runs-dark .runs-table th:nth-child(2),
 .runs-dark .runs-table td:nth-child(2),
 .runs-dark .runs-table th:nth-child(8),
@@ -57,33 +54,28 @@
   text-align: left;
 }
 
-/* Separadores verticales suaves */
 .runs-dark .runs-table thead th + th,
 .runs-dark .runs-table tbody td + td {
   border-left: 1px solid #1f2330;
 }
 
-/* Líneas horizontales sutiles */
 .runs-dark .runs-table tbody tr + tr td {
   border-top: 1px solid #1d2028;
 }
 
-/* Cabecera sticky con leve shadow */
 .runs-dark .sticky-header th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #0b1f2e;   /* encabezado oscuro */
+  background: #0b1f2e;   
   color: #eaf4ff;
   box-shadow: 0 1px 0 rgba(0,0,0,.35);
   border-bottom: 1px solid #22313f;
 }
 
-/* Alternado suave (filas) */
 .runs-dark .table-row-even { background-color: #111215; }
 .runs-dark .table-row-odd  { background-color: #0f1013; }
 
-/* ===== Chips de insumos (dark) ===== */
 .runs-dark .chips-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -103,7 +95,6 @@
 .runs-dark .chip .chip-label { font-weight: 600; color: #f2f4f6; }
 .runs-dark .chip .chip-qty   { opacity: .9; color: #9ee6a9; }
 
-/* ===== Responsive (≤768px): tabla -> tarjetas (dark) ===== */
 @media (max-width: 768px) {
   .runs-dark .actions { width: 100%; }
 
@@ -138,7 +129,6 @@
     text-wrap: nowrap;
     text-align: left;
   }
-  /* Insumos a toda la fila y texto a la izquierda */
   .runs-dark .runs-table tbody td[data-label="Insumos consumidos"] {
     grid-column: 1 / -1;
     align-items: flex-start;
@@ -147,7 +137,6 @@
   .runs-dark .chips-wrap { margin-top: .25rem; }
 }
 
-/* ===== Contenedor card oscuro (por si no lo tenías) ===== */
 .runs-dark {
   background: #0e0e10;
   color: #e9ecef;

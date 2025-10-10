@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProductos } from "../../context/ProductoContext";
-import * as XLSX from "xlsx"; // 👈 Asegurate de tener esto
+import * as XLSX from "xlsx"; 
 import "../../index.css";
 
 export default function StockList() {
@@ -43,7 +43,6 @@ export default function StockList() {
   const fechaActual = historialOrdenado[indiceDia]?.[0];
   const registrosActuales = historialOrdenado[indiceDia]?.[1] || [];
 
-  // 📥 Exporta todo el historial en una sola hoja
   const exportarHistorialCompleto = () => {
     const registrosTotales = historialOrdenado.flatMap(([fecha, registros]) =>
       registros.map((registro) => ({
@@ -64,12 +63,11 @@ export default function StockList() {
     XLSX.writeFile(wb, "historial_completo.xlsx");
   };
 
-  // 📁 Exporta el historial en pestañas separadas por día
   const exportarHistorialPorDia = () => {
   const wb = XLSX.utils.book_new();
 
   historialOrdenado.forEach(([fechaISO, registros]) => {
-    const nombreHoja = new Date(fechaISO).toISOString().split("T")[0]; // ✅ sin caracteres inválidos
+    const nombreHoja = new Date(fechaISO).toISOString().split("T")[0];
 
     const registrosFormateados = registros.map((registro) => ({
       Producto: registro.producto,

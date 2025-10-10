@@ -1,11 +1,8 @@
-/* src/components/styles/MeatBlendPlannerModal.css */
-
-/* evita que cualquier heredado del panel afecte al modal */
 .meat-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2050;               /* por encima de otros overlays */
-  isolation: isolate;          /* corta stacking contexts debajo */
+  z-index: 2050;              
+  isolation: isolate;         
   display: grid;
   place-items: center;
   background: rgba(10, 10, 10, 0.78);
@@ -24,7 +21,6 @@
   box-shadow: 0 10px 30px rgba(0,0,0,.6);
 }
 
-/* Header */
 .meat-modal-header {
   display: flex;
   align-items: center;
@@ -49,12 +45,10 @@
 }
 .meat-close:hover { color: #fff; background: rgba(255,255,255,.08); }
 
-/* Body */
 .meat-modal-content {
   padding: 16px;
 }
 
-/* Bloquea scroll del body como Bootstrap */
 body.modal-open {
   overflow: hidden;
 }

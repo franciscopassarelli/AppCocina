@@ -1,4 +1,3 @@
-// src/api/meatBlend.js
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
 export async function produceMeatBlend(body) {

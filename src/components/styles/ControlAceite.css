@@ -1,4 +1,3 @@
-/* ====== Contenedor principal de ControlAceite ====== */
 .aceite-container {
   background-color: #000;
   min-height: 100vh;
@@ -7,7 +6,6 @@
   font-family: Inter, sans-serif;
 }
 
-/* ====== Alerta flotante ====== */
 .aceite-alert {
   margin-bottom: 20px;
   padding: 10px 16px;
@@ -29,7 +27,6 @@
 .aceite-alert.bg-warning { background-color: #ffc107; color: #000; }
 .aceite-alert.bg-danger { background-color: #dc3545; }
 
-/* ====== Tarjeta de sección ====== */
 .aceite-card {
   background-color: #111;
   border-radius: 0.5rem;
@@ -39,7 +36,6 @@
   text-align: center;
 }
 
-/* ====== Inputs pequeños ====== */
 .aceite-card .aceite-input {
   font-size: 0.875rem;
   padding: 6px 10px;
@@ -51,14 +47,12 @@
   margin: 0 auto;
 }
 
-/* ====== Botón verde dentro de ControlAceite ====== */
 .aceite-card .button-green-lg {
   font-size: 1rem;
   padding: 0 20px;
   height: 40px;
 }
 
-/* ====== Tabla de historial ====== */
 .aceite-table {
   width: 100%;
   border-collapse: collapse;
@@ -89,7 +83,6 @@
 .text-warning { color: #ffc107; }
 .text-danger { color: #dc3545; }
 
-/* ====== Responsive ====== */
 @media (max-width: 576px) {
   .aceite-card .aceite-input { width: 100px; }
   .aceite-table th, .aceite-table td { font-size: 0.75rem; padding: 4px 6px; }

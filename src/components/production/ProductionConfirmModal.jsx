@@ -92,13 +92,11 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
     setLoading(true);
     setErrorMsg("");
     try {
-      // 1) Confirmar la corrida
       const payload = {
         unidadesProducidas: n,
-        unidadProducida, // 'unidad' | 'kg' | 'l'
+        unidadProducida, 
         preparadoPor: nombre,
         ...(noAplicaVenc ? {} : { fechaVencimientoProductoFinal: fechaVenc }),
-        // extras (opcionales)
         desperdicioCantidad: desperdicio,
         desperdicioUnidad: unidadProducida,
         eficienciaPorc,
@@ -108,14 +106,10 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
       await confirmRun(run._id, payload);
       window.dispatchEvent(new CustomEvent("runs:changed"));
 
-      // 2) Upsert en inventario (⬇️ ajustes clave)
       const existente = findExistingProducto();
 
-      // top-level en YYYY-MM-DD (como guarda tu FormularioProducto)
       const topLevelFecha = noAplicaVenc ? "" : fechaVenc;
-      // en lotes usamos ISO
       const isoVto = noAplicaVenc ? null : new Date(`${fechaVenc}T00:00:00`).toISOString();
-      // factura/remito no vacío (evita 400s)
       const facturaRemito = `PROD-${run._id}`;
 
       const lote = {
@@ -135,9 +129,9 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           ...existente,
           stock: nuevoStock,
           unidad: existente.unidad || unidadProducida,
-          departamento,                     // asegura que aparece en ese departamento
+          departamento,                     
           stockCritico: Number(existente.stockCritico || 0),
-          fechaVencimiento: topLevelFecha,  // YYYY-MM-DD (consistente con tu form)
+          fechaVencimiento: topLevelFecha,  
           facturaRemito,
           lotes,
           fechaActualizacion: new Date().toISOString(),
@@ -150,11 +144,11 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           stock: n,
           unidad: ["unidad", "kg", "l"].includes(unidadProducida) ? unidadProducida : "unidad",
           pesoPromedio: 0,
-          departamento,                     // displayName válido
+          departamento,                   
           stockCritico: 0,
-          fechaVencimiento: topLevelFecha,  // YYYY-MM-DD arriba
+          fechaVencimiento: topLevelFecha, 
           facturaRemito,
-          lotes: [lote],                    // ISO adentro del lote
+          lotes: [lote],                   
           fechaCreacion: new Date().toISOString(),
           fechaActualizacion: new Date().toISOString(),
         };
@@ -190,7 +184,6 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
 
         {errorMsg && <div className="alert alert-danger py-1 mb-2">{errorMsg}</div>}
 
-        {/* Operario */}
         <div className="mb-2">
           <label className="form-label">
             Nombre de quien produjo <span className="text-danger">*</span>
@@ -207,7 +200,6 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           />
         </div>
 
-        {/* Producido + unidad */}
         <div className="mb-2">
           <label className="form-label">
             Producido realmente <span className="text-danger">*</span>
@@ -237,7 +229,6 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           <small className="text-muted">Elegí si la cantidad está en unidades, kilogramos o litros.</small>
         </div>
 
-        {/* Resumen */}
         <div className="mb-3 small">
           <div className="d-flex flex-wrap gap-3">
             <span><strong>Desperdicio:</strong> {nf2.format(desperdicio)} {unidadProducida}</span>
@@ -250,7 +241,6 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           </div>
         </div>
 
-        {/* Vencimiento */}
         <div className="mb-3">
           <div className="d-flex align-items-center justify-content-between">
             <label className="form-label mb-0">
@@ -282,7 +272,6 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           />
         </div>
 
-        {/* Departamento destino */}
         <div className="mb-3">
           <label className="form-label">
             Departamento destino <span className="text-danger">*</span>

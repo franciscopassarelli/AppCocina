@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
-import "../styles/ActiveProductionsPanel.css"; // Asegúrate de tener este CSS para estilos personalizados
+import "../styles/ActiveProductionsPanel.css"; 
 
 export default function ActiveProductionsPanel({ runs = [], onConfirm, onCancel }) {
   const [, setTick] = useState(0);
 
-  // Refresca duración cada 1s
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Orden: más recientes primero
   const ordered = useMemo(() => {
     return [...runs].sort((a, b) => {
       const ta = a?.startedAt ? new Date(a.startedAt).getTime() : 0;

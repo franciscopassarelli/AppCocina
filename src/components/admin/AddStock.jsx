@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../styles/AddStock.css"; // estilos
+import "../styles/AddStock.css"; 
 
 export default function AddStock({ producto, onAgregarStock, onClose }) {
   const [numeroFactura, setNumeroFactura] = useState("");

@@ -1,4 +1,3 @@
-/* ====== Contenedor principal ====== */
 .cookpanel-container {
   background-color: #000;
   min-height: 100vh;
@@ -6,7 +5,6 @@
   padding-bottom: 3rem;
 }
 
-/* ====== Alerta flotante ====== */
 .cookpanel-alert {
   margin-bottom: 20px;
   padding: 12px 20px;
@@ -31,7 +29,6 @@
   opacity: 0;
 }
 
-/* ====== Tarjeta genérica de sección oscura ====== */
 .section-card {
   margin-bottom: 1rem;
   padding: 1rem;
@@ -44,7 +41,6 @@
   color: #fff;
 }
 
-/* ====== Panel de departamentos ====== */
 .department-panel {
   cursor: pointer;
   background-color: #111;
@@ -58,7 +54,6 @@
   text-transform: uppercase;
 }
 
-/* Contenedor de productos (botones) */
 .products-grid {
   display: flex;
   flex-wrap: wrap;
@@ -66,7 +61,6 @@
   justify-content: center;
 }
 
-/* ====== Botón de producto ====== */
 .product-btn {
   background-color: #222;
   color: white;
@@ -80,15 +74,13 @@
   font-size: 1.1rem;
 }
 
-/* ====== Modal fondo oscuro ====== */
 .modal-backdrop-dark {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* ====== Modal de detalle pequeño ====== */
 .small-modal {
-  font-size: 0.875rem; /* texto más pequeño */
-  max-width: 500px;    /* opcional: limita el ancho */
+  font-size: 0.875rem; 
+  max-width: 500px;   
   margin: auto;
 }
 
@@ -105,7 +97,7 @@
   padding: 6px 12px;
 }
 
-/* ====== Panel de Producción (ya lo tenías, lo dejo tal cual) ====== */
+
 .production-panel {
   background: #222;
   color: #fff;
@@ -134,13 +126,12 @@
   margin-bottom: 1.5rem;
 }
 
-/* Botón dentro del panel (por si lo necesitás) */
 .production-panel button {
   font-weight: 600;
   letter-spacing: 0.05em;
 }
 
-/* ====== Botón verde grande (ya lo tenías) ====== */
+
 .button-green-lg {
   background-image: linear-gradient(-180deg, #00c851, #007e33);
   border-radius: 6px;
@@ -148,10 +139,10 @@
   color: #fff;
   cursor: pointer;
   font-family: Inter, sans-serif;
-  font-size: 1.25rem;      /* más grande */
-  height: 48px;            /* más alto */
+  font-size: 1.25rem;    
+  height: 48px;            
   line-height: 48px;
-  padding: 0 32px;         /* padding más ancho */
+  padding: 0 32px;       
   border: none;
   transition: box-shadow 0.2s, transform 0.1s ease-in-out;
   font-weight: 600;
@@ -167,7 +158,7 @@
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ====== Responsive tweaks ====== */
+
 @media (max-width: 576px) {
   .product-btn {
     min-width: 140px;
@@ -179,17 +170,16 @@
 }
 
 
-/* Cuando los paneles estén dentro de .production-row, que ocupen todo el ancho de su columna */
 .production-row .production-panel {
-  max-width: none;   /* anula el 500px */
+  max-width: none;   
   width: 100%;
-  margin: 0;         /* sacá el centrado */
-  height: 100%;      /* para estirar al alto de la columna */
+  margin: 0;       
+  height: 100%;     
   display: flex; 
   flex-direction: column; 
   justify-content: center;
 }
 
-/* Si querés que ambos tengan la misma altura siempre */
+
 .production-row .col-lg-6 { display: flex; }
 .production-row .col-lg-6 > .production-panel { flex: 1; }

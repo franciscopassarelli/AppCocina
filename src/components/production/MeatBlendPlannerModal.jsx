@@ -1,11 +1,9 @@
-// src/components/production/MeatBlendPlannerModal.jsx
 import React, { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import MeatBlendPlanner from "./MeatBlendPlanner";
 import "../styles/MeatBlendPlannerModal.css";
 
 export default function MeatBlendPlannerModal({ show, onClose }) {
-  // bloquear scroll del body cuando el modal está abierto (como Bootstrap)
   useEffect(() => {
     if (show) document.body.classList.add("modal-open");
     return () => document.body.classList.remove("modal-open");
@@ -34,7 +32,6 @@ export default function MeatBlendPlannerModal({ show, onClose }) {
               <button className="meat-close" onClick={onClose} title="Cerrar">✕</button>
             </div>
 
-            {/* Contenido */}
             <div className="meat-modal-content">
               <MeatBlendPlanner />
             </div>

@@ -29,11 +29,7 @@ export default function FormularioProducto({
   const { departamentos, add, rename, remove } = useDepartamentos();
   const { productos, actualizarProducto } = useProductos();
  
- 
- 
-
-  // Modales locales (crear, renombrar, borrar)
-  const [showNewModal, setShowNewModal] = useState(false);
+   const [showNewModal, setShowNewModal] = useState(false);
   const [newName, setNewName] = useState("");
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -42,13 +38,11 @@ export default function FormularioProducto({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [replacement, setReplacement] = useState("");
 
-  // Depto actual como objeto
   const selectedDept = useMemo(
     () => departamentos.find((d) => d.displayName === (departamento || "")),
     [departamentos, departamento]
   );
 
-  // Productos que usan el seleccionado (para borrar)
   const afectados = useMemo(() => {
     if (!selectedDept) return [];
     return productos.filter((p) => (p.departamento || "") === selectedDept.displayName);
@@ -59,14 +53,12 @@ export default function FormularioProducto({
     return departamentos.filter((d) => d._id !== selectedDept._id);
   }, [departamentos, selectedDept]);
 
-  // Preseleccionar el primero si no hay depto seleccionado
   useEffect(() => {
     if (!productoEditando && !departamento && departamentos.length > 0) {
       setDepartamento(departamentos[0].displayName);
     }
   }, [productoEditando, departamento, departamentos, setDepartamento]);
 
-  // ====== Crear ======
   const openNew = () => { setNewName(""); setShowNewModal(true); };
   const confirmNew = async () => {
     const name = newName.trim();
@@ -81,7 +73,6 @@ export default function FormularioProducto({
     }
   };
 
-  // ====== Editar (propaga a productos) ======
   const openEdit = () => { if (selectedDept) { setEditName(selectedDept.displayName); setShowEditModal(true); } };
   const confirmEdit = async () => {
     if (!selectedDept) return;
@@ -100,7 +91,6 @@ export default function FormularioProducto({
     }
   };
 
-  // ====== Borrar ======
   const openDelete = () => { if (selectedDept) { setReplacement(""); setShowDeleteModal(true); } };
   const confirmDelete = async () => {
     if (!selectedDept) return;
@@ -126,7 +116,6 @@ export default function FormularioProducto({
     <div className="card card-body mb-4 shadow-sm formulario-producto">
      <form onSubmit={onSubmit} className="d-flex flex-wrap align-items-end gap-2">
 
-  {/* Nombre */}
   <div className="col-auto">
     <label className="form-label small mb-1">Nombre</label>
     <input
@@ -138,7 +127,6 @@ export default function FormularioProducto({
     />
   </div>
 
-  {/* Departamento + botones */}
   <div className="col-auto">
     <label className="form-label small mb-1">Departamento</label>
     <div className="d-flex align-items-center gap-2">
@@ -164,7 +152,6 @@ export default function FormularioProducto({
     </div>
   </div>
 
-  {/* Unidad */}
   <div className="col-auto">
     <label className="form-label small mb-1">Unidad</label>
     <select className="form-select form-select-sm" value={unidad} onChange={(e) => setUnidad(e.target.value)}>
@@ -174,7 +161,6 @@ export default function FormularioProducto({
     </select>
   </div>
 
-  {/* Peso/Volumen */}
   {unidad !== "unidad" && (
     <div className="col-auto">
       <div className="d-flex align-items-center gap-2">
@@ -205,7 +191,6 @@ export default function FormularioProducto({
     </div>
   )}
 
-  {/* Stock */}
   <div className="col-auto">
     <label className="form-label small">Stock</label>
     <input
@@ -219,7 +204,6 @@ export default function FormularioProducto({
     />
   </div>
 
-  {/* Crítico */}
   <div className="col-auto">
     <label className="form-label small mb-1">Crítico</label>
     <input
@@ -233,7 +217,6 @@ export default function FormularioProducto({
     />
   </div>
 
-  {/* Factura/Remito */}
   <div className="col-auto">
     <label className="form-label small mb-1">Factura/Remito</label>
     <input
@@ -245,7 +228,6 @@ export default function FormularioProducto({
     />
   </div>
 
-  {/* Fecha vencimiento */}
   <div className="col-auto">
     <label className="form-label small mb-1">Vencimiento</label>
     <input
@@ -257,7 +239,6 @@ export default function FormularioProducto({
     />
   </div>
 
-  {/* Botones */}
   <div className="col-auto d-flex gap-2">
     <button type="submit" className="button-green-sm">
       {productoEditando ? "Actualizar" : "Agregar"}
@@ -272,7 +253,6 @@ export default function FormularioProducto({
 </form>
 
 
-      {/* ===== Modales ===== */}
       {showNewModal && (
         <div className="alerta-overlay" onClick={() => setShowNewModal(false)}>
           <div className="alerta-modal" onClick={(e) => e.stopPropagation()}>

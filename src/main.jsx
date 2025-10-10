@@ -5,15 +5,13 @@ import App from "./App";
 
 import { ProductoProvider } from "./context/ProductoContext";
 import { DepartamentosProvider } from "./context/DepartamentosContext";
-import { AlertSettingsProvider } from "./context/AlertSettingsContext"; // ⬅️ NUEVO
+import { AlertSettingsProvider } from "./context/AlertSettingsContext";
 
-// (Opcional, si no lo tenés en tus estilos globales)
-// import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js"; // necesario para navbar responsive
+import "bootstrap/dist/js/bootstrap.bundle.min.js"; 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AlertSettingsProvider>     {/* ⬅️ Envolvés arriba para que esté disponible en toda la app */}
+    <AlertSettingsProvider>     
       <DepartamentosProvider>
         <ProductoProvider>
           <App />

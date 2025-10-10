@@ -1,4 +1,3 @@
-// src/pages/AdminDashboard.jsx
 import React from "react";
 import ProductForm from "../components/admin/ProductForm";
 import StockList from "../components/admin/StockList";
