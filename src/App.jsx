@@ -1,44 +1,111 @@
-// src/App.jsx
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-
+import React, { useEffect, useState } from "react";
 import AdminDashboard from "./pages/AdminDashboard";
 import CookDashboard from "./pages/CookDashboard";
 import RecipeAdmin from "./pages/RecipeAdmin";
 import ProveedoresPage from "./pages/Proveedores";
 import Navbar from "./components/common/Navbar";
 import ControlAceite from "./pages/ControlAceite";
-
 import { DepartamentosProvider } from "./context/DepartamentosContext";
 import { ProductoProvider } from "./context/ProductoContext";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+import Login from "./pages/Login";
+import FullScreenLoader from "./components/common/FullScreenLoader";
 
 export default function App() {
-  console.log("API:", import.meta.env.VITE_API_URL);
-  console.log("URL productos:", import.meta.env.VITE_API_PRODUCTOS_URL);
-  console.log("URL historial:", import.meta.env.VITE_API_HISTORIAL_URL);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuth, setIsAuth] = useState(
+    () => localStorage.getItem("isAuth") === "true"
+  );
+
+  useEffect(() => {
+    // Simulamos una carga inicial (puede ser fetch real a tu API)
+    const t = setTimeout(() => setIsLoading(false), 1000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (isLoading) {
+    return <FullScreenLoader />;
+  }
+
+  const handleLogin = () => {
+    setIsAuth(true);
+  };
+
+  const PrivateRoute = ({ children }) => {
+    if (!isAuth) return <Navigate to="/login" replace />;
+    return children;
+  };
 
   return (
     <DepartamentosProvider>
-  <ProductoProvider>
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Navigate to="/cook" replace />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/cook" element={<CookDashboard />} />
-        <Route path="/recipeadmin" element={<RecipeAdmin />} />
-        <Route path="/proveedores" element={<ProveedoresPage />} />
-        <Route path="*" element={<Navigate to="/cook" replace />} />
-        <Route path= "/aceite" element={<ControlAceite/>} />
-      </Routes>
-    </Router>
-  </ProductoProvider>
-</DepartamentosProvider>
+      <ProductoProvider>
+        <Router>
+          {/* Navbar sólo si está logueado */}
+        {!isLoading && isAuth && <Navbar />}
 
+          <Routes>
+            {/* LOGIN */}
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+
+            {/* RUTAS PROTEGIDAS */}
+            <Route
+              path="/"
+              element={
+                isAuth ? <Navigate to="/cook" replace /> : <Navigate to="/login" replace />
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/cook"
+              element={
+                <PrivateRoute>
+                  <CookDashboard />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/recipeadmin"
+              element={
+                <PrivateRoute>
+                  <RecipeAdmin />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/proveedores"
+              element={
+                <PrivateRoute>
+                  <ProveedoresPage />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/aceite"
+              element={
+                <PrivateRoute>
+                  <ControlAceite />
+                </PrivateRoute>
+              }
+            />
+
+            {/* CUALQUIER OTRA RUTA */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </ProductoProvider>
+    </DepartamentosProvider>
   );
 }

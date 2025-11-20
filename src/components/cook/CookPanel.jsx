@@ -3,14 +3,14 @@ import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { GiChefToque } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
-import "../cook/Cookpanel.css";
+import { getRecipes } from "../../api/recipes.js";
 import AlertaStockModal from "../admin/AlertaStockModal.jsx";
 import ModalAddStock from "../admin/ModalAddStock";
 import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
 import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
-import { getRecipes } from "../../api/recipes.js";
+import "../cook/Cookpanel.css";
 
 const STORAGE_KEY = "activeRuns"; 
 

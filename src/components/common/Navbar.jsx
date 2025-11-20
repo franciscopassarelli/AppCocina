@@ -5,15 +5,23 @@ import { GiCook } from "react-icons/gi";
 import { useProductos } from "../../context/ProductoContext";
 import { useAlertSettings } from "../../context/AlertSettingsContext";
 import AlertSettingsModal from "../common/AlertSettingsModal";
+import { useNavigate } from "react-router-dom";
 import "../styles/Navbar.css";
 
 export default function Navbar() {
   const { pathname } = useLocation();
   const { productos } = useProductos();
   const { settings, isPausedNow } = useAlertSettings();
+  const navigate = useNavigate();
 
   const [mostrarAlertas, setMostrarAlertas] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAuth"); // elimina sesión
+    navigate("/login"); // redirige
+    window.location.reload(); // refresca para resetear el estado de App.jsx
+  };
 
   useEffect(() => {
     setMostrarAlertas(false);
@@ -178,7 +186,24 @@ export default function Navbar() {
               <span className="nav-label">C.Aceite</span>
             </Link>
           </li>
+
+
+         <li className="nav-item w-100">
+  <button
+    className="nav-link nav-btn btn btn-link text-start w-100"
+    onClick={handleLogout}
+    title="Cerrar sesión"
+    style={{ color: "#775" }}
+  >
+    <FaUserCog className="nav-icon" />
+    <span className="nav-label">Salir</span>
+  </button>
+</li>
+
+
         </ul>
+
+
       </div>
 
       <AlertSettingsModal show={showSettings} onClose={() => setShowSettings(false)} />

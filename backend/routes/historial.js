@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const Historial = require("../models/Historial");
 
-// Obtener historial completo
 router.get("/", async (req, res) => {
   try {
     const registros = await Historial.find().sort({ fecha: -1 });
@@ -12,7 +11,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Agregar un nuevo registro
 router.post("/", async (req, res) => {
   try {
     const nuevoRegistro = new Historial(req.body);
