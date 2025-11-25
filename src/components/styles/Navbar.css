@@ -25,6 +25,15 @@
 }
 
 
+.nav-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 12px;
+}
+
+
+
 @media (max-width: 768px) {
   .nav-item {
     width: 100%;

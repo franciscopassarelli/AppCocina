@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useProductos } from "../../context/ProductoContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { GiChefToque } from "react-icons/gi";
+import { GiCook } from "react-icons/gi";
 import { FiCheckCircle } from "react-icons/fi";
 import { getRecipes } from "../../api/recipes.js";
 import AlertaStockModal from "../admin/AlertaStockModal.jsx";
@@ -308,7 +308,7 @@ export default function CookPanel() {
       />
 
       <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
-        <GiChefToque size={40} />
+        <GiCook size={40} />
         <span>Panel de Cocina</span>
       </h2>
 

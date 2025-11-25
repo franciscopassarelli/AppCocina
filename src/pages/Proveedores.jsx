@@ -7,6 +7,7 @@ import ProviderModal from "../components/provedores/ProviderFormModal";
 import ProvidersDirectoryModal from "../components/provedores/ProvidersDirectoryModal";   
 import ProviderDetailsModal from "../components/provedores/ProviderDetailsModal";        
 import { listProviders } from "../api/providers";
+import { FaTruck } from "react-icons/fa"; 
 import "../components/styles/proveedores.css";
 
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
@@ -36,6 +37,9 @@ export default function ProveedoresPage() {
     for (const p of productos) m.set(p._id, p);
     return m;
   }, [productos]);
+
+  console.log(import.meta.env.VITE_API_URL);
+
 
   async function refresh() {
     setLoading(true);
@@ -93,6 +97,7 @@ export default function ProveedoresPage() {
       await crearLoteProveedor({
         providerId,
         proveedor: selectedProvider?.nombre,
+        productoId,
         nombreProducto: prod.nombre,
         unidad,
         cantidadTotal: Number(cantidadTotal),
@@ -168,7 +173,11 @@ export default function ProveedoresPage() {
 
   return (
     <div className="container py-3">
-      <h4 className="mb-3">Proveedores / Recepción de mercadería</h4>
+      <h2 className="admin-title text-white mb-4 d-flex align-items-center gap-3">
+  <FaTruck size={32} />
+  Proveedores / Recepción de mercadería
+</h2>
+
 
       {msg && <div className={`alert alert-${msg.type === 'danger' ? 'danger' : 'success'} py-2`}>{msg.text}</div>}
 

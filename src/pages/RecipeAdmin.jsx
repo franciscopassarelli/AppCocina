@@ -5,6 +5,8 @@ import { getRecipes, createRecipe, updateRecipe, deleteRecipe } from "../api/rec
 import ProductionRunsList from "../components/production/ProductionRunsList";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../components/styles/RecipeAdmin.css";
+import { GiChefToque } from "react-icons/gi";
+
 
 
 const UNIDADES = ["g", "kg", "ml", "l", "unidad"];
@@ -19,7 +21,7 @@ export default function RecipeAdmin() {
   ]);
   const [guardando, setGuardando] = useState(false);
   const [msg, setMsg] = useState(null);
-
+  const [pendingDeleteRecipe, setPendingDeleteRecipe] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [edit, setEdit] = useState(null); 
@@ -208,22 +210,20 @@ export default function RecipeAdmin() {
     }
   };
 
-  const removeRecipe = async (id) => {
-    if (!confirm("¿Eliminar esta receta?")) return;
-    try {
-      await deleteRecipe(API_BASE, id);
-      setRecipes((prev) => prev.filter((r) => r._id !== id));
-      window.dispatchEvent(new CustomEvent("recipes:changed"));
-    } catch (e) {
-      console.error(e);
-      alert("Error al eliminar la receta");
-    }
-  };
+  const removeRecipe = (recipe) => {
+  setPendingDeleteRecipe(recipe);
+};
+
+
 
   return (
   <div className="recipe-admin-page">
    <div className="container py-4 recipe-admin">
-      <h4 className="mb-3">Nueva receta</h4>
+      <h2 className="text-center text-white mb-4 d-flex align-items-center justify-content-center gap-3">
+  <GiChefToque  size={40} />
+  <span>Nueva Receta</span>
+</h2>
+
 
       {msg && <div className={`alert alert-${msg.type} py-2`}>{msg.text}</div>}
 
@@ -357,6 +357,7 @@ export default function RecipeAdmin() {
         const ings = isOpen ? r.ingredientes : r.ingredientes.slice(0, maxPreview);
 
         return (
+
           <div className="recipe-card" key={r._id}>
             <div className="recipe-card__header">
               <h6 className="recipe-card__title" title={r.nombre}>{r.nombre}</h6>
@@ -371,7 +372,7 @@ export default function RecipeAdmin() {
                 <button
                   className="icon-btn icon-btn--danger"
                   title="Eliminar"
-                  onClick={() => removeRecipe(r._id)}
+                onClick={() => removeRecipe(r)}
                 >
                   <i className="bi bi-trash" />
                 </button>
@@ -513,6 +514,61 @@ export default function RecipeAdmin() {
         </div>
         
       )}
+
+
+      
+
+{pendingDeleteRecipe && (
+  <div
+    className="dep-dialog-backdrop"
+    onClick={() => setPendingDeleteRecipe(null)}
+  >
+    <div
+      className="dep-dialog"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h6 className="mb-2">
+        Borrar receta: <strong>{pendingDeleteRecipe.nombre}</strong>
+      </h6>
+
+      <p className="small text-muted mb-3">
+        Esta acción eliminará la receta del sistema. No se puede deshacer.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={() => setPendingDeleteRecipe(null)}
+        >
+          Cancelar
+        </button>
+
+        <button
+          className="btn btn-sm btn-danger"
+          onClick={async () => {
+            try {
+              await deleteRecipe(API_BASE, pendingDeleteRecipe._id);
+
+              setRecipes((prev) =>
+                prev.filter((r) => r._id !== pendingDeleteRecipe._id)
+              );
+
+              window.dispatchEvent(new CustomEvent("recipes:changed"));
+            } catch (e) {
+              console.error(e);
+              alert("Error al eliminar la receta");
+            }
+
+            setPendingDeleteRecipe(null);
+          }}
+        >
+          Borrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
        <div className="mt-4">
       <h4 className="mb-3">Producciones realizadas</h4>
       <ProductionRunsList apiBase={API_BASE} />

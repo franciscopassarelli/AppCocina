@@ -14,6 +14,12 @@ export default function Navbar() {
   const { settings, isPausedNow } = useAlertSettings();
   const navigate = useNavigate();
 
+
+  const rutasSinAlertas = ["/cook", "/recipeadmin", "/aceite"];
+  const ocultarBotonesAlertas = rutasSinAlertas.some((ruta) =>
+  pathname.startsWith(ruta)
+);
+
   const [mostrarAlertas, setMostrarAlertas] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -90,47 +96,41 @@ export default function Navbar() {
 
       <div className="collapse navbar-collapse" id="navbarNav">
         <ul className="navbar-nav ms-auto align-items-center">
-          <li className="nav-item me-3 position-relative">
-            <button
-              className="btn btn-link text-white position-relative"
-              style={{ fontSize: "1.2rem" }}
-              onClick={() => setMostrarAlertas((v) => !v)}
-              aria-label="Mostrar alertas de stock"
-              title="Alertas de stock"
-            >
-              <FaBell />
-              {showBadge && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {productosAlertaRoja.length + productosAlertaAmarilla.length}
-                </span>
-              )}
-            </button>
+         {!ocultarBotonesAlertas && (
+  <li className="nav-item me-3 position-relative">
+    <button
+      className="btn btn-link text-white position-relative"
+      style={{ fontSize: "1.2rem" }}
+      onClick={() => setMostrarAlertas((v) => !v)}
+      aria-label="Mostrar alertas de stock"
+      title="Alertas de stock"
+    >
+      <FaBell />
+      {showBadge && (
+        <span
+          className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+          style={{ fontSize: "0.6rem" }}
+        >
+          {productosAlertaRoja.length + productosAlertaAmarilla.length}
+        </span>
+      )}
+    </button>
 
-            {mostrarAlertas && (
-              <div
-                className="dropdown-menu show mt-2 p-2 text-start alert-dropdown"
-                onClick={() => setMostrarAlertas(false)}
-              >
-                <h6 className="dropdown-header">Alertas de stock</h6>
-                {dropdownContent()}
-              </div>
-            )}
-          </li>
+    {mostrarAlertas && (
+      <div
+        className="dropdown-menu show mt-2 p-2 text-start alert-dropdown"
+        onClick={() => setMostrarAlertas(false)}
+      >
+        <h6 className="dropdown-header">Alertas de stock</h6>
+        {dropdownContent()}
+      </div>
+    )}
+  </li>
+)}
 
-          <li className="nav-item me-3">
-            <button
-              className="btn btn-link text-white"
-              style={{ fontSize: "1.2rem" }}
-              title="Ajustes de alertas"
-              aria-label="Ajustes de alertas"
-              onClick={() => setShowSettings(true)}
-            >
-              <FaCog />
-            </button>
-          </li>
+
+           <li className="nav-divider"></li>
+
 
           <li className="nav-item w-100">
             <Link
@@ -143,16 +143,7 @@ export default function Navbar() {
             </Link>
           </li>
 
-          <li className="nav-item w-100">
-            <Link
-              className={`nav-link nav-btn ${isActive("/cook") ? "active" : ""}`}
-              to="/cook"
-              title="Cocina"
-            >
-              <GiCook className="nav-icon" />
-              <span className="nav-label">Cocina</span>
-            </Link>
-          </li>
+        
 
           <li className="nav-item w-100">
             <Link
@@ -162,6 +153,23 @@ export default function Navbar() {
             >
               <FaTruck className="nav-icon" />
               <span className="nav-label">Proveedores</span>
+            </Link>
+          </li>
+
+
+          <li className="nav-divider"></li>
+
+
+
+
+            <li className="nav-item w-100">
+            <Link
+              className={`nav-link nav-btn ${isActive("/cook") ? "active" : ""}`}
+              to="/cook"
+              title="Cocina"
+            >
+              <GiCook className="nav-icon" />
+              <span className="nav-label">Cocina</span>
             </Link>
           </li>
 
@@ -187,6 +195,24 @@ export default function Navbar() {
             </Link>
           </li>
 
+           <li className="nav-divider"></li>
+
+
+           {!ocultarBotonesAlertas && (
+  <li className="nav-item me-3">
+    <button
+      className="btn btn-link text-white"
+      style={{ fontSize: "1.2rem" }}
+      title="Ajustes de alertas"
+      aria-label="Ajustes de alertas"
+      onClick={() => setShowSettings(true)}
+    >
+      <FaCog />
+    </button>
+  </li>
+)}
+
+
 
          <li className="nav-item w-100">
   <button
@@ -199,9 +225,9 @@ export default function Navbar() {
     <span className="nav-label">Salir</span>
   </button>
 </li>
-
-
         </ul>
+
+        
 
 
       </div>

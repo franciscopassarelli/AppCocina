@@ -28,7 +28,7 @@ export default function ProductForm() {
   const [departamento, setDepartamento] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [facturaRemito, setFacturaRemito] = useState("");
-
+  const [pendingDeleteProduct, setPendingDeleteProduct] = useState(null);
   const [productoParaStock, setProductoParaStock] = useState(null);
   const [lotesVisibles, setLotesVisibles] = useState({});
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState("Todos");
@@ -177,16 +177,10 @@ const productoData = {
       console.error("Error al agregar stock:", err);
     }
   };
+const handleEliminar = (prod) => {
+  setPendingDeleteProduct(prod);
+};
 
-  const handleEliminar = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este producto?")) return;
-    try {
-      await eliminarProducto(id);
-      if (productoEditando && productoEditando._id === id) limpiarFormulario();
-    } catch (err) {
-      console.error("Error al eliminar producto:", err);
-    }
-  };
 
   const handleEliminarLote = async (productoId, loteIndex) => {
     const producto = productos.find((p) => p._id === productoId);
@@ -236,6 +230,54 @@ const productoData = {
 
   return (
     <>
+
+
+
+{pendingDeleteProduct && (
+  <div className="dep-dialog-backdrop" onClick={() => setPendingDeleteProduct(null)}>
+    <div className="dep-dialog" onClick={(e) => e.stopPropagation()}>
+      <h6 className="mb-2">
+        Borrar producto <strong>{pendingDeleteProduct.nombre}</strong>
+      </h6>
+
+      <p className="small text-muted mb-3">
+        Esta acción eliminará el producto del sistema. No se puede deshacer.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={() => setPendingDeleteProduct(null)}
+        >
+          Cancelar
+        </button>
+
+        <button
+          className="btn btn-sm btn-danger"
+          onClick={async () => {
+            try {
+              await eliminarProducto(pendingDeleteProduct._id);
+              if (productoEditando && productoEditando._id === pendingDeleteProduct._id) {
+                limpiarFormulario();
+              }
+            } catch (err) {
+              console.error("Error al eliminar producto:", err);
+            }
+            setPendingDeleteProduct(null);
+          }}
+        >
+          Borrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
+
+
+
       <AlertaStockModal
         productos={productos}
         visible={mostrarAlertaStock}
@@ -356,9 +398,10 @@ const productoData = {
                       </div>
 
                       <div className="d-flex gap-2">
-                        <button className="button-red-sm" onClick={() => handleEliminar(prod._id)}>
-                          <i className="bi bi-trash3 me-1"></i> Borrar
-                        </button>
+                       <button className="button-red-sm" onClick={() => handleEliminar(prod)}>
+  <i className="bi bi-trash3 me-1"></i> Borrar
+</button>
+
 
                         <button className="button-green-sm" onClick={() => setProductoParaStock(prod)}>
                           <i className="bi bi-plus-circle me-1"></i> Agregar Lote
