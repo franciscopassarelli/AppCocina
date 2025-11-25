@@ -4,8 +4,8 @@ export default function ProvidersDirectoryModal({
   show,
   onClose,
   providers = [],
-  onRefresh,           
-  onOpenDetails,      
+  onRefresh,
+  onOpenDetails,
 }) {
   const [q, setQ] = useState("");
 
@@ -16,7 +16,7 @@ export default function ProvidersDirectoryModal({
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return providers;
-    return providers.filter(p => {
+    return providers.filter((p) => {
       const nombre = (p.nombre || "").toLowerCase();
       const cuit = (p.cuit || "").toLowerCase();
       return nombre.includes(s) || cuit.includes(s);
@@ -27,12 +27,20 @@ export default function ProvidersDirectoryModal({
 
   return (
     <div className="alerta-overlay" onClick={onClose}>
-      <div className="alerta-modal" style={{ maxWidth: 800, width: "95%" }} onClick={(e) => e.stopPropagation()}>
+      <div
+        className="alerta-modal"
+        style={{ maxWidth: 950, width: "96%" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="d-flex align-items-center justify-content-between mb-2">
           <h6 className="mb-0">Proveedores</h6>
           <div className="d-flex gap-2">
             {onRefresh && (
-              <button className="button-ghost-sm" onClick={onRefresh} title="Actualizar lista">
+              <button
+                className="button-ghost-sm"
+                onClick={onRefresh}
+                title="Actualizar lista"
+              >
                 Recargar
               </button>
             )}
@@ -51,7 +59,11 @@ export default function ProvidersDirectoryModal({
             onChange={(e) => setQ(e.target.value)}
           />
           {q && (
-            <button className="button-ghost-sm" type="button" onClick={() => setQ("")}>
+            <button
+              className="button-ghost-sm"
+              type="button"
+              onClick={() => setQ("")}
+            >
               ×
             </button>
           )}
@@ -61,15 +73,18 @@ export default function ProvidersDirectoryModal({
           <div className="text-muted">Sin resultados.</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-sm align-middle">
+            <table
+              className="table table-sm align-middle"
+              style={{ tableLayout: "fixed", wordBreak: "break-word" }}
+            >
               <thead className="table-light">
                 <tr>
-                  <th>Nombre</th>
-                  <th>CUIT</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Dirección</th>
-                  <th style={{ width: 120 }}></th>
+                  <th style={{ width: "22%" }}>Nombre</th>
+                  <th style={{ width: "13%" }}>CUIT</th>
+                  <th style={{ width: "13%" }}>Teléfono</th>
+                  <th style={{ width: "18%" }}>Email</th>
+                  <th style={{ width: "24%" }}>Dirección</th>
+                  <th style={{ width: 100 }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -81,7 +96,10 @@ export default function ProvidersDirectoryModal({
                     <td>{p.email || "—"}</td>
                     <td>{p.direccion || "—"}</td>
                     <td className="text-end">
-                      <button className="button-green-sm" onClick={() => onOpenDetails?.(p)}>
+                      <button
+                        className="button-green-sm"
+                        onClick={() => onOpenDetails?.(p)}
+                      >
                         Ver detalle
                       </button>
                     </td>

@@ -17,7 +17,7 @@ const DIAS_URGENTE = 5;
 export default function ProductForm() {
   const { productos, agregarProducto, actualizarProducto, eliminarProducto } = useProductos();
   const { departamentos } = useDepartamentos();
-
+  const [pendingDeleteLote, setPendingDeleteLote] = useState(null);
   const [noAplicaPeso, setNoAplicaPeso] = useState(false);
   const [nombre, setNombre] = useState("");
   const [stock, setStock] = useState("");
@@ -182,32 +182,10 @@ const handleEliminar = (prod) => {
 };
 
 
-  const handleEliminarLote = async (productoId, loteIndex) => {
-    const producto = productos.find((p) => p._id === productoId);
-    if (!producto) return;
+const handleEliminarLote = (producto, lote, loteIndex) => {
+  setPendingDeleteLote({ producto, lote, loteIndex });
+};
 
-    const lotes = Array.isArray(producto.lotes) ? [...producto.lotes] : [];
-    const lote = lotes[loteIndex];
-    if (!lote) return;
-
-    const disponible = Number(lote.cantidadDisponible ?? lote.cantidad ?? 0);
-    const mensaje =
-      disponible > 0
-        ? `Se descontarán ${nf2.format(disponible)} ${producto.unidad} del stock total. ¿Eliminar este lote?`
-        : "Este lote ya está completamente usado. ¿Eliminarlo de todas formas?";
-
-    if (!window.confirm(mensaje)) return;
-
-    try {
-      const nuevoStock = Math.max(0, Number(producto.stock || 0) - disponible);
-      lotes.splice(loteIndex, 1);
-
-      await actualizarProducto(productoId, { ...producto, stock: nuevoStock, lotes });
-    } catch (e) {
-      console.error("Error eliminando lote:", e);
-      alert("No se pudo eliminar el lote.");
-    }
-  };
 
   const toggleLotes = (productoId) => {
     setLotesVisibles((prev) => ({ ...prev, [productoId]: !prev[productoId] }));
@@ -230,6 +208,73 @@ const handleEliminar = (prod) => {
 
   return (
     <>
+
+
+
+    {pendingDeleteLote && (
+  <div
+    className="dep-dialog-backdrop"
+    onClick={() => setPendingDeleteLote(null)}
+  >
+    <div
+      className="dep-dialog"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h6 className="mb-2">
+        Eliminar lote de <strong>{pendingDeleteLote.producto.nombre}</strong>
+      </h6>
+
+      <p className="small text-muted mb-3">
+        Cantidad disponible: <strong>{pendingDeleteLote.lote.cantidadDisponible ?? pendingDeleteLote.lote.cantidad}</strong><br />
+        Esta acción ajustará el stock del producto.
+      </p>
+
+      <div className="d-flex justify-content-end gap-2">
+        <button
+          className="btn btn-sm btn-secondary"
+          onClick={() => setPendingDeleteLote(null)}
+        >
+          Cancelar
+        </button>
+
+        <button
+          className="btn btn-sm btn-danger"
+          onClick={async () => {
+            const { producto, loteIndex, lote } = pendingDeleteLote;
+
+            const disponible = Number(lote.cantidadDisponible ?? lote.cantidad ?? 0);
+            const nuevoStock = Math.max(
+              0,
+              Number(producto.stock || 0) - disponible
+            );
+
+            const nuevosLotes = [...(producto.lotes || [])];
+            nuevosLotes.splice(loteIndex, 1);
+
+            try {
+              await actualizarProducto(producto._id, {
+                ...producto,
+                stock: nuevoStock,
+                lotes: nuevosLotes,
+              });
+
+              if (productoEditando && productoEditando._id === producto._id) {
+                cargarProducto(producto._id);
+              }
+            } catch (err) {
+              console.error("Error borrando lote:", err);
+            }
+
+            setPendingDeleteLote(null);
+          }}
+        >
+          Eliminar lote
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 
 
@@ -470,7 +515,7 @@ const handleEliminar = (prod) => {
                                           <button
                                             className="btn btn-sm btn-outline-danger"
                                             title="Eliminar lote"
-                                            onClick={() => handleEliminarLote(prod._id, idx)}
+                                           onClick={() => handleEliminarLote(prod, lote, idx)}
                                           >
                                             <i className="bi bi-trash" />
                                           </button>
