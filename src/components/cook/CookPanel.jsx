@@ -10,9 +10,11 @@ import ProductionPlanModal from "../production/ProductionPlanModal";
 import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
 import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
+import LomoBifeProductionModal from "../production/LomoBifeProductionModal";
 import "../cook/Cookpanel.css";
 
 const STORAGE_KEY = "activeRuns"; 
+
 
 
 const readJSON = (k, def) => {
@@ -47,21 +49,23 @@ function toProductoUnidad(valor, unidadEntrada, unidadProducto) {
 }
 
 export default function CookPanel() {
-  const {
-    productos,
-    actualizarStock,
-    agregarRegistroHistorial,
-    actualizarProducto,
-  } = useProductos();
+ const { productos, actualizarStock, agregarRegistroHistorial } = useProductos();
 
+
+const [cortes, setCortes] = useState([]);
  
   const [productoIdSeleccionado, setProductoIdSeleccionado] = useState(null);
   const [descCantidad, setDescCantidad] = useState("");
   const [descUnidad, setDescUnidad] = useState("unidad");
-
   const [alerta, setAlerta] = useState(null);
   const [mostrarAlertaStock, setMostrarAlertaStock] = useState(true);
   const [mostrarAlerta, setMostrarAlerta] = useState(false);
+  const [showLomoModal, setShowLomoModal] = useState(false);
+
+
+
+
+  
 
 
   const [departamentoActivoRapido, setDepartamentoActivoRapido] = useState(null);
@@ -127,6 +131,9 @@ export default function CookPanel() {
     setShowPlan(false);
   }
 
+
+  
+
   useEffect(() => {
     let cancelado = false;
 
@@ -156,6 +163,9 @@ export default function CookPanel() {
     setTimeout(() => setMostrarAlerta(false), 2700);
     setTimeout(() => setAlerta(null), 3200);
   };
+
+
+
 
  
   useEffect(() => {
@@ -319,29 +329,43 @@ export default function CookPanel() {
         </div>
       )}
 
-      <div className="container mb-4">
-        <div className="row g-3 align-items-stretch production-row">
-          <div className="col-12 col-lg-6">
-            <div className="production-panel">
-              <h3 className="mb-3">Producción (Recetas)</h3>
-              <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
-              <button className="button-green-lg" onClick={() => setShowPlan(true)}>
-                Nueva producción
-              </button>
-            </div>
-          </div>
+      <div className="row g-3 align-items-stretch production-row">
 
-          <div className="col-12 col-lg-6">
-            <div className="production-panel">
-              <h3 className="mb-3">Burger (Medallones)</h3>
-              <p className="mb-4 text-info">Cargar piezas → limpieza → calcular grasa → producir</p>
-              <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
-                Nueva producción
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  {/* Producción recetas */}
+  <div className="col-12 col-lg-6">
+    <div className="production-panel">
+      <h3 className="mb-3">Producción (Recetas)</h3>
+      <p className="mb-4 text-info">Planificar → iniciar (timer) → confirmar</p>
+      <button className="button-green-lg" onClick={() => setShowPlan(true)}>
+        Nueva producción
+      </button>
+    </div>
+  </div>
+
+  {/* Burger / Medallones */}
+  <div className="col-12 col-lg-6">
+    <div className="production-panel">
+      <h3 className="mb-3">Burger (Medallones)</h3>
+      <p className="mb-4 text-info">Cargar piezas → calcular → producir</p>
+      <button className="button-green-lg" onClick={() => setShowMeatPlanner(true)}>
+        Nueva producción
+      </button>
+    </div>
+  </div>
+
+  {/* 🔥 Nueva Producción: Lomitos / Bife */}
+  <div className="col-12 col-lg-6">
+    <div className="production-panel">
+      <h3 className="mb-3">Lomitos / Bife</h3>
+      <p className="mb-4 text-info">Cargar carne → cortes → producir</p>
+      <button className="button-green-lg" onClick={() => setShowLomoModal(true)}>
+        Nueva producción
+      </button>
+    </div>
+  </div>
+
+</div>
+
 
       <ActiveProductionsPanel
         runs={activeRuns}
@@ -581,6 +605,8 @@ export default function CookPanel() {
         onClose={() => setShowQuickStock(false)}
       />
 
+      
+
       <ProductionPlanModal
         apiBase={API_URL}
         recipes={recipes}
@@ -600,6 +626,31 @@ export default function CookPanel() {
           onClose={(ok) => handleConfirmClose(ok, confirmingRun?._id)}
         />
       )}
+
+
+      <LomoBifeProductionModal
+  show={showLomoModal}
+  cortes={cortes}
+  onClose={() => setShowLomoModal(false)}
+  onConfirm={async (data) => {
+    const { corteId, totalKg } = data;
+
+    await updateStockCorte(corteId, totalKg);
+
+    await addProductionLog({
+      tipo: "lomo-bife",
+      corteId,
+      ...data,
+      fecha: new Date(),
+    });
+
+    setShowLomoModal(false);
+    mostrarMensajeAlerta("Producción registrada correctamente");
+  }}
+/>
+
+
+
     </div>
   );
 }

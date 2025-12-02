@@ -60,19 +60,31 @@
   gap: 0.75rem;
   justify-content: center;
 }
-
 .product-btn {
-  background-color: #222;
-  color: white;
-  border: 1px solid white;
-  border-radius: 10px;
-  min-width: 170px;
-  min-height: 120px;
+  width: 140px;            /* 🔥 ancho fijo para que todos tengan el mismo tamaño */
+  height: 120px;           /* 🔥 alto fijo */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+
+  padding: 10px;
+  border-radius: 12px;
+
+  overflow: hidden;        /* 🔥 evita deformarse */
+  white-space: normal;
+  word-break: break-word;  /* 🔥 corta texto largo */
 }
 
 .product-btn strong {
-  font-size: 1.1rem;
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 🔥 muestra "..." si el nombre es muy largo */
 }
+
 
 .modal-backdrop-dark {
   background-color: rgba(0, 0, 0, 0.5);
@@ -169,17 +181,23 @@
   }
 }
 
-
-.production-row .production-panel {
-  max-width: none;   
-  width: 100%;
-  margin: 0;       
-  height: 100%;     
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center;
+/* === Producción: 3 columnas iguales en desktop === */
+.production-row .col-lg-6 {
+  width: 100%;      /* mobile */
 }
 
+/* Desktop (≥992px): 3 columnas iguales */
+@media (min-width: 992px) {
+  .production-row .col-lg-6 {
+    width: 33.333%;     /* ahora 3 tarjetas por fila */
+    flex: 0 0 33.333%;
+  }
+}
 
-.production-row .col-lg-6 { display: flex; }
-.production-row .col-lg-6 > .production-panel { flex: 1; }
+/* === Ajuste del tamaño de la tarjeta === */
+.production-row .production-panel {
+  max-width: 360px;     /* antes 500 → ahora más chica */
+  margin: 0 auto 1.25rem;
+  height: auto;
+  padding: 1.25rem;
+}

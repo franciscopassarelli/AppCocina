@@ -35,7 +35,9 @@ const meatBlendRouter = require('./routes/meatBlend');
 const proveedoresRouter = require('./routes/proveedores');
 const departamentosRouter = require("./routes/departamentos");
 const providersRouter = require('./routes/providers');
+const carnesRouter = require('./routes/carnes');
 
+app.use('/api/carnes', carnesRouter);
 app.use('/api/providers', providersRouter);
 app.use('/api/departamentos', departamentosRouter);
 app.use('/api/proveedores', proveedoresRouter);
