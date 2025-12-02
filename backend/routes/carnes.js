@@ -1,4 +1,3 @@
-// routes/carnes.js (Nueva ruta)
 const express = require('express');
 const mongoose = require('mongoose');
 const Producto = require('../models/Producto');
@@ -53,11 +52,11 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
       }
       await prod.save({ session });
 
-      // ✅ CORRECCIÓN 2.1: Usar Math.abs para garantizar que el delta de consumo (que se usa como cantidad consumida) sea siempre positivo y cumpla con el min: 0 del esquema.
+      // ✅ CORRECCIÓN 2.1: Usar Math.abs para garantizar que el delta de consumo sea siempre positivo.
       const delta = +Math.abs(stockAntes - prod.stock).toFixed(6); // consumido real (positivo)
 
       movimientos.push({
-        // ✅ CORRECCIÓN 1.1: Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
+        // Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
         tipo: 'PRODUCCION', 
         productoId: prod._id,
         delta: -delta, // Consumo (negativo)
@@ -86,7 +85,7 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
     await prodFinal.save({ session });
     
     movimientos.push({
-      // ✅ CORRECCIÓN 1.1: Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
+      // Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
       tipo: 'PRODUCCION', 
       productoId: prodFinal._id,
       delta: +Math.abs(cantFinalEnUnidadProd), // Producción
@@ -105,7 +104,7 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
         await prodGrasa.save({ session });
 
         movimientos.push({
-          // ✅ CORRECCIÓN 1.1: Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
+          // Usar 'PRODUCCION' para coincidir con el ENUM de MovimientoStock.
           tipo: 'PRODUCCION', 
           productoId: prodGrasa._id,
           delta: +Math.abs(cantGrasaEnUnidadProd), // Producción
@@ -120,9 +119,7 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
     
     // 4) REGISTRAR DESPERDICIO (opcional, para trazabilidad)
     if (desperdicioKg > 0) {
-        // Mismo proceso que la grasa, usando DESPERDICIO_ID.
-        // Si registras desperdicio, recuerda usar 'PRODUCCION' como tipo también.
-        // ... (Tu lógica para registrar desperdicio aquí) ...
+        // Lógica para registrar desperdicio...
     }
 
 
@@ -134,7 +131,6 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
     const now = new Date();
     const runDoc = {
       recipeNombre: `Corte y Limpieza: ${prodFinal.nombre}`,
-      // ✅ CORRECCIÓN 2.2: Registrar unidades en 'kg' para evitar error ENUM si 'g' no está permitido.
       unidadesPlanificadas: +productoFinalKg.toFixed(6),
       unidadesProducidas: +productoFinalKg.toFixed(6),
       unidadesProducidasUnidad: 'kg', // Usar 'kg'
@@ -153,13 +149,36 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
 
 
     await session.commitTransaction();
+    // ⚠️ Mover session.endSession() al final para asegurar el commit/abort se hace antes.
     session.endSession();
 
     res.json({ ok: true, runId: runCreated?._id || null });
+
   } catch (e) {
-    await session.abortTransaction();
+    
+    // 1. Registrar el error en el servidor para ver el stack trace.
+    console.error('🔴 Error en /producir-lomitos-bifes:', e);
+    
+    // 2. Intentar abortar la transacción de forma segura
+    try {
+      await session.abortTransaction();
+    } catch (abortError) {
+      console.error('⚠️ Falló el abortTransaction, el error original fue:', e.message);
+    }
+    
+    // 3. Asegurarse de cerrar la sesión
     session.endSession();
-    res.status(400).json({ error: e.message });
+    
+    // 4. Enviar respuesta de error al cliente solo si los headers no han sido enviados ya.
+    // Esto previene errores de "Can't set headers after they are sent" si Express falló antes.
+    if (!res.headersSent) {
+      // Asegurarse de que el mensaje sea un string
+      const errorMessage = e instanceof Error ? e.message : 'Error desconocido en el servidor.';
+      return res.status(400).json({ error: errorMessage });
+    } else {
+      // Si ya se enviaron los headers, no podemos enviar un JSON limpio.
+      console.warn('Los headers ya fueron enviados, no se pudo enviar el JSON de error al cliente.');
+    }
   }
 });
 
