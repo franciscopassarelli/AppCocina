@@ -10,7 +10,7 @@ const router = express.Router();
 
 // ✅ CORRECCIÓN APLICADA: Usando el ID real de MongoDB para la Grasa Limpia.
 const GRASA_LIMPIA_ID = '68c1a39b22453c9970d24de0';     // ¡Este es el ID correcto!
-const DESPERDICIO_ID = 'ID_DEL_PRODUCTO_DESPERDICIO'; // <--- PENDIENTE: Reemplazar con el ID real del Desperdicio.
+
 
 router.post('/producir-lomitos-bifes', async (req, res) => {
   const session = await mongoose.startSession();
@@ -21,7 +21,6 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
       productoFinalId,         // ID del Bife/Lomito
       productoFinalKg,         // Peso final (Carne Limpia)
       grasaLimpiaKg = 0,       // Grasa recuperada
-      desperdicioKg = 0,       // Desperdicio
       producidoPor,
       fechaVencimientoProductoFinal,
     } = req.body || {};
@@ -116,12 +115,12 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
         console.warn('⚠️ Producto de Grasa Limpia no encontrado, no se registró el stock recuperado.');
       }
     }
-    
-    // 4) REGISTRAR DESPERDICIO (opcional, para trazabilidad)
-    if (desperdicioKg > 0) {
-        // Lógica para registrar desperdicio...
-    }
 
+const totalConsumidoKg = consumos.reduce((sum, c) => sum + (c.cantidadKg || 0), 0);
+const desperdicioKg = Math.max(totalConsumidoKg - productoFinalKg, 0);
+
+    
+   
 
     if (MovimientoStock && movimientos.length) {
       await MovimientoStock.create(movimientos, { session, ordered: true });
@@ -143,6 +142,8 @@ router.post('/producir-lomitos-bifes', async (req, res) => {
         ? new Date(fechaVencimientoProductoFinal)
         : null,
       status: 'closed',
+ desperdicioCantidad: desperdicioKg,
+         desperdicioUnidad: 'kg',
     };
 
     const runCreated = await new ProductionRun(runDoc).save({ session });
