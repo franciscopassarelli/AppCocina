@@ -311,7 +311,7 @@ export default function LomoBifePlanner({ apiBase = "/api", onConfirmProduction 
                     min={1}
                     step="1"
                     value={pesoUnidadCarne}
-                    onChange={(e) => setPesoUnidadCarne(e.target.value)}
+                    onChange={(e) => setPesoUnidadCarne(Number(e.target.value))}
                     style={{ maxWidth: 100 }}
                   />
                 </div>
