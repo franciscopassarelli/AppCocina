@@ -1,0 +1,19 @@
+.modal-overlay {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.6);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 5000;
+}
+
+.modal-card {
+background: #242424;
+color: white;
+padding: 20px;
+border-radius: 12px;
+width: 95%;
+max-width: 420px;
+box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+}

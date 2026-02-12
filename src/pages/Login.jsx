@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../components/styles/Auth.css";
 
@@ -8,17 +8,17 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const timerRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (user === "admin" && pass === "1234") {
+    if (user === "Admin" && pass === "123456") {
       setLoading(true);
       localStorage.setItem("isAuth", "true");
       onLogin();
 
-      // ⏳ 5 segundos antes de entrar
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         navigate("/cook");
       }, 5000);
     } else {
@@ -26,7 +26,15 @@ export default function Login({ onLogin }) {
     }
   };
 
-  // ⛔ MOSTRAR LOADER EN VEZ DEL LOGIN
+  // Cleanup
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="loader-screen">
@@ -77,6 +85,16 @@ export default function Login({ onLogin }) {
             Entrar
           </button>
         </form>
+
+        <div className="demo-credentials">
+          <p className="demo-title">Credenciales de prueba</p>
+          <p>
+            <strong>Usuario:</strong> Admin
+          </p>
+          <p>
+            <strong>Contraseña:</strong> 123456
+          </p>
+        </div>
       </div>
     </div>
   );

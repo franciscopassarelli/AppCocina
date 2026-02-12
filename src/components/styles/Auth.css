@@ -102,3 +102,21 @@
     text-shadow: 0 0 16px rgba(0, 200, 81, 0.9);
   }
 }
+
+.demo-credentials {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+.demo-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #9be15d; /* verde suave */
+}
+
