@@ -41,7 +41,9 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
   const FACTOR_GRASA = 0.32;
   const MEDALLON_GR = 80;
 
-  const carnes = useMemo(() => productos.filter(esCarne), [productos]);
+  const carnes = productos.filter(
+  (p) => p.departamento === "Carnicería"
+);
   const grasas = useMemo(() => productos.filter(esGrasa), [productos]);
 
   useEffect(() => {
@@ -213,15 +215,18 @@ export default function MeatBlendPlanner({ apiBase = "/api", onConfirmConsumos }
                 <div style={{ minWidth: 220 }}>
                   <label className="form-label small">Producto</label>
                   <select
-                    className="form-select form-select-sm"
-                    value={piezaProductoId}
-                    onChange={(e) => setPiezaProductoId(e.target.value)}
-                  >
-                    <option value="">— Elegí producto —</option>
-                    {carnes.map((p) => (
-                      <option key={p._id} value={p._id}>{p.nombre}</option>
-                    ))}
-                  </select>
+  className="form-select form-select-sm"
+  value={piezaProductoId}
+  onChange={(e) => setPiezaProductoId(e.target.value)}
+>
+  <option value="">— Elegir carnes —</option>
+
+  {carnes.map((p) => (
+    <option key={p._id} value={p._id}>
+      {p.nombre}
+    </option>
+  ))}
+</select>
                   <div className="small text-secondary mt-1">
                     {piezaProducto && stockTexto(piezaProducto)}
                   </div>

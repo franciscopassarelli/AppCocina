@@ -1,6 +1,5 @@
 import React from "react";
 import ProductForm from "../components/admin/ProductForm";
-import StockList from "../components/admin/StockList";
 import { FaBoxes } from "react-icons/fa";
 import "../components/styles/AdminDashboard.css"; 
 
@@ -12,7 +11,7 @@ export default function AdminDashboard() {
         Panel de Stock
       </h2>
       <ProductForm />
-      <StockList />
+      
     </div>
   );
 }

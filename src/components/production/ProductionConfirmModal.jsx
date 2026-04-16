@@ -127,6 +127,7 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
 
         const productoActualizado = {
           ...existente,
+          tipo: "producido",
           stock: nuevoStock,
           unidad: existente.unidad || unidadProducida,
           departamento,                     
@@ -143,6 +144,7 @@ export default function ProductionConfirmModal({ apiBase, show, onClose, run }) 
           nombre: nombreProductoFinal,
           stock: n,
           unidad: ["unidad", "kg", "l"].includes(unidadProducida) ? unidadProducida : "unidad",
+          tipo: "producido",
           pesoPromedio: 0,
           departamento,                   
           stockCritico: 0,

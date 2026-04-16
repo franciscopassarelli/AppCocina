@@ -44,7 +44,9 @@ export default function LomoBifePlanner({ apiBase = "/api", onConfirmProduction 
   const [msg, setMsg] = useState(null);
 
   // --- Memos ---
-  const carnes = useMemo(() => productos.filter(esCarne), [productos]);
+    const carnes = productos.filter(
+  (p) => p.departamento === "Carnicería"
+);
   const productosCorte = useMemo(() => productos.filter(p => /lomit|bife|corte/i.test(p.nombre || "")), [productos]);
   
   const productoFinal = useMemo(

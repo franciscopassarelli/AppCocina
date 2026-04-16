@@ -7,7 +7,7 @@ import AlertaStockModal from "../admin/AlertaStockModal";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useDepartamentos } from "../../context/DepartamentosContext";
 import DepartmentsManagerModal from "./DepartmentsManagerModal";
-
+import ProductosProducidos from "../../components/producidos/ProductosProducidos";
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 
@@ -38,6 +38,13 @@ export default function ProductForm() {
 
   const [showDepModal, setShowDepModal] = useState(false);
 
+
+
+  const [vista, setVista] = useState("agregados");
+  
+const productosAgregados = useMemo(() => {
+  return productos.filter((p) => p.tipo !== "producido");
+}, [productos]);
 
   const startOfDay = (d) => {
     const x = new Date(d);
@@ -191,11 +198,13 @@ const handleEliminarLote = (producto, lote, loteIndex) => {
     setLotesVisibles((prev) => ({ ...prev, [productoId]: !prev[productoId] }));
   };
 
-  const productosFiltrados = useMemo(() => {
-    return productos.filter(
-      (p) => departamentoSeleccionado === "Todos" || p.departamento === departamentoSeleccionado
-    );
-  }, [productos, departamentoSeleccionado]);
+const productosFiltrados = useMemo(() => {
+  return productosAgregados.filter(
+    (p) =>
+      departamentoSeleccionado === "Todos" ||
+      p.departamento === departamentoSeleccionado
+  );
+}, [productosAgregados, departamentoSeleccionado]);
 
   const productosPorDepartamento = useMemo(() => {
     return productosFiltrados.reduce((acc, prod) => {
@@ -206,9 +215,33 @@ const handleEliminarLote = (producto, lote, loteIndex) => {
     }, {});
   }, [productosFiltrados]);
 
-  return (
-    <>
+  
 
+
+
+ return (
+  <>
+  
+  <div className="d-flex gap-2 mb-3">
+    <button
+      className={`btn ${vista === "agregados" ? "btn-dark" : "btn-outline-dark"}`}
+      onClick={() => setVista("agregados")}
+    >
+      Productos agregados
+    </button>
+
+    <button
+      className={`btn ${vista === "producidos" ? "btn-dark" : "btn-outline-dark"}`}
+      onClick={() => setVista("producidos")}
+    >
+      Productos producidos
+    </button>
+  </div>
+
+  {vista === "producidos" ? (
+    <ProductosProducidos />
+  ) : (
+    <>
 
 
     {pendingDeleteLote && (
@@ -392,7 +425,7 @@ const handleEliminarLote = (producto, lote, loteIndex) => {
         ))}
       </div>
 
-      {productos.length === 0 ? (
+      {productosAgregados.length === 0 ? (
         <p>No hay productos aún.</p>
       ) : (
         <ul className="list-group">
@@ -538,7 +571,10 @@ const handleEliminarLote = (producto, lote, loteIndex) => {
         </ul>
       )}
 
-      <DepartmentsManagerModal show={showDepModal} onClose={() => setShowDepModal(false)} />
+         <DepartmentsManagerModal show={showDepModal} onClose={() => setShowDepModal(false)} />
     </>
-  );
+  )}
+
+  </>
+);
 }

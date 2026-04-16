@@ -11,6 +11,7 @@ import ProductionConfirmModal from "../production/ProductionConfirmModal";
 import ActiveProductionsPanel from "../production/ActiveProductionsPanel";
 import MeatBlendPlannerModal from "../production/MeatBlendPlannerModal";
 import LomoBifeProductionModal from "../production/LomoBifeProductionModal";
+import { sanitizeNumberInput } from "../../utils/numberInput";
 import "../cook/Cookpanel.css";
 
 const STORAGE_KEY = "activeRuns"; 
@@ -178,6 +179,7 @@ const [cortes, setCortes] = useState([]);
   }, [productoSeleccionado]);
 
   const handleRegistrar = async () => {
+    
     const prod = productoSeleccionado;
     if (!prod) {
       mostrarMensajeAlerta("Elegí un producto.");
@@ -186,14 +188,25 @@ const [cortes, setCortes] = useState([]);
 
     const cantidadIngresada = Number(descCantidad);
     if (!Number.isFinite(cantidadIngresada) || cantidadIngresada <= 0) {
+
       mostrarMensajeAlerta("Ingresá una cantidad válida a descontar.");
       return;
     }
+    
     const aDescontar = toProductoUnidad(cantidadIngresada, descUnidad, prod.unidad);
     if (aDescontar <= 0) {
       mostrarMensajeAlerta("La cantidad a descontar en la unidad del producto es inválida.");
       return;
     }
+
+    const stockActual = Number(prod.stock || 0);
+    if (aDescontar > stockActual) {
+      mostrarMensajeAlerta("No hay suficiente stock para descontar esa cantidad.");
+      return;
+    } 
+
+  
+  
 
     let restante = aDescontar;
     const lotesOrdenados = [...(prod.lotes || [])].sort(
@@ -269,6 +282,8 @@ const [cortes, setCortes] = useState([]);
   };
 
   
+
+  
   const handleAgregarStock = async (productoId, nuevoLote) => {
     try {
       const producto = productos.find((p) => p._id === productoId);
@@ -308,6 +323,21 @@ const [cortes, setCortes] = useState([]);
     }
     setConfirmingRun(null);
   }
+
+
+const cantidadIngresada = Number(descCantidad);
+const esNumeroValido = !isNaN(cantidadIngresada);
+
+const aDescontarEnVivo = toProductoUnidad(
+  cantidadIngresada,
+  descUnidad,
+  productoSeleccionado?.unidad
+);
+
+
+const stockActual = Number(productoSeleccionado?.stock || 0);
+
+const excedeStock = aDescontarEnVivo > stockActual;
 
   return (
     <div className="container-fluid cookpanel-container">
@@ -522,18 +552,32 @@ const [cortes, setCortes] = useState([]);
                         type="number"
                         className="form-control form-control-sm"
                         value={descCantidad}
-                        onChange={(e) => setDescCantidad(e.target.value)}
+                       onChange={(e) => {
+  const sanitized = sanitizeNumberInput(e.target.value);
+  if (sanitized === null) return;
+
+  setDescCantidad(sanitized);
+}}
+onKeyDown={(e) => {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault();
+  }
+}}
                         placeholder="Ej: 2.5"
                         min="0"
                         step="any"
                         autoFocus
                       />
+
+                      
                       <select
                         className="form-select form-select-sm"
                         value={descUnidad}
                         onChange={(e) => setDescUnidad(e.target.value)}
                         style={{ maxWidth: 120 }}
                       >
+
+                        
                         {productoSeleccionado.unidad === "kg" && (
                           <>
                             <option value="kg">kg</option>
@@ -551,9 +595,20 @@ const [cortes, setCortes] = useState([]);
                         )}
                       </select>
                     </div>
-                    <small className="text-muted">
-                      Se descontará del stock en {productoSeleccionado.unidad} (conversión automática).
-                    </small>
+                    
+                    {excedeStock && (
+  <small className="text-danger">
+    No hay suficiente stock para esa cantidad
+  </small>
+)}
+
+{descCantidad !== "" && cantidadIngresada <= 0 && (
+  <small className="text-danger">
+    Ingresá una cantidad mayor a 0
+  </small>
+)}
+
+
                   </div>
 
                   <div className="col-md-5">
@@ -570,7 +625,12 @@ const [cortes, setCortes] = useState([]);
                 <button
                   className="btn btn-success btn-sm w-100"
                   onClick={handleRegistrar}
-                  disabled={cargando}
+                  disabled={
+  cargando ||
+  !esNumeroValido ||
+  cantidadIngresada <= 0 ||
+  excedeStock
+}
                 >
                   {cargando ? (
                     <div className="d-flex justify-content-center align-items-center gap-2">

@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 const nf0 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 });
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
+
 function formatDateTimeAR(value) {
   if (!value) return "—";
   try { return new Date(value).toLocaleString("es-AR"); } catch { return "—"; }
@@ -29,6 +30,7 @@ function formatDuration(sec) {
 export default function ProductionRunsList({ apiBase }) {
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [runSeleccionado, setRunSeleccionado] = useState(null);
 
   async function refresh() {
     setLoading(true);
@@ -159,7 +161,7 @@ export default function ProductionRunsList({ apiBase }) {
                 <th className="text-center" style={{ width: 110 }}>Eficiencia</th>
                 <th style={{ width: 120 }}>Duración</th>
                 <th style={{ minWidth: 160 }}>Fecha de vencimiento</th>
-                <th style={{ minWidth: 260 }}>Insumos consumidos</th>
+                <th style={{ width: 120 }}>Detalles</th>
               </tr>
             </thead>
             <tbody>
@@ -200,23 +202,71 @@ export default function ProductionRunsList({ apiBase }) {
                     </td>
                     <td data-label="Duración">{dur}</td>
                     <td data-label="Vencimiento">{formatDateAR(fechaVenc)}</td>
-                    <td data-label="Insumos consumidos">
-                      {consumidosArr.length === 0 ? "—" : (
-                        <div className="chips-wrap">
-                          {consumidosArr.map((c) => (
-                            <span key={c.key} className="chip" title={`${c.label}: ${c.qty} ${c.unidad}`}>
-                              <span className="chip-label">{c.label}</span>
-                              <span className="chip-qty"> {c.qty} {c.unidad}</span>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
+                    
+
+<td className="text-center">
+  <button
+    className="btn btn-outline-primary btn-sm"
+    onClick={() => setRunSeleccionado(r)}
+  >
+    <i className="bi bi-eye"></i> Ver
+  </button>
+</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          {runSeleccionado && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+
+      <div className="modal-header">
+        <h5>Detalle de Producción</h5>
+        <button
+          className="btn-close"
+          onClick={() => setRunSeleccionado(null)}
+        />
+      </div>
+
+      <div className="modal-body">
+
+        <p>
+          <strong>Receta:</strong> {runSeleccionado.recipeNombre}
+        </p>
+
+        <p>
+          <strong>Preparado por:</strong> {runSeleccionado.preparadoPor || "—"}
+        </p>
+
+        <p>
+          <strong>Inicio:</strong> {formatDateTimeAR(runSeleccionado.startedAt)}
+        </p>
+
+        <hr />
+
+        <h6>Ingredientes consumidos</h6>
+
+        {(runSeleccionado.ingredientesConsumidos || []).map((i, index) => (
+          <div key={index} className="ingredient-row">
+            {i.nombreProducto} — {nf2.format(i.cantidad)} {i.unidad}
+          </div>
+        ))}
+
+      </div>
+
+      <div className="modal-footer">
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => setRunSeleccionado(null)}
+        >
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
         </div>
       )}
     </div>
