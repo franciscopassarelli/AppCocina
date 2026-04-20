@@ -12,9 +12,7 @@ export default function ProductosProducidos() {
     <div>
       <h4 className="mb-3">Productos producidos</h4>
 
-      {productosProducidos.length === 0 && (
-        <p className="text-muted">No hay productos producidos.</p>
-      )}
+      
 
       {productosProducidos.map((producto) => (
         <div key={producto._id} className="card mb-3 p-3">

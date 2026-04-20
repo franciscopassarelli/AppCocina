@@ -114,6 +114,7 @@ export default function FormularioProducto({
 
   return (
     <div className="card card-body mb-4 shadow-sm formulario-producto">
+      <h2>Crear Producto</h2>
      <form onSubmit={onSubmit} className="d-flex flex-wrap align-items-end gap-2">
 
   <div className="col-auto">

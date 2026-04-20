@@ -8,6 +8,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import { useDepartamentos } from "../../context/DepartamentosContext";
 import DepartmentsManagerModal from "./DepartmentsManagerModal";
 import ProductosProducidos from "../../components/producidos/ProductosProducidos";
+import { div } from "framer-motion/client";
 const nf2 = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 
 
@@ -205,6 +206,8 @@ const productosFiltrados = useMemo(() => {
       p.departamento === departamentoSeleccionado
   );
 }, [productosAgregados, departamentoSeleccionado]);
+
+
 
   const productosPorDepartamento = useMemo(() => {
     return productosFiltrados.reduce((acc, prod) => {
@@ -425,8 +428,16 @@ const productosFiltrados = useMemo(() => {
         ))}
       </div>
 
-      {productosAgregados.length === 0 ? (
-        <p>No hay productos aún.</p>
+      {productosAgregados.length === 0 || productosFiltrados.length === 0 ? (
+       <div className="empty-state">
+  <i className="bi bi-box-seam empty-icon"></i>
+
+  <p className="empty-title">No hay productos disponibles</p>
+  
+  <p className="empty-subtitle">
+    Usá el formulario para agregar tu primer producto.
+  </p>
+</div>
       ) : (
         <ul className="list-group">
           {Object.entries(productosPorDepartamento).map(([depto, productosDepto]) => (
